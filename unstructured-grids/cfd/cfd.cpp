@@ -218,7 +218,7 @@ int main(int argc, char** argv)
 	n_platform = opts.platform_id;
 	n_device = opts.device_id;
 
-	device_id = GetDevice(n_platform, n_device);
+	device_id = GetDevice(n_platform, n_device,USEGPU);
         // Create a compute context
     context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
     CHKERR(err, "Failed to create a compute context!");

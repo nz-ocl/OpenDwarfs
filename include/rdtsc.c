@@ -240,12 +240,15 @@ void walkList() {
 
 #endif //ENABLE_TIMER
 
-cl_device_id
-GetDevice(int platform, int device) {
+cl_device_id GetDevice(int platform, int device, int usegpu)
+{
+	printf("entering GetDevice(%d,%d)...\n",platform,device);
+
     cl_int err;
     cl_uint nPlatforms = 1;
     err = clGetPlatformIDs(0, NULL, &nPlatforms);
     CHECK_ERROR(err);
+    printf("PlatformIDs Retrieved.\n");
 
     if (nPlatforms <= 0) {
         printf("No OpenCL platforms found. Exiting.\n");
@@ -265,9 +268,12 @@ GetDevice(int platform, int device) {
     err = clGetPlatformInfo(platforms[0], CL_PLATFORM_VENDOR, sizeof (platformName), platformName, NULL);
     CHECK_ERROR(err);
     printf("Platform Chosen : %s\n", platformName);
+    printf("USEGPU: %d\n",usegpu);
     // query devices
-    err = clGetDeviceIDs(platforms[platform], USEGPU ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU, 0, NULL, &nDevices);
+    err = clGetDeviceIDs(platforms[platform], usegpu ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU, 0, NULL, &nDevices);
     CHECK_ERROR(err);
+    printf("num devices retrieved.\n");
+
     if (nDevices <= 0) {
         printf("No OpenCL Device found. Exiting.\n");
         exit(0);
@@ -278,9 +284,10 @@ GetDevice(int platform, int device) {
         exit(-4);
     }
     cl_device_id* devices = (cl_device_id *) malloc(sizeof (cl_device_id) * nDevices);
-    err = clGetDeviceIDs(platforms[platform], USEGPU ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU, nDevices, devices, NULL);
+    err = clGetDeviceIDs(platforms[platform], usegpu ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU, nDevices, devices, NULL);
     char DeviceName[100];
     err = clGetDeviceInfo(devices[device], CL_DEVICE_NAME, sizeof (DeviceName), DeviceName, NULL);
+    printf("device info retrieved.\n");
     CHECK_ERROR(err);
     printf("Device Chosen : %s\n", DeviceName);
 

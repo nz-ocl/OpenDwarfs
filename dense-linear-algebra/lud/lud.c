@@ -119,7 +119,7 @@ main ( int argc, char *argv[] )
 //
 //  errcode = clGetDeviceIDs(clPlatform[PLATFORM_ID], USEGPU ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU, 1, &clDevice, NULL);
 //  CHECKERR(errcode);
-clDevice = GetDevice(platform_id, device_id);
+clDevice = GetDevice(platform_id, device_id,USEGPU);
  size_t max_worksize[3];
  errcode = clGetDeviceInfo(clDevice, CL_DEVICE_MAX_WORK_ITEM_SIZES,sizeof(size_t)*3, &max_worksize, NULL);
  CHECKERR(errcode);
@@ -156,7 +156,7 @@ clDevice = GetDevice(platform_id, device_id);
     errcode = clGetProgramBuildInfo(clProgram, clDevice, CL_PROGRAM_BUILD_LOG, logLength, (void *) log, NULL);
     fprintf(stderr, "Kernel build error! Log:\n%s", log);
     free(log);
-    return;
+    return 0;
   }
   CHECKERR(errcode);
 

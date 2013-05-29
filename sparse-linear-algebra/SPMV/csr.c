@@ -29,6 +29,8 @@ static struct option long_options[] = {
 int platform_id=PLATFORM_ID, n_device=DEVICE_ID;
 int main(int argc, char** argv)
 {
+  printf("Entering Main()...\n");
+
 	cl_int err;
 	int usegpu = USEGPU;
     int do_verify = 0;
@@ -84,6 +86,8 @@ int main(int argc, char** argv)
           exit(EXIT_FAILURE);
       }
   }
+    if(do_verify)
+      printf("Options Parsed.\n");
 
     /* Fill input set with random float values */
     int i;
@@ -107,16 +111,28 @@ int main(int argc, char** argv)
         y_host[ii] = rand() / (RAND_MAX + 2.0);
     }
 
+      if(do_verify)
+	printf("input generated.\n");
+
     /* Retrieve an OpenCL platform */
-    device_id = GetDevice(platform_id, n_device);
+    device_id = GetDevice(platform_id, n_device,usegpu);
+
+    if(do_verify)
+      printf("platform ID retrieved.\n");
 
     /* Create a compute context */
     context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
     CHKERR(err, "Failed to create a compute context!");
 
+    if(do_verify)
+      printf("context created.\n");
+
     /* Create a command queue */
     commands = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
     CHKERR(err, "Failed to create a command queue!");
+
+    if(do_verify)
+      printf("command queue created.\n");
 
     /* Load kernel source */
     kernelFile = fopen("spmv_csr_kernel.cl", "r");
@@ -126,6 +142,9 @@ int main(int argc, char** argv)
     rewind(kernelFile);
     lengthRead = fread((void *) kernelSource, kernelLength, 1, kernelFile);
     fclose(kernelFile);
+
+    if(do_verify)
+      printf("kernel source loaded.\n");
 
     /* Create the compute program from the source buffer */
     program = clCreateProgramWithSource(context, 1, (const char **) &kernelSource, &kernelLength, &err);

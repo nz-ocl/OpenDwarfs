@@ -254,7 +254,7 @@ void setupGPU()
 	cl_int err;
 	// Retrieve an OpenCL platform
 	printf("Getting Device %d %d \n", platform_id, n_device);
-	device_id = GetDevice(platform_id, n_device);
+	device_id = GetDevice(platform_id, n_device,USEGPU);
 
 	printf("Getting Device\n");
 	context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);

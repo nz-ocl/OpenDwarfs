@@ -73,7 +73,7 @@ void initCL()
 	platform_id = opts.platform_id;
 	device_id = opts.device_id;
 
-clDevice = GetDevice(platform_id, device_id);
+clDevice = GetDevice(platform_id, device_id,USEGPU);
 	size_t max_worksize[3];
 errcode = clGetDeviceInfo(clDevice, CL_DEVICE_MAX_WORK_ITEM_SIZES,sizeof(size_t)*3, &max_worksize, NULL);
  CHECKERR(errcode);

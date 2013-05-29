@@ -171,7 +171,7 @@ int main(int argc, char** argv) {
         118, -1, -1, -1, 111, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         75, -1, -1, -1, -1, -1, -1, -1, 71, -1, -1, -1, -1, -1};
 
-	device_id = GetDevice(platform_id, n_device);
+	device_id = GetDevice(platform_id, n_device,USEGPU);
 
     /* Create a compute context */
     context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);

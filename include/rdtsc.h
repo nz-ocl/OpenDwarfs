@@ -314,7 +314,7 @@ fullExecTimer.endtime = 1000 * (fullExecTimer.timer.tv_sec*1000000L + fullExecTi
 #define END_KERNEL
 #endif
 
-extern cl_device_id GetDevice(int platform, int device);
+extern cl_device_id GetDevice(int platform, int device, int usegpu);
 
 #ifdef __cplusplus
 }

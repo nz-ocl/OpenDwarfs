@@ -245,7 +245,7 @@ init2(OptionParser& op, bool _do_dp, int fftn1, int fftn2)
 #ifndef ENABLE_TIMER
 		fftDev = GetDevice(platform, device);
 #else
-		fftDev = GetDevice(PLATFORM_ID, DEVICE_ID);
+		fftDev = GetDevice(PLATFORM_ID, DEVICE_ID,USEGPU);
 #endif 
 		// now get the context
 		fftCtx = clCreateContext(NULL, 1, &fftDev, NULL, NULL, &err);
@@ -332,7 +332,7 @@ init(OptionParser& op, bool _do_dp, int fftn)
 #ifndef ENABLE_TIMER
 		fftDev = GetDevice(platform, device);
 #else
-		fftDev = GetDevice(PLATFORM_ID, DEVICE_ID);
+		fftDev = GetDevice(PLATFORM_ID, DEVICE_ID, USEGPU);
 #endif 
 		fftCtx = clCreateContext(NULL, 1, &fftDev, NULL, NULL, &err);
 		CL_CHECK_ERROR(err);
