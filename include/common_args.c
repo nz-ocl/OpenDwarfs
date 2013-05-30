@@ -129,7 +129,8 @@ int ocd_check_requirements(ocd_requirements* reqs)
 	int pass = 1;
 
 	ocd_options opts = ocd_get_options();
-	cl_device_id d_id = _ocd_get_device(opts.platform_id, opts.device_id);
+//	cl_device_id d_id = _ocd_get_device(opts.platform_id, opts.device_id);
+	cl_device_id d_id = GetDevice(opts.platform_id, opts.device_id,USEGPU);
 
 	cl_ulong local_mem;
 	clGetDeviceInfo(d_id, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(cl_ulong), &local_mem, NULL);

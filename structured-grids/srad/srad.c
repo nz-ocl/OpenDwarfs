@@ -60,7 +60,7 @@ runTest( int argc, char** argv)
 
 #ifdef CPU
 	float Jc, G2, L, num, den, qsqr;
-	int *iN,*iS,*jE,*jW, k;
+	int *iN,*iS,*jE,*jW;// k;
 	float *dN,*dS,*dW,*dE;
 	float cN,cS,cW,cE,D;
 #endif

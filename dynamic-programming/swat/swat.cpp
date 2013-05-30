@@ -132,9 +132,11 @@ int main(int argc, char ** argv)
 	err = clGetPlatformIDs(1, &platformID, NULL);
 	CHECK_ERR(err, "Get platform ID error!");
 
+/*
 	err = clGetDeviceIDs(platformID, CL_DEVICE_TYPE_GPU, 1, &deviceID, NULL);
 	CHECK_ERR(err, "Get device ID error!");
-
+*/
+	deviceID = GetDevice(0,0,USEGPU);
 
 	//check to make sure the device supports this block count
 	//then scale threads appropriately

@@ -198,11 +198,12 @@ initializeCL(void)
 
     cl_context_properties cps[3] = { CL_CONTEXT_PLATFORM, (cl_context_properties)platform, 0 };
     cl_context_properties* cprops = (NULL == platform) ? NULL : cps;
-    context = clCreateContextFromType(cprops,
-        USEGPU ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU,
-        NULL,
-        NULL,
-        &status);
+    context = clCreateContextFromType(cprops, CL_DEVICE_TYPE_GPU, NULL, NULL, &status);
+    if(status == CL_DEVICE_NOT_FOUND)
+	{
+		fprintf(stderr,"No Supported GPU Found. Falling back to CPU.\n");
+		context = clCreateContextFromType(cprops, CL_DEVICE_TYPE_CPU, NULL, NULL, &status);
+	}
   // }else{
     // context = clCreateContextFromType(0,
         // CL_DEVICE_TYPE_GPU,

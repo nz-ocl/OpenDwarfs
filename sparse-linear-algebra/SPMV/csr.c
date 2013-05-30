@@ -29,8 +29,6 @@ static struct option long_options[] = {
 int platform_id=PLATFORM_ID, n_device=DEVICE_ID;
 int main(int argc, char** argv)
 {
-  printf("Entering Main()...\n");
-
 	cl_int err;
 	int usegpu = USEGPU;
     int do_verify = 0;
@@ -134,11 +132,24 @@ int main(int argc, char** argv)
     if(do_verify)
       printf("command queue created.\n");
 
+    if(do_verify) printf("changes made.\n");
+
     /* Load kernel source */
     kernelFile = fopen("spmv_csr_kernel.cl", "r");
+    if(kernelFile == NULL)
+    	fprintf(stderr,"Cannot Open Kernel.\n");
+    else
+    	if(do_verify) printf("Kernel Opened.\n");
     fseek(kernelFile, 0, SEEK_END);
+    if(do_verify) printf("Seeked to kernel end.\n");
     kernelLength = (size_t) ftell(kernelFile);
+    if(do_verify) printf("Kernel Source Read.\n");
     kernelSource = (char *) malloc(sizeof(char)*kernelLength);
+    if(kernelSource == NULL)
+    	fprintf(stderr,"Heap Overflow. Cannot Load Kernel Source.\n");
+    else
+    	if(do_verify)
+    		printf("Memory Allocated.\n");
     rewind(kernelFile);
     lengthRead = fread((void *) kernelSource, kernelLength, 1, kernelFile);
     fclose(kernelFile);

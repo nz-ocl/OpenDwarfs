@@ -242,13 +242,10 @@ void walkList() {
 
 cl_device_id GetDevice(int platform, int device, int usegpu)
 {
-	printf("entering GetDevice(%d,%d)...\n",platform,device);
-
-    cl_int err;
+    cl_int err,dev_type;
     cl_uint nPlatforms = 1;
     err = clGetPlatformIDs(0, NULL, &nPlatforms);
     CHECK_ERROR(err);
-    printf("PlatformIDs Retrieved.\n");
 
     if (nPlatforms <= 0) {
         printf("No OpenCL platforms found. Exiting.\n");
@@ -268,11 +265,24 @@ cl_device_id GetDevice(int platform, int device, int usegpu)
     err = clGetPlatformInfo(platforms[0], CL_PLATFORM_VENDOR, sizeof (platformName), platformName, NULL);
     CHECK_ERROR(err);
     printf("Platform Chosen : %s\n", platformName);
-    printf("USEGPU: %d\n",usegpu);
+
     // query devices
-    err = clGetDeviceIDs(platforms[platform], usegpu ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU, 0, NULL, &nDevices);
-    CHECK_ERROR(err);
-    printf("num devices retrieved.\n");
+    if(usegpu)
+    {
+    	dev_type = CL_DEVICE_TYPE_GPU;
+    	err = clGetDeviceIDs(platforms[platform], dev_type, 0, NULL, &nDevices);
+    	if(err == CL_DEVICE_NOT_FOUND)
+    	{
+    		fprintf(stderr,"No Supported GPU Found. Falling back to CPU.\n");
+    		usegpu = 0;
+    	}
+    }
+	if(!usegpu)
+	{
+		dev_type = CL_DEVICE_TYPE_CPU;
+		err = clGetDeviceIDs(platforms[platform], dev_type, 0, NULL, &nDevices);
+	}
+	CHECK_ERROR(err);
 
     if (nDevices <= 0) {
         printf("No OpenCL Device found. Exiting.\n");
@@ -284,10 +294,9 @@ cl_device_id GetDevice(int platform, int device, int usegpu)
         exit(-4);
     }
     cl_device_id* devices = (cl_device_id *) malloc(sizeof (cl_device_id) * nDevices);
-    err = clGetDeviceIDs(platforms[platform], usegpu ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU, nDevices, devices, NULL);
+    err = clGetDeviceIDs(platforms[platform], dev_type, nDevices, devices, NULL);
     char DeviceName[100];
     err = clGetDeviceInfo(devices[device], CL_DEVICE_NAME, sizeof (DeviceName), DeviceName, NULL);
-    printf("device info retrieved.\n");
     CHECK_ERROR(err);
     printf("Device Chosen : %s\n", DeviceName);
 
