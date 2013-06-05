@@ -24,17 +24,29 @@ static struct option long_options[] = {
       {"device", 1, NULL, 'd'},
       {"platform", 1, NULL, 'p'},
       {"verify", 0, NULL, 'v'},
+      {"density",1,NULL, 'D'},
+      {"size",1,NULL, 'N'},
       {0,0,0,0}
 };
+
 int platform_id=PLATFORM_ID, n_device=DEVICE_ID;
+
 int main(int argc, char** argv)
 {
 	cl_int err;
 	int usegpu = USEGPU;
     int do_verify = 0;
+    unsigned long density_ppm = 19;
+    unsigned int N = 512*512;
     int opt, option_index=0;
 
     unsigned int correct;
+
+    const char* usage = "Usage: %s [-v] [-c] [-D <xx>] [-N <xx>]\n\n \
+    		-v: Warning: lots of output\n \
+    		-c: use CPU\n \
+    		-D: Density (fraction of Non-Zero Elements) of test matrix expressed in parts per million\n \
+    		-N: Size (Length and Width) of square test matrix\n\n";
 
     size_t global_size;
     size_t local_size;
@@ -58,44 +70,50 @@ int main(int argc, char** argv)
     size_t kernelLength;
     size_t lengthRead;
 
-
     ocd_init(&argc, &argv, NULL);
     ocd_options opts = ocd_get_options();
     platform_id = opts.platform_id;
     n_device = opts.device_id;
 
-    while ((opt = getopt_long(argc, argv, "::vc::", 
-                            long_options, &option_index)) != -1 ) {
-      switch(opt){
-        //case 'i':
-          //input_file = optarg;
-          //break;
-        case 'v':
-          fprintf(stderr, "verify\n");
-          do_verify = 1;
-          break;
-        case 'c':
-          fprintf(stderr, "using cpu\n");
-          usegpu = 0;
-	  break;
-        default:
-          fprintf(stderr, "Usage: %s [-v Warning: lots of output] [-c use CPU]\n",
-                  argv[0]);
-          exit(EXIT_FAILURE);
-      }
-  }
-    if(do_verify)
-      printf("Options Parsed.\n");
+    while ((opt = getopt_long(argc, argv, "::vcD:N:::", long_options, &option_index)) != -1 )
+    {
+    	switch(opt)
+		{
+    		case 'v':
+    			fprintf(stderr, "verify\n");
+    			do_verify = 1;
+    			break;
+			case 'c':
+				fprintf(stderr, "using cpu\n");
+				usegpu = 0;
+				break;
+			case 'D':
+				if(optarg != NULL)
+					density_ppm = atol(optarg);
+				else
+					density_ppm = atol(argv[optind]);
+				printf("Density = %u / 1000000\n",density_ppm);
+				break;
+			case 'N':
+				if(optarg != NULL)
+					N = atoi(optarg);
+				else
+					N = atoi(argv[optind]);
+				printf("N = %d\n",N);
+				break;
+			default:
+			  fprintf(stderr, usage,argv[0]);
+			  exit(EXIT_FAILURE);
+		  }
+    }
 
     /* Fill input set with random float values */
     int i;
 
+    coo_matrix coo;
+    coo = rand_square_coo(N,density_ppm);
     csr_matrix csr;
-    csr = laplacian_5pt(512);
-    int k = 0;
-      for(k = 0; k < csr.num_nonzeros; k++){
-         csr.Ax[k] = 1.0 - 2.0 * (rand() / (RAND_MAX + 1.0));
-      }
+    csr = coo_to_csr(&coo);
 
     //The other arrays
     float * x_host = float_new_array(csr.num_cols);
@@ -109,28 +127,19 @@ int main(int argc, char** argv)
         y_host[ii] = rand() / (RAND_MAX + 2.0);
     }
 
-      if(do_verify)
-	printf("input generated.\n");
+//    if(do_verify)
+    	printf("input generated.\n");
 
     /* Retrieve an OpenCL platform */
     device_id = GetDevice(platform_id, n_device,usegpu ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU);
-
-    if(do_verify)
-      printf("platform ID retrieved.\n");
 
     /* Create a compute context */
     context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
     CHKERR(err, "Failed to create a compute context!");
 
-    if(do_verify)
-      printf("context created.\n");
-
     /* Create a command queue */
     commands = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
     CHKERR(err, "Failed to create a command queue!");
-
-    if(do_verify)
-      printf("command queue created.\n");
 
     if(do_verify) printf("changes made.\n");
 
@@ -183,6 +192,10 @@ int main(int argc, char** argv)
     kernel = clCreateKernel(program, "csr", &err);
     CHKERR(err, "Failed to create a compute kernel!");
 
+
+    if(do_verify)
+      printf("kernel created\n");
+
     /* Create the input and output arrays in device memory for our calculation */
     csr_ap = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned int)*csr.num_rows+4, NULL, &err);
     CHKERR(err, "Failed to allocate device memory!");
@@ -195,32 +208,40 @@ int main(int argc, char** argv)
     y_loc = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float)*csr.num_rows, NULL, &err);
     CHKERR(err, "Failed to allocate device memory!");
 
+
+    if(do_verify)
+      printf("buffers created\n");
+
     /* beginning of timing point */
     stopwatch_start(&sw); 
+
+
+    if(do_verify)
+      printf("stopwatch started\n");
    
     /* Write our data set into the input array in device memory */
 	err = clEnqueueWriteBuffer(commands, csr_ap, CL_TRUE, 0, sizeof(unsigned int)*csr.num_rows+4, csr.Ap, 0, NULL, &ocdTempEvent);
-        clFinish(commands);
+	clFinish(commands);
 	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
 	END_TIMER(ocdTempTimer)
     CHKERR(err, "Failed to write to source array!");
     err = clEnqueueWriteBuffer(commands, csr_aj, CL_TRUE, 0, sizeof(unsigned int)*csr.num_nonzeros, csr.Aj, 0, NULL, &ocdTempEvent);
-        clFinish(commands);
+	clFinish(commands);
 	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
 	END_TIMER(ocdTempTimer)
     CHKERR(err, "Failed to write to source array!");
     err = clEnqueueWriteBuffer(commands, csr_ax, CL_TRUE, 0, sizeof(float)*csr.num_nonzeros, csr.Ax, 0, NULL, &ocdTempEvent);
-        clFinish(commands);
+	clFinish(commands);
 	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
 	END_TIMER(ocdTempTimer)
     CHKERR(err, "Failed to write to source array!");
     err = clEnqueueWriteBuffer(commands, x_loc, CL_TRUE, 0, sizeof(float)*csr.num_cols, x_host, 0, NULL, &ocdTempEvent);
-        clFinish(commands);
+	clFinish(commands);
 	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
 	END_TIMER(ocdTempTimer)
     CHKERR(err, "Failed to write to source array!");
     err = clEnqueueWriteBuffer(commands, y_loc, CL_TRUE, 0, sizeof(float)*csr.num_rows, y_host, 0, NULL, &ocdTempEvent);
-        clFinish(commands);
+	clFinish(commands);
 	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
     CHKERR(err, "Failed to write to source array!");
 	END_TIMER(ocdTempTimer)
@@ -234,32 +255,53 @@ int main(int argc, char** argv)
     err |= clSetKernelArg(kernel, 5, sizeof(cl_mem), &y_loc);
     CHKERR(err, "Failed to set kernel arguments!");
 
+
+    if(do_verify)
+      printf("set kernel arguments\n");
+
     /* Get the maximum work group size for executing the kernel on the device */
     err = clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &local_size, NULL);
+    if(do_verify)
+    	printf("Device Max Local Size: %d\n",local_size);
     CHKERR(err, "Failed to retrieve kernel work group info!");
 
     /* Execute the kernel over the entire range of our 1d input data set */
     /* using the maximum number of work group items for this device */
     global_size = csr.num_rows;
     err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global_size, &local_size, 0, NULL, &ocdTempEvent);
-        clFinish(commands);
-	START_TIMER(ocdTempEvent, OCD_TIMER_KERNEL, "CSR Kernel", ocdTempTimer)
-    END_TIMER(ocdTempTimer)
+    clFinish(commands);
     CHKERR(err, "Failed to execute kernel!");
+
+    if(do_verify)
+      printf("NDRange enqueued\n");
+
+	START_TIMER(ocdTempEvent, OCD_TIMER_KERNEL, "CSR Kernel", ocdTempTimer)
+
+
+    if(do_verify)
+      printf("timer started\n");
+
+    END_TIMER(ocdTempTimer)
+//    CHKERR(err, "Failed to execute kernel!");
+
+
+    if(do_verify)
+      printf("kernel executed\n");
 
     /* Wait for the command commands to get serviced before reading back results */
     float output[csr.num_rows];
     
     /* Read back the results from the device to verify the output */
 	err = clEnqueueReadBuffer(commands, y_loc, CL_TRUE, 0, sizeof(float)*csr.num_rows, output, 0, NULL, &ocdTempEvent);
-        clFinish(commands);
-    	START_TIMER(ocdTempEvent, OCD_TIMER_D2H, "CSR Data Copy", ocdTempTimer)
+    clFinish(commands);
+    START_TIMER(ocdTempEvent, OCD_TIMER_D2H, "CSR Data Copy", ocdTempTimer)
 	END_TIMER(ocdTempTimer)
 	CHKERR(err, "Failed to read output array!");
 
     /* end of timing point */
     stopwatch_stop(&sw);
     printf("Time consumed(ms): %lf Gflops: %f \n", 1000*get_interval_by_sec(&sw), (2.0 * (double) csr.num_nonzeros / get_interval_by_sec(&sw)) / 1e9);
+
 
    /* Validate our results */
    if(do_verify){

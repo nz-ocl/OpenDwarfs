@@ -489,7 +489,7 @@ AUTOMAKE = ${SHELL} /home/tjkenney/OpenDwarfs/m4/missing --run automake-1.11
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS =  
+CFLAGS = -g
 CPP = gcc -E
 CPPFLAGS = -g
 CXX = g++
