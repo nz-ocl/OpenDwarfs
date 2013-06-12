@@ -79,7 +79,7 @@ int main(int argc, char** argv)
     platform_id = opts.platform_id;
     n_device = opts.device_id;
 
-    while ((opt = getopt_long(argc, argv, "::vcD:N:f:::", long_options, &option_index)) != -1 )
+    while ((opt = getopt_long(argc, argv, "::vcD:N:f:p:::", long_options, &option_index)) != -1 )
     {
     	switch(opt)
 		{
@@ -116,8 +116,9 @@ int main(int argc, char** argv)
 				do_print = 1;
 				break;
 			default:
-			  fprintf(stderr, usage,argv[0]);
-			  exit(EXIT_FAILURE);
+				fprintf(stderr,"Illegal Argument: '%c'\n\n",opt);
+				fprintf(stderr, usage,argv[0]);
+				exit(EXIT_FAILURE);
 		  }
     }
 
@@ -353,10 +354,7 @@ int main(int argc, char** argv)
         sum = y_host[row];
         
         row_start = csr.Ap[row];
-        if(row_start == CSR_EMPTY_ROW) continue; //If there aren't any non-zero elements in this row, y_host[row] already contains the proper value
-        
-        next_nz_row = get_next_nz_row(&csr,row);
-        row_end   = csr.Ap[next_nz_row];
+        row_end   = csr.Ap[row+1];
 
         unsigned int jj = 0;
         for (jj = row_start; jj < row_end; jj++){             
