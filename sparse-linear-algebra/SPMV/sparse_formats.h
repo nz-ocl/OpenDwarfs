@@ -55,6 +55,15 @@ typedef struct coo_matrix
 }
 coo_matrix;
 
+void check(int b, const char* msg)
+{
+	if(!b)
+	{
+		fprintf(stderr,"ERROR: %s\n\n",msg);
+		exit(-1);
+	}
+}
+
 unsigned int * int_new_array(const size_t N) 
 { 
     //dispatch on location
@@ -96,6 +105,46 @@ int triplet_comparator(const void *v1, const void *v2)
 		return +1;
 	else
 		return 0;
+}
+
+/*
+ * Read a CSR Matrix from file. Values are stored and read via fprintf
+ * and fscanf rather than fwrite and fread to ensure portability
+ *
+ */
+void read_csr(csr_matrix* csr,const char* file_path)
+{
+	FILE* fp;
+	int i,read_count;
+
+	fp = fopen(file_path,"r");
+	check(fp != NULL,"sparse_formats.read_csr() - Cannot Open Input File");
+
+	read_count = fscanf(fp,"%u\n%f\n%u\n%u\n%u\n",&(csr->index_type),&(csr->value_type),&(csr->num_rows),&(csr->num_cols),&(csr->num_nonzeros));
+	check(read_count == 5,"sparse_formats.read_csr() - Input File Corrupted! Read count for header info differs from 5");
+
+	read_count = 0;
+	csr->Ap = int_new_array(csr->num_rows+1);
+	check(csr->Ap != NULL,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Ap");
+	for(i=0; i<=csr->num_rows; i++)
+	  read_count += fscanf(fp,"%u ",csr->Ap+i);
+	check(read_count == (csr->num_rows+1),"sparse_formats.read_csr() - Input File Corrupted! Read count for Ap differs from csr->num_rows+1");
+
+	read_count = 0;
+	csr->Aj = int_new_array(csr->num_nonzeros);
+	check(csr->Aj != NULL,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Aj");
+	for(i=0; i<csr->num_nonzeros; i++)
+	  read_count += fscanf(fp,"%u ",csr->Aj+i);
+	check(read_count == (csr->num_nonzeros),"sparse_formats.read_csr() - Input File Corrupted! Read count for Aj differs from csr->num_nonzeros");
+
+	read_count = 0;
+	csr->Ax = float_new_array(csr->num_nonzeros);
+	check(csr->Ax != NULL,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Ax");
+	for(i=0; i<csr->num_nonzeros; i++)
+	  read_count += fscanf(fp,"%f ",csr->Ax+i);
+	check(read_count == (csr->num_nonzeros),"sparse_formats.read_csr() - Input File Corrupted! Read count for Ax differs from csr->num_nonzeros");
+
+	fclose(fp);
 }
 
 /*
@@ -181,6 +230,8 @@ csr_matrix laplacian_5pt(const unsigned int N)
 /*
  * Method to generate a random matrix in COO form of given size and density
  *
+ * O(NNZ^2) - nested for loops save memory
+ *
  * N = L&W of square matrix
  * density = density (fraction of NZ elements) expressed in parts per million (ppm)
  *
@@ -196,9 +247,10 @@ coo_matrix rand_square_coo(const unsigned int N,const unsigned long density)
 	coo.num_rows = N;
 	coo.num_cols = N;
 	coo.density_ppm = density;
-	coo.num_nonzeros = N*N*density/1000000;
+	coo.num_nonzeros = (((double)(N*density))/1000000.0)*N;
 
 	coo.non_zero = triplet_new_array(coo.num_nonzeros);
+	check(coo.non_zero != NULL,"sparse_formats.rand_square_coo(): Heap Overflow - Cannot allocate memory for coo.non_zero\n");
 
 	for(ind=0; ind<coo.num_nonzeros; ind++)
 	{
@@ -219,8 +271,9 @@ coo_matrix rand_square_coo(const unsigned int N,const unsigned long density)
 	for(ind=0; ind<coo.num_nonzeros; ind++)
 	{
 		current_triplet = &(coo.non_zero[ind]);
+		(current_triplet->v) = 1.0 - 2.0 * (rand() / (RAND_MAX + 1.0));
 		while((current_triplet->v) == 0.0)
-				(current_triplet->v) = 1.0 - 2.0 * (rand() / (2147483647 + 1.0));
+				(current_triplet->v) = 1.0 - 2.0 * (rand() / (RAND_MAX + 1.0));
 	}
 
 	qsort(coo.non_zero,coo.num_nonzeros,sizeof(triplet),triplet_comparator);
@@ -270,6 +323,61 @@ csr_matrix coo_to_csr(const coo_matrix* coo)
 
 	csr.Ap[row_count] = csr.num_nonzeros;
 	return csr;
+}
+
+void print_csr_metadata(const csr_matrix* csr)
+{
+	double density;
+	density = ((double)(csr->num_nonzeros))/(((double)(csr->num_rows))*((double)(csr->num_cols)));
+	printf("\nCSR Matrix Metadata:\n\nNRows=%d\tNCols=%d\tNNZ=%d\tDensity=%g\n\n",csr->num_rows,csr->num_cols,csr->num_nonzeros,density);
+}
+
+/*
+ * Function to find index of next non-zero row within a CSR matrix
+ *
+ * csr - pointer to CSR Matrix as defined in the struct above
+ * row_count - current NZ row. Search will begin with the next row
+ *
+ * Returns: index of first NZ row within csr after the row_count-th row OR csr->num_rows if all remaining rows are empty
+ */
+int get_next_nz_row(const csr_matrix* csr, int row_count)
+{
+	row_count++;
+	while(csr->Ap[row_count] == CSR_EMPTY_ROW && row_count < csr->num_rows)
+		row_count++;
+	return row_count;
+}
+
+void print_csr_std(const csr_matrix* csr)
+{
+	int ind,ind2,nz_count=0,row_count=0,next_nz_row;
+	float val,density;
+	density = ((float)(csr->num_nonzeros))/(((float)(csr->num_rows))*((float)(csr->num_cols)));
+
+	print_csr_metadata(csr);
+
+	while(csr->Ap[row_count] == CSR_EMPTY_ROW)
+		row_count++;
+
+	for(ind=0; ind<csr->num_rows; ind++)
+	{
+		printf("[");
+		for(ind2=0; ind2<csr->num_cols; ind2++)
+		{
+			if(ind == row_count && ind2 == csr->Aj[nz_count])
+			{
+				val = csr->Ax[nz_count++];
+				next_nz_row = get_next_nz_row(csr,row_count);
+				if(csr->Ap[next_nz_row] == nz_count)
+					row_count = next_nz_row;
+			}
+			else
+				val = 0.0;
+			printf("%6.2f",val);
+		}
+		printf("]\n");
+	}
+	printf("\n");
 }
 
 

@@ -24,33 +24,19 @@ static struct option long_options[] = {
       {"device", 1, NULL, 'd'},
       {"platform", 1, NULL, 'p'},
       {"verify", 0, NULL, 'v'},
-      {"density",1,NULL, 'D'},
-      {"size",1,NULL, 'N'},
-      {"csr_file",1,NULL,'f'},
       {0,0,0,0}
 };
-
 int platform_id=PLATFORM_ID, n_device=DEVICE_ID;
-
 int main(int argc, char** argv)
 {
+  printf("Entering Main()...\n");
+
 	cl_int err;
 	int usegpu = USEGPU;
-    int do_verify = 0,do_print=0;
-    unsigned long density_ppm = 500000;
-    unsigned int N = 512;
-    int opt, option_index=0,i;
-    char* file_path = NULL;
+    int do_verify = 0;
+    int opt, option_index=0;
 
     unsigned int correct;
-
-    const char* usage = "Usage: %s [-v] [-c] [-D <d_ppm>] [-N <size>] [-f <file_path>] [-p]\n\n \
-    		-v: Warning: lots of output\n \
-    		-c: use CPU\n \
-    		-D: Generate square test matrix with density (fraction of Non-Zero Elements) of <d_ppm> / 1,000,000 - Default is 500,000\n \
-    		-N: Generate square test matrix with length and width of <size> - Default is 512\n \
-    		-f: Read CSR Matrix from file <file_path> rather than creating one\n \
-    		-p: Print matrices to stdout in standard (2-D Array) format\n\n";
 
     size_t global_size;
     size_t local_size;
@@ -74,118 +60,85 @@ int main(int argc, char** argv)
     size_t kernelLength;
     size_t lengthRead;
 
+
     ocd_init(&argc, &argv, NULL);
     ocd_options opts = ocd_get_options();
     platform_id = opts.platform_id;
     n_device = opts.device_id;
 
-    while ((opt = getopt_long(argc, argv, "::vcD:N:f:::", long_options, &option_index)) != -1 )
-    {
-    	switch(opt)
-		{
-    		case 'v':
-    			printf("verify\n");
-    			do_verify = 1;
-    			break;
-			case 'c':
-				printf("using cpu\n");
-				usegpu = 0;
-				break;
-			case 'D':
-				if(optarg != NULL)
-					density_ppm = atol(optarg);
-				else
-					density_ppm = atol(argv[optind]);
-				printf("Density = %u / 1000000\n",density_ppm);
-				break;
-			case 'N':
-				if(optarg != NULL)
-					N = atoi(optarg);
-				else
-					N = atoi(argv[optind]);
-				printf("N = %d\n",N);
-				break;
-			case 'f':
-				if(optarg != NULL)
-					file_path = optarg;
-				else
-					file_path = argv[optind];
-				printf("Reading Input from '%s'\n",file_path);
-				break;
-			case 'p':
-				do_print = 1;
-				break;
-			default:
-			  fprintf(stderr, usage,argv[0]);
-			  exit(EXIT_FAILURE);
-		  }
-    }
+    while ((opt = getopt_long(argc, argv, "::vc::", 
+                            long_options, &option_index)) != -1 ) {
+      switch(opt){
+        //case 'i':
+          //input_file = optarg;
+          //break;
+        case 'v':
+          fprintf(stderr, "verify\n");
+          do_verify = 1;
+          break;
+        case 'c':
+          fprintf(stderr, "using cpu\n");
+          usegpu = 0;
+	  break;
+        default:
+          fprintf(stderr, "Usage: %s [-v Warning: lots of output] [-c use CPU]\n",
+                  argv[0]);
+          exit(EXIT_FAILURE);
+      }
+  }
+    if(do_verify)
+      printf("Options Parsed.\n");
+
+    /* Fill input set with random float values */
+    int i;
 
     csr_matrix csr;
-    if(file_path != NULL)
-    {
-    	read_csr(&csr,file_path);
-    }
-    else
-    {
-		pid_t p = getpid();
-		srand(p);
-		coo_matrix coo;
-		coo = rand_square_coo(N,density_ppm);
-		csr = coo_to_csr(&coo);
-    }
-
-    if(do_print)
-    	print_csr_std(&csr);
+    csr = laplacian_5pt(512);
+    int k = 0;
+      for(k = 0; k < csr.num_nonzeros; k++){
+         csr.Ax[k] = 1.0 - 2.0 * (rand() / (RAND_MAX + 1.0));
+      }
 
     //The other arrays
     float * x_host = float_new_array(csr.num_cols);
     float * y_host = float_new_array(csr.num_rows);
 
     unsigned int ii;
-    for(ii = 0; ii < csr.num_cols; ii++)
-    {
+    for(ii = 0; ii < csr.num_cols; ii++){
         x_host[ii] = rand() / (RAND_MAX + 1.0);
-        if(do_print) printf("x[%d] = %6.2f\n",ii,x_host[ii]);
     }
-    for(ii = 0; ii < csr.num_rows; ii++)
-    {
+    for(ii = 0; ii < csr.num_rows; ii++){
         y_host[ii] = rand() / (RAND_MAX + 2.0);
-        if(do_print) printf("y[%d] = %6.2f\n",ii,y_host[ii]);
     }
 
-    if(do_verify)
-    	printf("input generated.\n");
+      if(do_verify)
+	printf("input generated.\n");
 
     /* Retrieve an OpenCL platform */
-    device_id = GetDevice(platform_id, n_device,usegpu ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU);
+  device_id = GetDevice(platform_id, n_device);
+
+    if(do_verify)
+      printf("platform ID retrieved.\n");
 
     /* Create a compute context */
     context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
     CHKERR(err, "Failed to create a compute context!");
 
+    if(do_verify)
+      printf("context created.\n");
+
     /* Create a command queue */
     commands = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
     CHKERR(err, "Failed to create a command queue!");
 
-    if(do_verify) printf("changes made.\n");
+    if(do_verify)
+      printf("command queue created.\n");
 
     /* Load kernel source */
     kernelFile = fopen("spmv_csr_kernel.cl", "r");
-    if(kernelFile == NULL)
-    	fprintf(stderr,"Cannot Open Kernel.\n");
-    else
-    	if(do_verify) printf("Kernel Opened.\n");
     fseek(kernelFile, 0, SEEK_END);
-    if(do_verify) printf("Seeked to kernel end.\n");
     kernelLength = (size_t) ftell(kernelFile);
-    if(do_verify) printf("Kernel Source Read.\n");
     kernelSource = (char *) malloc(sizeof(char)*kernelLength);
-    if(kernelSource == NULL)
-    	fprintf(stderr,"Heap Overflow. Cannot Load Kernel Source.\n");
-    else
-    	if(do_verify)
-    		printf("Memory Allocated.\n");
     rewind(kernelFile);
     lengthRead = fread((void *) kernelSource, kernelLength, 1, kernelFile);
     fclose(kernelFile);
@@ -219,56 +172,44 @@ int main(int argc, char** argv)
     kernel = clCreateKernel(program, "csr", &err);
     CHKERR(err, "Failed to create a compute kernel!");
 
-
-    if(do_verify)
-      printf("kernel created\n");
-
     /* Create the input and output arrays in device memory for our calculation */
     csr_ap = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned int)*csr.num_rows+4, NULL, &err);
-    CHKERR(err, "Failed to allocate device memory for csr_ap!");
+    CHKERR(err, "Failed to allocate device memory!");
     csr_aj = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned int)*csr.num_nonzeros, NULL, &err);
-    CHKERR(err, "Failed to allocate device memory for csr_aj!");
+    CHKERR(err, "Failed to allocate device memory!");
     csr_ax = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float)*csr.num_nonzeros, NULL, &err);
-    CHKERR(err, "Failed to allocate device memory for csr_ax!");
+    CHKERR(err, "Failed to allocate device memory!");
     x_loc = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float)*csr.num_cols, NULL, &err);
-    CHKERR(err, "Failed to allocate device memory for x_loc!");
+    CHKERR(err, "Failed to allocate device memory!");
     y_loc = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float)*csr.num_rows, NULL, &err);
-    CHKERR(err, "Failed to allocate device memory for x_loc!");
-
-
-    if(do_verify)
-      printf("buffers created\n");
+    CHKERR(err, "Failed to allocate device memory!");
 
     /* beginning of timing point */
     stopwatch_start(&sw); 
-
-
-    if(do_verify)
-      printf("stopwatch started\n");
    
     /* Write our data set into the input array in device memory */
 	err = clEnqueueWriteBuffer(commands, csr_ap, CL_TRUE, 0, sizeof(unsigned int)*csr.num_rows+4, csr.Ap, 0, NULL, &ocdTempEvent);
-	clFinish(commands);
+        clFinish(commands);
 	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
 	END_TIMER(ocdTempTimer)
     CHKERR(err, "Failed to write to source array!");
     err = clEnqueueWriteBuffer(commands, csr_aj, CL_TRUE, 0, sizeof(unsigned int)*csr.num_nonzeros, csr.Aj, 0, NULL, &ocdTempEvent);
-	clFinish(commands);
+        clFinish(commands);
 	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
 	END_TIMER(ocdTempTimer)
     CHKERR(err, "Failed to write to source array!");
     err = clEnqueueWriteBuffer(commands, csr_ax, CL_TRUE, 0, sizeof(float)*csr.num_nonzeros, csr.Ax, 0, NULL, &ocdTempEvent);
-	clFinish(commands);
+        clFinish(commands);
 	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
 	END_TIMER(ocdTempTimer)
     CHKERR(err, "Failed to write to source array!");
     err = clEnqueueWriteBuffer(commands, x_loc, CL_TRUE, 0, sizeof(float)*csr.num_cols, x_host, 0, NULL, &ocdTempEvent);
-	clFinish(commands);
+        clFinish(commands);
 	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
 	END_TIMER(ocdTempTimer)
     CHKERR(err, "Failed to write to source array!");
     err = clEnqueueWriteBuffer(commands, y_loc, CL_TRUE, 0, sizeof(float)*csr.num_rows, y_host, 0, NULL, &ocdTempEvent);
-	clFinish(commands);
+        clFinish(commands);
 	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
     CHKERR(err, "Failed to write to source array!");
 	END_TIMER(ocdTempTimer)
@@ -282,53 +223,26 @@ int main(int argc, char** argv)
     err |= clSetKernelArg(kernel, 5, sizeof(cl_mem), &y_loc);
     CHKERR(err, "Failed to set kernel arguments!");
 
-
-    if(do_verify)
-      printf("set kernel arguments\n");
-
     /* Get the maximum work group size for executing the kernel on the device */
     err = clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &local_size, NULL);
-    if(do_verify)
-    	printf("Kernel Max Work Group Size: %d\n",local_size);
     CHKERR(err, "Failed to retrieve kernel work group info!");
 
     /* Execute the kernel over the entire range of our 1d input data set */
     /* using the maximum number of work group items for this device */
     global_size = csr.num_rows;
-    int num_wg;
-    if(global_size % local_size != 0)
-    {
-		num_wg = global_size / local_size + 1;
-		local_size = global_size / (num_wg);
-    }
-    if(do_verify) printf("globalsize: %d - num_wg: %d - local_size: %d\n",global_size,num_wg,local_size);
     err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global_size, &local_size, 0, NULL, &ocdTempEvent);
-    clFinish(commands);
-    CHKERR(err, "Failed to execute kernel!");
-
-    if(do_verify)
-      printf("NDRange enqueued\n");
-
+        clFinish(commands);
 	START_TIMER(ocdTempEvent, OCD_TIMER_KERNEL, "CSR Kernel", ocdTempTimer)
-
-
-    if(do_verify)
-      printf("timer started\n");
-
     END_TIMER(ocdTempTimer)
-//    CHKERR(err, "Failed to execute kernel!");
-
-
-    if(do_verify)
-      printf("kernel executed\n");
+    CHKERR(err, "Failed to execute kernel!");
 
     /* Wait for the command commands to get serviced before reading back results */
     float output[csr.num_rows];
     
     /* Read back the results from the device to verify the output */
 	err = clEnqueueReadBuffer(commands, y_loc, CL_TRUE, 0, sizeof(float)*csr.num_rows, output, 0, NULL, &ocdTempEvent);
-    clFinish(commands);
-    START_TIMER(ocdTempEvent, OCD_TIMER_D2H, "CSR Data Copy", ocdTempTimer)
+        clFinish(commands);
+    	START_TIMER(ocdTempEvent, OCD_TIMER_D2H, "CSR Data Copy", ocdTempTimer)
 	END_TIMER(ocdTempTimer)
 	CHKERR(err, "Failed to read output array!");
 
@@ -336,69 +250,46 @@ int main(int argc, char** argv)
     stopwatch_stop(&sw);
     printf("Time consumed(ms): %lf Gflops: %f \n", 1000*get_interval_by_sec(&sw), (2.0 * (double) csr.num_nonzeros / get_interval_by_sec(&sw)) / 1e9);
 
-
    /* Validate our results */
-   if(do_print)
-   {
-       for (i = 0; i < csr.num_rows; i++)
-           printf("row: %d	output: %6.2f \n", i, output[i]);
+   if(do_verify){
+       for (i = 0; i < csr.num_rows; i++){
+           printf("row: %d	output: %f \n", i, output[i]);  
+       }
    }
 
-   int row,next_nz_row;
+   int row = 0;
    float sum = 0;
    int row_start = 0;
    int row_end = 0;
-   for(row=0; row < csr.num_rows; row++)
-   {
+   for(row =0; row < csr.num_rows; row++){     
         sum = y_host[row];
         
         row_start = csr.Ap[row];
-        if(row_start == CSR_EMPTY_ROW) continue; //If there aren't any non-zero elements in this row, y_host[row] already contains the proper value
+        row_end   = csr.Ap[row+1];
         
-        next_nz_row = get_next_nz_row(&csr,row);
-        row_end   = csr.Ap[next_nz_row];
-
         unsigned int jj = 0;
         for (jj = row_start; jj < row_end; jj++){             
             sum += csr.Ax[jj] * x_host[csr.Aj[jj]];      
         }
         y_host[row] = sum;
     }
-
     for (i = 0; i < csr.num_rows; i++){
         if((fabsf(y_host[i]) - fabsf(output[i])) > .001)
              printf("Possible error, difference greater then .001 at row %d \n", i);
     }
 
-    if(do_verify)
-    	printf("results validated\n");
-
     /* Print a brief summary detailing the results */
     ocd_finalize();
 
-    if(do_verify)
-    	printf("ocd finalized\n");
-
     /* Shutdown and cleanup */
     clReleaseMemObject(csr_ap);
-    if(do_verify) printf("Released csr_ap\n");
     clReleaseMemObject(csr_aj);
-    if(do_verify) printf("Released csr_aj\n");
     clReleaseMemObject(csr_ax);
-    if(do_verify) printf("released csr_az\n");
     clReleaseMemObject(x_loc);
-    if(do_verify) printf("released x_loc\n");
     clReleaseMemObject(y_loc);
-    if(do_verify) printf("released y_loc\n");
     clReleaseProgram(program);
-    if(do_verify) printf("released program\n");
-    cl_int kernel_release_err = clReleaseKernel(kernel);
-    if(kernel_release_err != CL_SUCCESS) printf("Error: %d",kernel_release_err);
-    if(do_verify) printf("released kernel\n");
+    clReleaseKernel(kernel);
     clReleaseCommandQueue(commands);
-    if(do_verify) printf("released commands\n");
     clReleaseContext(context);
-    if(do_verify) printf("released context\n");
     return 0;
 }
-
