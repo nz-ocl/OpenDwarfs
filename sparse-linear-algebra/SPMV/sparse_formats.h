@@ -1,3 +1,6 @@
+#ifndef SPARSE_FORMATS_H
+#define SPARSE_FORMATS_H
+
 /*
  *  Copyright 2008-2009 NVIDIA Corporation
  *
@@ -14,19 +17,25 @@
  *  limitations under the License.
  */
 
+#include<math.h>
+#include<sys/types.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<time.h>
+#include<string.h>
+
+#include "ziggurat.h"
+
 /*
- *  Compressed Sparse Row matrix (aka CRS)
+ *  Compressed Sparse Row matrix (aka CSR)
  * valueType = float, IndexType = unsigned int
  */
-
-#define MAX(a,b) (a > b ? a:b)
-#define CSR_EMPTY_ROW -1
-
 typedef struct csr_matrix
-{
+{//if ith row is empty Ap[i] = Ap[i+1]
     unsigned int index_type;
     float value_type;
-    unsigned int num_rows, num_cols, num_nonzeros;
+    unsigned int num_rows, num_cols, num_nonzeros,density_ppm;
+    double density_perc,nz_per_row,stddev;
 
     unsigned int * Ap;  //row pointer
     unsigned int * Aj;  //column indices
@@ -34,118 +43,21 @@ typedef struct csr_matrix
 }
 csr_matrix;
 
-typedef struct triplet
-{
-	unsigned int i_type,j_type;
-	float value_type;
+void chck(int b, const char* msg);
 
-	unsigned int i,j;
-	float v;
-}
-triplet;
+unsigned int * int_new_array(const size_t N);
 
-typedef struct coo_matrix
-{
-	unsigned int index_type;
-	float value_type;
-	unsigned long density_ppm;
-	unsigned int num_rows,num_cols,num_nonzeros;
+unsigned long * long_new_array(const size_t N);
 
-	triplet* non_zero;
-}
-coo_matrix;
+float * float_new_array(const size_t N);
 
-void check(int b, const char* msg)
-{
-	if(!b)
-	{
-		fprintf(stderr,"ERROR: %s\n\n",msg);
-		exit(-1);
-	}
-}
+int unsigned_long_comparator(const void* v1, const void* v2);
 
-unsigned int * int_new_array(const size_t N) 
-{ 
-    //dispatch on location
-    return (unsigned int*) malloc(N * sizeof(unsigned int));
-}
+void write_csr(const csr_matrix* csr,const char* file_path);
 
-float * float_new_array(const size_t N) 
-{ 
-    //dispatch on location
-    return (float*) malloc(N * sizeof(float));
-}
+void read_csr(csr_matrix* csr,const char* file_path);
 
-triplet* triplet_new_array(const size_t N)
-{
-	//dispatch on location
-	return (triplet*) malloc(N * sizeof(triplet));
-}
-
-/*
- * Comparator function implemented for use with qsort
- *
- * Could a speedup be achieved by using qsort as the
- * intermediate sort for radix sort if two separate
- * comparators (one for each coordinate [i,j]) were
- * implemented?
- */
-int triplet_comparator(const void *v1, const void *v2)
-{
-	const triplet* t1 = (triplet*) v1;
-	const triplet* t2 = (triplet*) v2;
-
-	if(t1->i < t2->i)
-		return -1;
-	else if(t1->i > t2->i)
-		return +1;
-	else if(t1->j < t2->j)
-		return -1;
-	else if(t1->j > t2->j)
-		return +1;
-	else
-		return 0;
-}
-
-/*
- * Read a CSR Matrix from file. Values are stored and read via fprintf
- * and fscanf rather than fwrite and fread to ensure portability
- *
- */
-void read_csr(csr_matrix* csr,const char* file_path)
-{
-	FILE* fp;
-	int i,read_count;
-
-	fp = fopen(file_path,"r");
-	check(fp != NULL,"sparse_formats.read_csr() - Cannot Open Input File");
-
-	read_count = fscanf(fp,"%u\n%f\n%u\n%u\n%u\n",&(csr->index_type),&(csr->value_type),&(csr->num_rows),&(csr->num_cols),&(csr->num_nonzeros));
-	check(read_count == 5,"sparse_formats.read_csr() - Input File Corrupted! Read count for header info differs from 5");
-
-	read_count = 0;
-	csr->Ap = int_new_array(csr->num_rows+1);
-	check(csr->Ap != NULL,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Ap");
-	for(i=0; i<=csr->num_rows; i++)
-	  read_count += fscanf(fp,"%u ",csr->Ap+i);
-	check(read_count == (csr->num_rows+1),"sparse_formats.read_csr() - Input File Corrupted! Read count for Ap differs from csr->num_rows+1");
-
-	read_count = 0;
-	csr->Aj = int_new_array(csr->num_nonzeros);
-	check(csr->Aj != NULL,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Aj");
-	for(i=0; i<csr->num_nonzeros; i++)
-	  read_count += fscanf(fp,"%u ",csr->Aj+i);
-	check(read_count == (csr->num_nonzeros),"sparse_formats.read_csr() - Input File Corrupted! Read count for Aj differs from csr->num_nonzeros");
-
-	read_count = 0;
-	csr->Ax = float_new_array(csr->num_nonzeros);
-	check(csr->Ax != NULL,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Ax");
-	for(i=0; i<csr->num_nonzeros; i++)
-	  read_count += fscanf(fp,"%f ",csr->Ax+i);
-	check(read_count == (csr->num_nonzeros),"sparse_formats.read_csr() - Input File Corrupted! Read count for Ax differs from csr->num_nonzeros");
-
-	fclose(fp);
-}
+void print_timestamp(FILE* stream);
 
 /*
  * Generate random integer between high_bound & low_bound, inclusive.
@@ -153,233 +65,37 @@ void read_csr(csr_matrix* csr,const char* file_path)
  * preconditions: 	HB > 0
  * 					LB > 0
  * 					HB >= LB
- * Returns: -1 if preconditions not met, random int within [LB,HB] otherwise.
+ * Returns: random int within [LB,HB] otherwise.
  */
-int gen_rand(const int LB, const int HB)
-{
-	int range = HB - LB + 1;
-	if(HB < 0 || LB < 0 || range <= 0)
-			return -1;
-    return (rand() % range) + LB;
-}
+unsigned long gen_rand(const long LB, const long HB);
+
+void print_csr_metadata(const csr_matrix* csr, FILE* stream);
+
+void print_csr_std(const csr_matrix* csr, FILE* stream);
 
 /*
- * The standard 5-point finite difference approximation
- * to the Laplacian operator on a regular N-by-N grid.
+ * Method to generate random matrix of given size and density in compressed sparse row (CSR) form.
+ *
+ * Preconditions:	N > 0, density > 0, normal_stddev > 0, log != NULL
+ * Postconditions:	struct csr_matrix representing an NxN matrix of density ~density parts per million is returned
+ * 					The exact number of NZ elements as well as the exact density is printed to log
+ *
+ * The algorithm used is O[NNZ*lg(NNZ/N)] where NNZ is the number of non-zero elements (N^2 * density/1,000,000)
+ *
+ * The number of NZ elements in each row is randomly generated from a normal distribution with a mean equal to
+ * NNZ / N and a standard deviation equal to this mean scaled by normal_stddev. A corresponding number of column
+ * indices is then randomly generated from a normal distribution.
+ *
+ * If the random number of NZ elements for a given row returned from ziggurat.r4_nor() is negative, 0 NZ elements
+ * will be placed in the row. A standard deviation > 35% of the average NNZ/Row (i.e., a normal_stddev > .35) will
+ * cause this to occur more and more frequently and the distribution of NNZ/Row will have a greater mean than
+ * intended (resulting in more NNZ and a higher density). This will also cause the distribution to deviate from
+ * a truly "normal" shape.
  */
+csr_matrix rand_csr(const unsigned int N,const unsigned int density,const double normal_stddev,unsigned long seed,FILE* log);
 
-csr_matrix laplacian_5pt(const unsigned int N)
-{
-    csr_matrix csr;
-    csr.num_rows = N*N;
-    csr.num_cols = N*N;
-    csr.num_nonzeros = 5*N*N - 4*N; 
+void free_csr(csr_matrix* csr);
 
-    csr.Ap = int_new_array(csr.num_rows+4);
-
-    csr.Aj = int_new_array(csr.num_nonzeros);
-    
-    csr.Ax = float_new_array(csr.num_nonzeros);
-
-    unsigned int nz = 0;
-    unsigned int i = 0;
-    unsigned int j = 0;
-    unsigned int indx = 0;
-
-    for(i = 0; i < N; i++)
-    {
-        for(j = 0; j < N; j++)
-        {
-            indx = N*i + j;
-
-            if (i > 0){
-                csr.Aj[nz] = indx - N;
-                csr.Ax[nz] = -1;
-                nz++;
-            }
-
-            if (j > 0){
-                csr.Aj[nz] = indx - 1;
-                csr.Ax[nz] = -1;
-                nz++;
-            }
-
-            csr.Aj[nz] = indx;
-            csr.Ax[nz] = 4;
-            nz++;
-
-            if (j < N - 1){
-                csr.Aj[nz] = indx + 1;
-                csr.Ax[nz] = -1;
-                nz++;
-            }
-
-            if (i < N - 1){
-                csr.Aj[nz] = indx + N;
-                csr.Ax[nz] = -1;
-                nz++;
-            }
-            
-            csr.Ap[indx + 1] = nz;
-        }
-    }
-    return csr;
-}
-
-
-/*
- * Method to generate a random matrix in COO form of given size and density
- *
- * O(NNZ^2) - nested for loops save memory
- *
- * N = L&W of square matrix
- * density = density (fraction of NZ elements) expressed in parts per million (ppm)
- *
- * returns coo_matrix struct
- */
-coo_matrix rand_square_coo(const unsigned int N,const unsigned long density)
-{
-	coo_matrix coo;
-	triplet* current_triplet;
-	triplet* preexisting_triplet;
-	unsigned int ind,ind2;
-
-	coo.num_rows = N;
-	coo.num_cols = N;
-	coo.density_ppm = density;
-	coo.num_nonzeros = (((double)(N*density))/1000000.0)*N;
-
-	coo.non_zero = triplet_new_array(coo.num_nonzeros);
-	check(coo.non_zero != NULL,"sparse_formats.rand_square_coo(): Heap Overflow - Cannot allocate memory for coo.non_zero\n");
-
-	for(ind=0; ind<coo.num_nonzeros; ind++)
-	{
-		current_triplet = &(coo.non_zero[ind]);
-		(current_triplet->i) = gen_rand(0,N-1);
-		(current_triplet->j) = gen_rand(0,N-1);
-		for(ind2=0; ind2<ind; ind2++)
-		{
-			preexisting_triplet = &(coo.non_zero[ind2]);
-			if((current_triplet->i) == (preexisting_triplet->i) && (current_triplet->j) == (preexisting_triplet->j))
-			{
-				ind--;
-				break;
-			}
-		}
-	}
-
-	for(ind=0; ind<coo.num_nonzeros; ind++)
-	{
-		current_triplet = &(coo.non_zero[ind]);
-		(current_triplet->v) = 1.0 - 2.0 * (rand() / (RAND_MAX + 1.0));
-		while((current_triplet->v) == 0.0)
-				(current_triplet->v) = 1.0 - 2.0 * (rand() / (RAND_MAX + 1.0));
-	}
-
-	qsort(coo.non_zero,coo.num_nonzeros,sizeof(triplet),triplet_comparator);
-
-	return coo;
-}
-
-csr_matrix coo_to_csr(const coo_matrix* coo)
-{
-	int ind,row_count,newline_count;
-
-	csr_matrix csr;
-	csr.num_rows = coo->num_rows;
-	csr.num_cols = coo->num_cols;
-	csr.num_nonzeros = coo->num_nonzeros;
-
-	csr.Ap = int_new_array(csr.num_rows+1);
-	csr.Aj = int_new_array(csr.num_nonzeros);
-	csr.Ax = float_new_array(csr.num_nonzeros);
-
-	for(ind=0; ind<coo->num_nonzeros; ind++)
-	{
-		csr.Ax[ind] = coo->non_zero[ind].v;
-		csr.Aj[ind] = coo->non_zero[ind].j;
-	}
-
-	row_count = 0;
-	ind=0;
-	while(ind < coo->non_zero[0].i)
-	{
-		csr.Ap[row_count++] = -1;
-		ind++;
-	}
-	csr.Ap[row_count++] = 0;
-
-	for(ind=1; ind<coo->num_nonzeros; ind++)
-	{
-		newline_count = coo->non_zero[ind].i - coo->non_zero[ind-1].i;
-		while(newline_count > 1)
-		{
-			csr.Ap[row_count++] = CSR_EMPTY_ROW;
-			newline_count--;
-		}
-		if(newline_count == 1)
-			csr.Ap[row_count++] = ind;
-	}
-
-	csr.Ap[row_count] = csr.num_nonzeros;
-	return csr;
-}
-
-void print_csr_metadata(const csr_matrix* csr)
-{
-	double density;
-	density = ((double)(csr->num_nonzeros))/(((double)(csr->num_rows))*((double)(csr->num_cols)));
-	printf("\nCSR Matrix Metadata:\n\nNRows=%d\tNCols=%d\tNNZ=%d\tDensity=%g\n\n",csr->num_rows,csr->num_cols,csr->num_nonzeros,density);
-}
-
-/*
- * Function to find index of next non-zero row within a CSR matrix
- *
- * csr - pointer to CSR Matrix as defined in the struct above
- * row_count - current NZ row. Search will begin with the next row
- *
- * Returns: index of first NZ row within csr after the row_count-th row OR csr->num_rows if all remaining rows are empty
- */
-int get_next_nz_row(const csr_matrix* csr, int row_count)
-{
-	row_count++;
-	while(csr->Ap[row_count] == CSR_EMPTY_ROW && row_count < csr->num_rows)
-		row_count++;
-	return row_count;
-}
-
-void print_csr_std(const csr_matrix* csr)
-{
-	int ind,ind2,nz_count=0,row_count=0,next_nz_row;
-	float val,density;
-	density = ((float)(csr->num_nonzeros))/(((float)(csr->num_rows))*((float)(csr->num_cols)));
-
-	print_csr_metadata(csr);
-
-	while(csr->Ap[row_count] == CSR_EMPTY_ROW)
-		row_count++;
-
-	for(ind=0; ind<csr->num_rows; ind++)
-	{
-		printf("[");
-		for(ind2=0; ind2<csr->num_cols; ind2++)
-		{
-			if(ind == row_count && ind2 == csr->Aj[nz_count])
-			{
-				val = csr->Ax[nz_count++];
-				next_nz_row = get_next_nz_row(csr,row_count);
-				if(csr->Ap[next_nz_row] == nz_count)
-					row_count = next_nz_row;
-			}
-			else
-				val = 0.0;
-			printf("%6.2f",val);
-		}
-		printf("]\n");
-	}
-	printf("\n");
-}
-
-
+#endif
 
 

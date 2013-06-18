@@ -32,7 +32,10 @@ sparse-linear-algebra/SPMV/csr.o: ../sparse-linear-algebra/SPMV/csr.c \
  ../sparse-linear-algebra/SPMV/../../include/rdtsc.h \
  ../sparse-linear-algebra/SPMV/common.h \
  ../sparse-linear-algebra/SPMV/common.c \
- ../sparse-linear-algebra/SPMV/sparse_formats.h
+ ../sparse-linear-algebra/SPMV/sparse_formats.h \
+ ../sparse-linear-algebra/SPMV/ziggurat.h \
+ ../sparse-linear-algebra/SPMV/sparse_formats.c \
+ ../sparse-linear-algebra/SPMV/ziggurat.c
 
 /usr/include/math.h:
 
@@ -151,3 +154,9 @@ config.h:
 ../sparse-linear-algebra/SPMV/common.c:
 
 ../sparse-linear-algebra/SPMV/sparse_formats.h:
+
+../sparse-linear-algebra/SPMV/ziggurat.h:
+
+../sparse-linear-algebra/SPMV/sparse_formats.c:
+
+../sparse-linear-algebra/SPMV/ziggurat.c:

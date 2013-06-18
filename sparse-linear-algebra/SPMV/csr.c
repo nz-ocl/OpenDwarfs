@@ -17,16 +17,17 @@
 #include "common.h"
 #include "common.c"
 #include "sparse_formats.h"
+#include "sparse_formats.c"
+
 //#define USEGPU 1
 static struct option long_options[] = {
       /* name, has_arg, flag, val */
       {"cpu", 0, NULL, 'c'},
       {"device", 1, NULL, 'd'},
-      {"platform", 1, NULL, 'p'},
-      {"verify", 0, NULL, 'v'},
-      {"density",1,NULL, 'D'},
-      {"size",1,NULL, 'N'},
+      {"verbose", 0, NULL, 'v'},
       {"csr_file",1,NULL,'f'},
+      {"print",0,NULL,'p'},
+      {"affirm",0,NULL,'a'},
       {0,0,0,0}
 };
 
@@ -36,7 +37,7 @@ int main(int argc, char** argv)
 {
 	cl_int err;
 	int usegpu = USEGPU;
-    int do_verify = 0,do_print=0;
+    int be_verbose = 0,do_print=0,do_affirm=0;
     unsigned long density_ppm = 500000;
     unsigned int N = 512;
     int opt, option_index=0,i;
@@ -44,13 +45,12 @@ int main(int argc, char** argv)
 
     unsigned int correct;
 
-    const char* usage = "Usage: %s [-v] [-c] [-D <d_ppm>] [-N <size>] [-f <file_path>] [-p]\n\n \
-    		-v: Warning: lots of output\n \
+    const char* usage = "Usage: %s -f <file_path> [-v] [-c] [-p] [-a]\n\n \
+    		-f: Read CSR Matrix from file <file_path>\n \
+    		-v: Be Verbose \n \
     		-c: use CPU\n \
-    		-D: Generate square test matrix with density (fraction of Non-Zero Elements) of <d_ppm> / 1,000,000 - Default is 500,000\n \
-    		-N: Generate square test matrix with length and width of <size> - Default is 512\n \
-    		-f: Read CSR Matrix from file <file_path> rather than creating one\n \
-    		-p: Print matrices to stdout in standard (2-D Array) format\n\n";
+    		-p: Print matrices to stdout in standard (2-D Array) format - Warning: lots of output\n \
+    		-a: Affirm results with serial C code on CPU\n\n";
 
     size_t global_size;
     size_t local_size;
@@ -79,31 +79,17 @@ int main(int argc, char** argv)
     platform_id = opts.platform_id;
     n_device = opts.device_id;
 
-    while ((opt = getopt_long(argc, argv, "::vcD:N:f:p:::", long_options, &option_index)) != -1 )
+    while ((opt = getopt_long(argc, argv, "::vcf:pa::", long_options, &option_index)) != -1 )
     {
     	switch(opt)
 		{
     		case 'v':
     			printf("verify\n");
-    			do_verify = 1;
+    			be_verbose = 1;
     			break;
 			case 'c':
 				printf("using cpu\n");
 				usegpu = 0;
-				break;
-			case 'D':
-				if(optarg != NULL)
-					density_ppm = atol(optarg);
-				else
-					density_ppm = atol(argv[optind]);
-				printf("Density = %u / 1000000\n",density_ppm);
-				break;
-			case 'N':
-				if(optarg != NULL)
-					N = atoi(optarg);
-				else
-					N = atoi(argv[optind]);
-				printf("N = %d\n",N);
 				break;
 			case 'f':
 				if(optarg != NULL)
@@ -115,6 +101,9 @@ int main(int argc, char** argv)
 			case 'p':
 				do_print = 1;
 				break;
+			case 'a':
+				do_affirm = 1;
+				break;
 			default:
 				fprintf(stderr,"Illegal Argument: '%c'\n\n",opt);
 				fprintf(stderr, usage,argv[0]);
@@ -122,22 +111,16 @@ int main(int argc, char** argv)
 		  }
     }
 
+    if(!file_path)
+	{
+    	fprintf(stderr,"-f Option must be supplied\n\n",opt);
+		fprintf(stderr, usage,argv[0]);
+		exit(EXIT_FAILURE);
+	}
     csr_matrix csr;
-    if(file_path != NULL)
-    {
-    	read_csr(&csr,file_path);
-    }
-    else
-    {
-		pid_t p = getpid();
-		srand(p);
-		coo_matrix coo;
-		coo = rand_square_coo(N,density_ppm);
-		csr = coo_to_csr(&coo);
-    }
+    read_csr(&csr,file_path);
 
-    if(do_print)
-    	print_csr_std(&csr);
+    if(do_print) print_csr_std(&csr,stdout);
 
     //The other arrays
     float * x_host = float_new_array(csr.num_cols);
@@ -155,11 +138,12 @@ int main(int argc, char** argv)
         if(do_print) printf("y[%d] = %6.2f\n",ii,y_host[ii]);
     }
 
-    if(do_verify)
-    	printf("input generated.\n");
+    if(be_verbose) printf("input generated.\n");
 
     /* Retrieve an OpenCL platform */
     device_id = GetDevice(platform_id, n_device,usegpu ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU);
+
+    if(be_verbose) ocd_print_device_info(device_id);
 
     /* Create a compute context */
     context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
@@ -169,30 +153,26 @@ int main(int argc, char** argv)
     commands = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
     CHKERR(err, "Failed to create a command queue!");
 
-    if(do_verify) printf("changes made.\n");
-
     /* Load kernel source */
     kernelFile = fopen("spmv_csr_kernel.cl", "r");
     if(kernelFile == NULL)
     	fprintf(stderr,"Cannot Open Kernel.\n");
     else
-    	if(do_verify) printf("Kernel Opened.\n");
+    	if(be_verbose) printf("Kernel Opened.\n");
     fseek(kernelFile, 0, SEEK_END);
-    if(do_verify) printf("Seeked to kernel end.\n");
+    if(be_verbose) printf("Seeked to kernel end.\n");
     kernelLength = (size_t) ftell(kernelFile);
-    if(do_verify) printf("Kernel Source Read.\n");
+    if(be_verbose) printf("Kernel Source Read.\n");
     kernelSource = (char *) malloc(sizeof(char)*kernelLength);
     if(kernelSource == NULL)
     	fprintf(stderr,"Heap Overflow. Cannot Load Kernel Source.\n");
     else
-    	if(do_verify)
-    		printf("Memory Allocated.\n");
+    	if(be_verbose) printf("Memory Allocated.\n");
     rewind(kernelFile);
     lengthRead = fread((void *) kernelSource, kernelLength, 1, kernelFile);
     fclose(kernelFile);
 
-    if(do_verify)
-      printf("kernel source loaded.\n");
+    if(be_verbose) printf("kernel source loaded.\n");
 
     /* Create the compute program from the source buffer */
     program = clCreateProgramWithSource(context, 1, (const char **) &kernelSource, &kernelLength, &err);
@@ -220,56 +200,70 @@ int main(int argc, char** argv)
     kernel = clCreateKernel(program, "csr", &err);
     CHKERR(err, "Failed to create a compute kernel!");
 
-
-    if(do_verify)
-      printf("kernel created\n");
+    if(be_verbose) printf("kernel created\n");
 
     /* Create the input and output arrays in device memory for our calculation */
-    csr_ap = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned int)*csr.num_rows+4, NULL, &err);
+    size_t csr_ap_bytes,csr_aj_bytes,csr_ax_bytes,x_loc_bytes,y_loc_bytes;
+    csr_ap_bytes = sizeof(unsigned int)*csr.num_rows+4;
+    if(be_verbose) printf("Allocating %zu bytes for csr_ap...\n",csr_ap_bytes);
+    csr_ap = clCreateBuffer(context, CL_MEM_READ_ONLY,csr_ap_bytes, NULL, &err);
     CHKERR(err, "Failed to allocate device memory for csr_ap!");
-    csr_aj = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned int)*csr.num_nonzeros, NULL, &err);
+
+    csr_aj_bytes = sizeof(unsigned int)*csr.num_nonzeros;
+    if(be_verbose) printf("Allocating %zu bytes for csr_aj...\n",csr_aj_bytes);
+    csr_aj = clCreateBuffer(context, CL_MEM_READ_ONLY, csr_aj_bytes, NULL, &err);
     CHKERR(err, "Failed to allocate device memory for csr_aj!");
-    csr_ax = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float)*csr.num_nonzeros, NULL, &err);
+
+    csr_ax_bytes = sizeof(float)*csr.num_nonzeros;
+    if(be_verbose) printf("Allocating %zu bytes for csr_ax...\n",csr_ax_bytes);
+    csr_ax = clCreateBuffer(context, CL_MEM_READ_ONLY, csr_ax_bytes, NULL, &err);
     CHKERR(err, "Failed to allocate device memory for csr_ax!");
-    x_loc = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float)*csr.num_cols, NULL, &err);
-    CHKERR(err, "Failed to allocate device memory for x_loc!");
-    y_loc = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float)*csr.num_rows, NULL, &err);
+
+    x_loc_bytes = sizeof(float)*csr.num_cols;
+    if(be_verbose) printf("Allocating %zu bytes for x_loc...\n",x_loc_bytes);
+    x_loc = clCreateBuffer(context, CL_MEM_READ_ONLY, x_loc_bytes, NULL, &err);
     CHKERR(err, "Failed to allocate device memory for x_loc!");
 
+    y_loc_bytes = sizeof(float)*csr.num_rows;
+    if(be_verbose) printf("Allocating %zu bytes for y_loc...\n",y_loc_bytes);
+    y_loc = clCreateBuffer(context, CL_MEM_READ_ONLY, y_loc_bytes, NULL, &err);
+    CHKERR(err, "Failed to allocate device memory for x_loc!");
 
-    if(do_verify)
-      printf("buffers created\n");
+    if(be_verbose) printf("buffers created\n");
 
     /* beginning of timing point */
     stopwatch_start(&sw); 
 
-
-    if(do_verify)
-      printf("stopwatch started\n");
+    if(be_verbose) printf("stopwatch started\n");
    
     /* Write our data set into the input array in device memory */
 	err = clEnqueueWriteBuffer(commands, csr_ap, CL_TRUE, 0, sizeof(unsigned int)*csr.num_rows+4, csr.Ap, 0, NULL, &ocdTempEvent);
 	clFinish(commands);
+	if(be_verbose) printf("Ap Buffer Enqueued\n");
 	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
 	END_TIMER(ocdTempTimer)
     CHKERR(err, "Failed to write to source array!");
     err = clEnqueueWriteBuffer(commands, csr_aj, CL_TRUE, 0, sizeof(unsigned int)*csr.num_nonzeros, csr.Aj, 0, NULL, &ocdTempEvent);
 	clFinish(commands);
+	if(be_verbose) printf("Aj Buffer Enqueued\n");
 	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
 	END_TIMER(ocdTempTimer)
     CHKERR(err, "Failed to write to source array!");
-    err = clEnqueueWriteBuffer(commands, csr_ax, CL_TRUE, 0, sizeof(float)*csr.num_nonzeros, csr.Ax, 0, NULL, &ocdTempEvent);
+    err = clEnqueueWriteBuffer(commands, csr_ax, CL_TRUE, 0, sizeof(float)*csr.num_nonzeros, csr.Ax, 0, NULL, &ocdTempEvent);  //OOM kill here
 	clFinish(commands);
+	if(be_verbose) printf("Ax Buffer Enqueued\n");
 	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
 	END_TIMER(ocdTempTimer)
     CHKERR(err, "Failed to write to source array!");
     err = clEnqueueWriteBuffer(commands, x_loc, CL_TRUE, 0, sizeof(float)*csr.num_cols, x_host, 0, NULL, &ocdTempEvent);
 	clFinish(commands);
+	if(be_verbose) printf("X_host Buffer Enqueued\n");
 	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
 	END_TIMER(ocdTempTimer)
     CHKERR(err, "Failed to write to source array!");
     err = clEnqueueWriteBuffer(commands, y_loc, CL_TRUE, 0, sizeof(float)*csr.num_rows, y_host, 0, NULL, &ocdTempEvent);
 	clFinish(commands);
+	if(be_verbose) printf("Y_host Buffer Enqueued\n");
 	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
     CHKERR(err, "Failed to write to source array!");
 	END_TIMER(ocdTempTimer)
@@ -283,14 +277,11 @@ int main(int argc, char** argv)
     err |= clSetKernelArg(kernel, 5, sizeof(cl_mem), &y_loc);
     CHKERR(err, "Failed to set kernel arguments!");
 
-
-    if(do_verify)
-      printf("set kernel arguments\n");
+    if(be_verbose) printf("set kernel arguments\n");
 
     /* Get the maximum work group size for executing the kernel on the device */
     err = clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &local_size, NULL);
-    if(do_verify)
-    	printf("Kernel Max Work Group Size: %d\n",local_size);
+    if(be_verbose) printf("Kernel Max Work Group Size: %d\n",local_size);
     CHKERR(err, "Failed to retrieve kernel work group info!");
 
     /* Execute the kernel over the entire range of our 1d input data set */
@@ -302,26 +293,15 @@ int main(int argc, char** argv)
 		num_wg = global_size / local_size + 1;
 		local_size = global_size / (num_wg);
     }
-    if(do_verify) printf("globalsize: %d - num_wg: %d - local_size: %d\n",global_size,num_wg,local_size);
+    if(be_verbose) printf("globalsize: %d - num_wg: %d - local_size: %d\n",global_size,num_wg,local_size);
     err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global_size, &local_size, 0, NULL, &ocdTempEvent);
     clFinish(commands);
+	START_TIMER(ocdTempEvent, OCD_TIMER_KERNEL, "CSR Kernel", ocdTempTimer)
+    END_TIMER(ocdTempTimer)
     CHKERR(err, "Failed to execute kernel!");
 
-    if(do_verify)
-      printf("NDRange enqueued\n");
 
-	START_TIMER(ocdTempEvent, OCD_TIMER_KERNEL, "CSR Kernel", ocdTempTimer)
-
-
-    if(do_verify)
-      printf("timer started\n");
-
-    END_TIMER(ocdTempTimer)
-//    CHKERR(err, "Failed to execute kernel!");
-
-
-    if(do_verify)
-      printf("kernel executed\n");
+    if(be_verbose) printf("kernel executed\n");
 
     /* Wait for the command commands to get serviced before reading back results */
     float output[csr.num_rows];
@@ -339,64 +319,66 @@ int main(int argc, char** argv)
 
 
    /* Validate our results */
+
    if(do_print)
    {
        for (i = 0; i < csr.num_rows; i++)
            printf("row: %d	output: %6.2f \n", i, output[i]);
    }
 
-   int row,next_nz_row;
-   float sum = 0;
-   int row_start = 0;
-   int row_end = 0;
-   for(row=0; row < csr.num_rows; row++)
+   if(do_affirm)
    {
-        sum = y_host[row];
-        
-        row_start = csr.Ap[row];
-        row_end   = csr.Ap[row+1];
+	   if(be_verbose) printf("Validating results with serial C code on CPU...\n");
+	   int row,next_nz_row;
+	   float sum = 0;
+	   int row_start = 0;
+	   int row_end = 0;
+	   for(row=0; row < csr.num_rows; row++)
+	   {
+			sum = y_host[row];
 
-        unsigned int jj = 0;
-        for (jj = row_start; jj < row_end; jj++){             
-            sum += csr.Ax[jj] * x_host[csr.Aj[jj]];      
-        }
-        y_host[row] = sum;
-    }
+			row_start = csr.Ap[row];
+			row_end   = csr.Ap[row+1];
 
-    for (i = 0; i < csr.num_rows; i++){
-        if((fabsf(y_host[i]) - fabsf(output[i])) > .001)
-             printf("Possible error, difference greater then .001 at row %d \n", i);
-    }
+			unsigned int jj = 0;
+			for (jj = row_start; jj < row_end; jj++){
+				sum += csr.Ax[jj] * x_host[csr.Aj[jj]];
+			}
+			y_host[row] = sum;
+		}
 
-    if(do_verify)
-    	printf("results validated\n");
+		for (i = 0; i < csr.num_rows; i++){
+			if((fabsf(y_host[i]) - fabsf(output[i])) > .001)
+				 printf("Possible error, difference greater then .001 at row %d \n", i);
+		}
+   }
 
     /* Print a brief summary detailing the results */
     ocd_finalize();
 
-    if(do_verify)
-    	printf("ocd finalized\n");
+    if(be_verbose) printf("ocd finalized\n");
 
     /* Shutdown and cleanup */
+    free_csr(&csr);
     clReleaseMemObject(csr_ap);
-    if(do_verify) printf("Released csr_ap\n");
+    if(be_verbose) printf("Released csr_ap\n");
     clReleaseMemObject(csr_aj);
-    if(do_verify) printf("Released csr_aj\n");
+    if(be_verbose) printf("Released csr_aj\n");
     clReleaseMemObject(csr_ax);
-    if(do_verify) printf("released csr_az\n");
+    if(be_verbose) printf("released csr_az\n");
     clReleaseMemObject(x_loc);
-    if(do_verify) printf("released x_loc\n");
+    if(be_verbose) printf("released x_loc\n");
     clReleaseMemObject(y_loc);
-    if(do_verify) printf("released y_loc\n");
+    if(be_verbose) printf("released y_loc\n");
     clReleaseProgram(program);
-    if(do_verify) printf("released program\n");
+    if(be_verbose) printf("released program\n");
     cl_int kernel_release_err = clReleaseKernel(kernel);
     if(kernel_release_err != CL_SUCCESS) printf("Error: %d",kernel_release_err);
-    if(do_verify) printf("released kernel\n");
+    if(be_verbose) printf("released kernel\n");
     clReleaseCommandQueue(commands);
-    if(do_verify) printf("released commands\n");
+    if(be_verbose) printf("released commands\n");
     clReleaseContext(context);
-    if(do_verify) printf("released context\n");
+    if(be_verbose) printf("released context\n");
     return 0;
 }
 
