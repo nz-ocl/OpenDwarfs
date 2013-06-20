@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <assert.h>
-#include "../../include/rdtsc.h"
-#include "../../include/common_args.h"
+#include "../../../include/rdtsc.h"
+#include "../../../include/common_args.h"
 
 
 #define CHKERR(err, str) \
@@ -14,10 +14,10 @@
         exit(1); \
     }
 
-#include "common.h"
-#include "common.c"
-#include "sparse_formats.h"
-#include "sparse_formats.c"
+#include "../inc/common.h"
+#include "../inc/common.c"
+#include "../inc/sparse_formats.h"
+#include "../inc/sparse_formats.c"
 
 //#define USEGPU 1
 static struct option long_options[] = {
@@ -300,11 +300,12 @@ int main(int argc, char** argv)
     END_TIMER(ocdTempTimer)
     CHKERR(err, "Failed to execute kernel!");
 
-
     if(be_verbose) printf("kernel executed\n");
 
     /* Wait for the command commands to get serviced before reading back results */
-    float output[csr.num_rows];
+    float* output;
+    output = malloc(sizeof(float)*csr.num_rows); //Store output on heap so data can be scaled beyond size of stack
+    chck(output != NULL,"csr.main() - Heap Overflow! Cannot Allocate Space for 'output'");
     
     /* Read back the results from the device to verify the output */
 	err = clEnqueueReadBuffer(commands, y_loc, CL_TRUE, 0, sizeof(float)*csr.num_rows, output, 0, NULL, &ocdTempEvent);
@@ -316,9 +317,6 @@ int main(int argc, char** argv)
     /* end of timing point */
     stopwatch_stop(&sw);
     printf("Time consumed(ms): %lf Gflops: %f \n", 1000*get_interval_by_sec(&sw), (2.0 * (double) csr.num_nonzeros / get_interval_by_sec(&sw)) / 1e9);
-
-
-   /* Validate our results */
 
    if(do_print)
    {
@@ -360,6 +358,7 @@ int main(int argc, char** argv)
 
     /* Shutdown and cleanup */
     free_csr(&csr);
+    free(output);
     clReleaseMemObject(csr_ap);
     if(be_verbose) printf("Released csr_ap\n");
     clReleaseMemObject(csr_aj);

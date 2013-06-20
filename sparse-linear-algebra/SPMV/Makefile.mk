@@ -6,14 +6,16 @@
 #
 
 bin_PROGRAMS += csr
+bin_PROGRAMS += createcsr
 
-csr_SOURCES = sparse-linear-algebra/SPMV/csr.c
+csr_SOURCES = sparse-linear-algebra/SPMV/src/csr.c
+createcsr_SOURCES = sparse-linear-algebra/SPMV/test-src/createcsr.c
 
 all_local += csr-all-local
 exec_local += csr-exec-local
 
 csr-all-local:
-	cp $(top_srcdir)/sparse-linear-algebra/SPMV/spmv_csr_kernel.cl .
+	cp $(top_srcdir)/sparse-linear-algebra/SPMV/src/spmv_csr_kernel.cl .
 
 csr-exec-local:
-	cp $(top_srcdir)/sparse-linear-algebra/SPMV/spmv_csr_kernel.cl ${DESTDIR}${bindir}
+	cp $(top_srcdir)/sparse-linear-algebra/SPMV/src/spmv_csr_kernel.cl ${DESTDIR}${bindir}

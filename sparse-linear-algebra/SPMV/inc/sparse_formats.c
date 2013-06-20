@@ -1,13 +1,10 @@
 #include "sparse_formats.h"
-#include "ziggurat.h"
-#include "ziggurat.c"
-#include<stdlib.h>
 
 void chck(int b, const char* msg)
 {
 	if(!b)
 	{
-		fprintf(stderr,"error: %s\n\n",msg);
+		fprintf(stderr,"ERROR: %s\n\n",msg);
 		exit(-1);
 	}
 }
@@ -25,6 +22,28 @@ unsigned long * long_new_array(const size_t N) {
 float * float_new_array(const size_t N) {
     //dispatch on location
     return (float*) malloc(N * sizeof(float));
+}
+
+triplet* triplet_new_array(const size_t N) {
+	//dispatch on location
+	return (triplet*) malloc(N * sizeof(triplet));
+}
+
+int triplet_comparator(const void *v1, const void *v2)
+{
+	const triplet* t1 = (triplet*) v1;
+	const triplet* t2 = (triplet*) v2;
+
+	if(t1->i < t2->i)
+		return -1;
+	else if(t1->i > t2->i)
+		return +1;
+	else if(t1->j < t2->j)
+		return -1;
+	else if(t1->j > t2->j)
+		return +1;
+	else
+		return 0;
 }
 
 int unsigned_int_comparator(const void* v1, const void* v2)
@@ -77,7 +96,7 @@ void read_csr(csr_matrix* csr,const char* file_path)
 
 	read_count = 0;
 	csr->Ap = int_new_array(csr->num_rows+1);
-	chck((csr->Ap) != NULL,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Ap");
+	chck(csr->Ap != NULL,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Ap");
 	for(i=0; i<=csr->num_rows; i++)
 	  read_count += fscanf(fp,"%u ",csr->Ap+i);
 	chck(read_count == (csr->num_rows+1),"sparse_formats.read_csr() - Input File Corrupted! Read count for Ap differs from csr->num_rows+1");
@@ -116,8 +135,179 @@ unsigned long gen_rand(const long LB, const long HB)
     return (rand() % range) + LB;
 }
 
+csr_matrix laplacian_5pt(const unsigned int N)
+{
+
+    csr_matrix csr;
+    csr.num_rows = N*N;
+    csr.num_cols = N*N;
+    csr.num_nonzeros = 5*N*N - 4*N;
+
+    csr.Ap = int_new_array(csr.num_rows+4);
+    csr.Aj = int_new_array(csr.num_nonzeros);
+    csr.Ax = float_new_array(csr.num_nonzeros);
+
+    unsigned int nz = 0;
+    unsigned int i = 0;
+    unsigned int j = 0;
+    unsigned int indx = 0;
+
+    for(i = 0; i < N; i++){
+        for(j = 0; j < N; j++){
+            indx = N*i + j;
+
+            if (i > 0){
+                csr.Aj[nz] = indx - N;
+                csr.Ax[nz] = -1;
+                nz++;
+            }
+
+            if (j > 0){
+                csr.Aj[nz] = indx - 1;
+                csr.Ax[nz] = -1;
+                nz++;
+            }
+
+            csr.Aj[nz] = indx;
+            csr.Ax[nz] = 4;
+            nz++;
+
+            if (j < N - 1){
+                csr.Aj[nz] = indx + 1;
+                csr.Ax[nz] = -1;
+                nz++;
+            }
+
+            if (i < N - 1){
+                csr.Aj[nz] = indx + N;
+                csr.Ax[nz] = -1;
+                nz++;
+            }
+
+            csr.Ap[indx + 1] = nz;
+        }
+    }
+    return csr;
+}
+
+
+int bin_search(const triplet* data, int size, const triplet* key)
+{
+	triplet* mid_triplet;
+	int lo,hi,m;
+	lo = 0;
+	hi = size-1;
+	while(lo <= hi) //binary search to determine if element exists and, if not, what is the proper index for insertion
+	{
+		m = lo + ((hi - lo)/2);
+		if(triplet_comparator(key,&(data[m])) > 0)
+			lo = m + 1;
+		else if (triplet_comparator(key,&(data[m])) < 0)
+			hi = m - 1;
+		else
+			return m;
+	}
+	return (-1*lo - 1);
+}
+
+coo_matrix rand_coo(const unsigned int N,const unsigned long density, FILE* log)
+{
+	coo_matrix coo;
+	triplet tmp, *current_triplet, *mid_triplet;
+
+	unsigned int ind;
+	int m;
+
+	coo.num_rows = N;
+	coo.num_cols = N;
+	coo.density_ppm = density;
+	coo.num_nonzeros = (((double)(N*density))/1000000.0)*N;
+	printf("NUM_nonzeros: %d\n",coo.num_nonzeros);
+
+	coo.non_zero = triplet_new_array(coo.num_nonzeros);
+	chck(coo.non_zero != NULL,"sparse_formats.rand_coo_bin_insertion(): Heap Overflow - Cannot allocate memory for coo.non_zero\n");
+	print_timestamp(log);
+	fprintf(log,"Memory Allocated. Generating Data...\n");
+
+	current_triplet = &(coo.non_zero[0]); //Generate random first element
+	(current_triplet->i) = gen_rand(0,N-1);
+	(current_triplet->j) = gen_rand(0,N-1);
+
+	for(ind=1; ind<coo.num_nonzeros; ind++)
+	{
+		current_triplet = &(coo.non_zero[ind]); //element to be inserted
+		(current_triplet->i) = gen_rand(0,N-1);
+		(current_triplet->j) = gen_rand(0,N-1);
+
+		m = bin_search(coo.non_zero,ind,current_triplet);
+		if(m < 0)
+		{
+			m = -1*m - 1;
+		}
+		else
+		{
+			ind--;
+			continue;
+		}
+
+		if(m < ind)
+		{
+			tmp = *current_triplet;
+			memmove(coo.non_zero + m + 1,coo.non_zero+m,sizeof(triplet)*(ind-m));
+			coo.non_zero[m] = tmp;
+		}
+	}
+
+	for(ind=0; ind<coo.num_nonzeros; ind++)
+	{
+		current_triplet = &(coo.non_zero[ind]);
+		(current_triplet->v) = 1.0 - 2.0 * (rand() / (2147483647 + 1.0));
+		while((current_triplet->v) == 0.0)
+				(current_triplet->v) = 1.0 - 2.0 * (rand() / (2147483647 + 1.0));
+	}
+
+	print_timestamp(log);
+	fprintf(log,"Matrix Completed. Returning...\n");
+
+	return coo;
+}
+
+void print_coo_metadata(const coo_matrix* coo, FILE* stream) {
+	fprintf(stream,"\nCOO Matrix Metadata:\n\nNRows=%d\tNCols=%d\tNNZ=%d\tDensity (ppm)=%d\tDensity (fract)=%g\n\n",coo->num_rows,coo->num_cols,coo->num_nonzeros,coo->density_ppm,(double)(coo->density_ppm/1000000.0));
+}
+
 void print_csr_metadata(const csr_matrix* csr, FILE* stream) {
 	fprintf(stream,"\nCSR Matrix Metadata:\n\nNRows=%lu\tNCols=%lu\tNNZ=%lu\tDensity=%lu ppm = %g%%\tAverage NZ/Row=%g\tStdDev NZ/Row=%g\n\n",csr->num_rows,csr->num_cols,csr->num_nonzeros,csr->density_ppm,csr->density_perc,csr->nz_per_row,csr->stddev);
+}
+
+void print_coo(const coo_matrix* coo, FILE* stream)
+{
+	unsigned int ind;
+	fprintf(stream,"\nPrinting COO Matrix in COO Form:\n\nNRows=%d\nNCols=%d\nNNZ=%d\nDensity (ppm)=%d\nDensity (fract)=%g\n",coo->num_rows,coo->num_cols,coo->num_nonzeros,coo->density_ppm,(double)(coo->density_ppm/1000000.0));
+	for(ind=0; ind<coo->num_nonzeros; ind++)
+		fprintf(stream,"(%2d,%2d,%5.2f)\n",coo->non_zero[ind].i,coo->non_zero[ind].j,coo->non_zero[ind].v);
+}
+
+void print_coo_std(const coo_matrix* coo,FILE* stream)
+{
+	int ind,ind2,nz_count=0;
+	float val;
+
+	fprintf(stream,"\nPrinting COO Matrix in Standard Form:\n\nNRows=%d\nNCols=%d\nNNZ=%d\nDensity (ppm)=%d\nDensity (fract)=%g\n",coo->num_rows,coo->num_cols,coo->num_nonzeros,coo->density_ppm,(double)(coo->density_ppm/1000000.0));
+
+	for(ind=0; ind<coo->num_rows; ind++)
+	{
+		fprintf(stream,"[");
+		for(ind2=0; ind2<coo->num_cols; ind2++)
+		{
+			if(ind == coo->non_zero[nz_count].i && ind2 == coo->non_zero[nz_count].j)
+				val = coo->non_zero[nz_count++].v;
+			else
+				val = 0.0;
+			fprintf(stream,"%6.2f",val);
+		}
+		fprintf(stream,"]\n");
+	}
 }
 
 void print_csr_std(const csr_matrix* csr,FILE* stream)
@@ -149,6 +339,53 @@ void print_csr_std(const csr_matrix* csr,FILE* stream)
 		fprintf(stream,"]\n");
 	}
 	fprintf(stream,"\n");
+}
+
+csr_matrix coo_to_csr(const coo_matrix* coo,FILE* log)
+{
+	int ind,row_count,newline_count;
+
+	csr_matrix csr;
+	csr.num_rows = coo->num_rows;
+	csr.num_cols = coo->num_cols;
+	csr.num_nonzeros = coo->num_nonzeros;
+
+	csr.Ap = int_new_array(csr.num_rows+1);
+	csr.Aj = int_new_array(csr.num_nonzeros);
+	csr.Ax = float_new_array(csr.num_nonzeros);
+
+	print_timestamp(log);
+	fprintf(log,"Memory Allocated. Copying column indices & values...\n");
+
+	for(ind=0; ind<coo->num_nonzeros; ind++)
+	{
+		csr.Ax[ind] = coo->non_zero[ind].v;
+		csr.Aj[ind] = coo->non_zero[ind].j;
+	}
+
+	print_timestamp(log);
+	fprintf(log,"Calculating Row Pointers...\n");
+
+	row_count = 0;
+	ind = 0;
+	while(row_count <= coo->non_zero[ind].i)
+		csr.Ap[row_count++] = 0;
+
+	for(ind=1; ind<coo->num_nonzeros; ind++)
+	{
+		newline_count = coo->non_zero[ind].i - coo->non_zero[ind-1].i;
+		while(newline_count > 0)
+		{
+			csr.Ap[row_count++] = ind;
+			newline_count--;
+		}
+	}
+	csr.Ap[row_count] = csr.num_nonzeros;
+
+	print_timestamp(log);
+	fprintf(log,"Conversion Complete. Returning...\n");
+
+	return csr;
 }
 
 csr_matrix rand_csr(const unsigned int N,const unsigned int density, const double normal_stddev,unsigned long seed,FILE* log)
@@ -238,9 +475,9 @@ csr_matrix rand_csr(const unsigned int N,const unsigned int density, const doubl
 	chck(csr.Ax != NULL,"rand_square_csr2() - Heap Overflow! Cannot Allocate Space for csr.Ax");
 	for(i=0; i<csr.num_nonzeros; i++)
 	{
-		csr.Ax[i] = 1.0 - 2.0 * (rand() / (RAND_MAX + 1.0));
+		csr.Ax[i] = 1.0 - 2.0 * (rand() / (2147483647 + 1.0));
 		while(csr.Ax[i] == 0.0)
-			csr.Ax[i] = 1.0 - 2.0 * (rand() / (RAND_MAX + 1.0));
+			csr.Ax[i] = 1.0 - 2.0 * (rand() / (2147483647 + 1.0));
 	}
 
 	return csr;
