@@ -1,11 +1,11 @@
 #include "../inc/sparse_formats.h"
 #include "../inc/sparse_formats.c"
 
-#include <stdio.h>
-#include <stdlib.h>
+#include<stdio.h>
+#include<stdlib.h>
 #include<sys/types.h>
 #include<unistd.h>
-#include <getopt.h>
+#include<getopt.h>
 
 #define CSR_NAME_MAX_LENGTH 256
 

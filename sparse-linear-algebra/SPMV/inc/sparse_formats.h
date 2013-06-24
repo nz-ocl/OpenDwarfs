@@ -26,8 +26,7 @@
 
 #include "ziggurat.h"
 #include "ziggurat.c"
-
-#define MIN(a,b) ((a) < (b) ? (a):(b))
+#include "common.h"
 
 /*
  *  Compressed Sparse Row matrix (aka CSR)
