@@ -400,7 +400,7 @@ csr_matrix rand_csr(const unsigned int N,const unsigned int density, const doubl
 	csr.num_rows = N;
 	csr.num_cols = N;
 	csr.density_perc = (((double)(density))/10000.0);
-	csr.nz_per_row = (((double)(N*density))/1000000.0);
+	csr.nz_per_row = (((double)N)*((double)density))/1000000.0;
 	csr.num_nonzeros = round(csr.nz_per_row*N);
 	csr.stddev = normal_stddev * csr.nz_per_row; //scale normalized standard deviation by average NZ/row
 
@@ -468,7 +468,7 @@ csr_matrix rand_csr(const unsigned int N,const unsigned int density, const doubl
 		fprintf(stderr,"WARNING: Actual NNZ differs from Theoretical NNZ by %5.2f%%!\n",nz_error*100);
 	csr.num_nonzeros = csr.Ap[csr.num_rows];
 	fprintf(log,"Actual NUM_nonzeros: %d\n",csr.num_nonzeros);
-	csr.density_perc = (double) (((double)(csr.num_nonzeros*100))/((double)csr.num_cols))/((double)csr.num_rows);
+	csr.density_perc = (((double)csr.num_nonzeros)*100.0)/((double)csr.num_cols)/((double)csr.num_rows);
 	csr.density_ppm = (unsigned int)round(csr.density_perc * 10000.0);
 	fprintf(log,"Actual Density: %u ppm = %g%%\n",csr.density_ppm,csr.density_perc);
 
