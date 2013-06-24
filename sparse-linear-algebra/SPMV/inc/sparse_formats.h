@@ -27,6 +27,8 @@
 #include "ziggurat.h"
 #include "ziggurat.c"
 
+#define MIN(a,b) ((a) < (b) ? (a):(b))
+
 /*
  *  Compressed Sparse Row matrix (aka CSR)
  * valueType = float, IndexType = unsigned int

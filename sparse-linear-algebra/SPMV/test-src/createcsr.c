@@ -101,7 +101,7 @@ int main(int argc, char** argv)
 		t = time(NULL);
 		tm = *localtime(&t);
 		normal_stddev_rounded = (int) round(normal_stddev * 100);
-		snprintf(file_path,(sizeof(char)*CSR_NAME_MAX_LENGTH),"../test/sparse-linear-algebra/SPMV/csrmatrix_N%lu_D%lu_S%d_%d-%d-%d-%d-%d",N,density,normal_stddev_rounded,(tm.tm_year+1900),tm.tm_mon+1,tm.tm_mday,tm.tm_hour,tm.tm_min);
+		snprintf(file_path,(sizeof(char)*CSR_NAME_MAX_LENGTH),"../test/sparse-linear-algebra/SPMV/csrmatrix_N%lu_D%lu_S%2d_%d-%d-%d-%d-%d",N,density,normal_stddev_rounded,(tm.tm_year+1900),tm.tm_mon+1,tm.tm_mday,tm.tm_hour,tm.tm_min);
 		free_file=1;
 	}
 	printf("Saving Matrix to File '%s'...\n\n",file_path);

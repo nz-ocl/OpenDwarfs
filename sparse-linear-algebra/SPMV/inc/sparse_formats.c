@@ -66,7 +66,7 @@ void write_csr(const csr_matrix* csr,const char* file_path)
 	fp = fopen(file_path,"w");
 	chck(fp != NULL,"sparse_formats.write_csr() - Cannot Open File");
 
-	fprintf(fp,"%u\n%f\n%u\n%u\n%u\n%u\n%f\n%f\n%f\n",csr->index_type,csr->value_type,csr->num_rows,csr->num_cols,csr->num_nonzeros,csr->density_ppm,csr->density_perc,csr->nz_per_row,csr->stddev);
+	fprintf(fp,"%u\n%u\n%u\n%u\n%f\n%f\n%f\n",csr->num_rows,csr->num_cols,csr->num_nonzeros,csr->density_ppm,csr->density_perc,csr->nz_per_row,csr->stddev);
 
 	for(i=0; i<=csr->num_rows; i++)
 	  fprintf(fp,"%u ",csr->Ap[i]);
@@ -91,7 +91,7 @@ void read_csr(csr_matrix* csr,const char* file_path)
 	fp = fopen(file_path,"r");
 	chck(fp != NULL,"sparse_formats.read_csr() - Cannot Open Input File");
 
-	read_count = fscanf(fp,"%u\n%f\n%u\n%u\n%u\n%u\n%f\n%f\n%f\n",&(csr->index_type),&(csr->value_type),&(csr->num_rows),&(csr->num_cols),&(csr->num_nonzeros),&(csr->density_ppm),&(csr->density_perc),&(csr->nz_per_row),&(csr->stddev));
+	read_count = fscanf(fp,"%u\n%u\n%u\n%u\n%f\n%f\n%f\n",&(csr->num_rows),&(csr->num_cols),&(csr->num_nonzeros),&(csr->density_ppm),&(csr->density_perc),&(csr->nz_per_row),&(csr->stddev));
 	chck(read_count == 9,"sparse_formats.read_csr() - Input File Corrupted! Read count for header info differs from 9");
 
 	read_count = 0;
@@ -391,7 +391,7 @@ csr_matrix coo_to_csr(const coo_matrix* coo,FILE* log)
 csr_matrix rand_csr(const unsigned int N,const unsigned int density, const double normal_stddev,unsigned long seed,FILE* log)
 {
 	unsigned int i,j,nnz_ith_row,nnz,update_interval,rand_col;
-	double nnz_ith_row_double,nz_error;
+	double nnz_ith_row_double,nz_error,nz_per_row_doubled,high_bound;
 	int kn[128];
 	float fn[128],wn[128];
 	char* used_cols;
@@ -416,6 +416,8 @@ csr_matrix rand_csr(const unsigned int N,const unsigned int density, const doubl
 
 	csr.Ap[0] = 0;
 	nnz = 0;
+	nz_per_row_doubled = 2*csr.nz_per_row; //limit nnz_ith_row to double the average because negative values are rounded up to 0. This
+	high_bound = MIN(csr.num_cols,nz_per_row_doubled); //limitation ensures the distribution will be symmetric about the mean, albeit not truly normal.
 	used_cols = malloc(csr.num_cols*sizeof(char));
 	chck(used_cols != NULL,"rand_square_csr2() - Heap Overflow! Cannot allocate space for used_cols");
 
@@ -433,8 +435,8 @@ csr_matrix rand_csr(const unsigned int N,const unsigned int density, const doubl
 		nnz_ith_row_double += csr.nz_per_row; //add average nz/row
 		if(nnz_ith_row_double < 0)
 			nnz_ith_row = 0;
-		else if(nnz_ith_row_double > csr.num_cols)
-			nnz_ith_row = csr.num_cols;
+		else if(nnz_ith_row_double > high_bound)
+			nnz_ith_row = high_bound;
 		else
 			nnz_ith_row = (unsigned int) round(nnz_ith_row_double);
 
