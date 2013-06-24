@@ -18170,11 +18170,11 @@ $as_echo "$ac_cv_lib_OpenCL_clGetPlatformIDs" >&6; }
 if test "x$ac_cv_lib_OpenCL_clGetPlatformIDs" = x""yes; then
 
 
-        if echo "$LIBS" | $FGREP -e '-lOpenCL' >/dev/null 2>&1; then
-  echo "LIBS(='$LIBS') contains '-lOpenCL', not prepending" >&5
+        if echo "$LDFLAGS" | $FGREP -e '-lOpenCL' >/dev/null 2>&1; then
+  echo "LDFLAGS(='$LDFLAGS') contains '-lOpenCL', not prepending" >&5
 else
-  echo "LIBS(='$LIBS') does not contain '-lOpenCL', prepending" >&5
-                LIBS="-lOpenCL $LIBS"
+  echo "LDFLAGS(='$LDFLAGS') does not contain '-lOpenCL', prepending" >&5
+                LDFLAGS="-lOpenCL $LDFLAGS"
 
 fi
 
@@ -18194,11 +18194,11 @@ _ACEOF
 
 
 
-        if echo "$LIBS" | $FGREP -e '-framework OpenCL' >/dev/null 2>&1; then
-  echo "LIBS(='$LIBS') contains '-framework OpenCL', not prepending" >&5
+        if echo "$LDFLAGS" | $FGREP -e '-framework OpenCL' >/dev/null 2>&1; then
+  echo "LDFLAGS(='$LDFLAGS') contains '-framework OpenCL', not prepending" >&5
 else
-  echo "LIBS(='$LIBS') does not contain '-framework OpenCL', prepending" >&5
-                LIBS="-framework OpenCL $LIBS"
+  echo "LDFLAGS(='$LDFLAGS') does not contain '-framework OpenCL', prepending" >&5
+                LDFLAGS="-framework OpenCL $LDFLAGS"
 
 fi
 
@@ -18433,10 +18433,6 @@ for app in ${app_names}; do
         build_csr=true
         selected_apps="$selected_apps csr"
         ;;
-     #createcsr)
-     #	build_createcsr=true
-     #	selected_apps="$selected_apps createcsr"
-     #	;;
      astar)
         build_astar=true
         selected_apps="$selected_apps astar"
@@ -18541,7 +18537,6 @@ else
   build_csr_FALSE=
 fi
 
-#AM_CONDITIONAL([build_createcsr], [$build_createcsr])
  if $build_crc; then
   build_crc_TRUE=
   build_crc_FALSE='#'

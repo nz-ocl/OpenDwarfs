@@ -188,7 +188,7 @@ am__append_21 = samplecl-exec-local
 am__append_22 = clfft
 am__append_23 = clfft-all-local
 am__append_24 = clfft-exec-local
-am__append_25 = csr
+am__append_25 = csr createcsr
 am__append_26 = csr-all-local
 am__append_27 = csr-exec-local
 am__append_28 = crc 
@@ -243,7 +243,7 @@ am__EXEEXT_5 = lud$(EXEEXT)
 am__EXEEXT_6 = kmeans$(EXEEXT)
 am__EXEEXT_7 = scl$(EXEEXT)
 am__EXEEXT_8 = clfft$(EXEEXT)
-am__EXEEXT_9 = csr$(EXEEXT)
+am__EXEEXT_9 = csr$(EXEEXT) createcsr$(EXEEXT)
 am__EXEEXT_10 = crc$(EXEEXT)
 am__EXEEXT_11 = cfd$(EXEEXT)
 am__EXEEXT_12 = bfs$(EXEEXT)
@@ -306,9 +306,14 @@ crc_DEPENDENCIES = include/common_args.o include/rdtsc.o libopts.a
 crc_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(crc_LDFLAGS) $(LDFLAGS) -o $@
-am__csr_SOURCES_DIST = sparse-linear-algebra/SPMV/csr.c
+am__createcsr_SOURCES_DIST =  \
+	sparse-linear-algebra/SPMV/test-src/createcsr.c
+am_createcsr_OBJECTS = sparse-linear-algebra/SPMV/test-src/createcsr.$(OBJEXT)
+createcsr_OBJECTS = $(am_createcsr_OBJECTS)
+createcsr_DEPENDENCIES =
+am__csr_SOURCES_DIST = sparse-linear-algebra/SPMV/src/csr.c
 am_csr_OBJECTS =  \
-	sparse-linear-algebra/SPMV/csr.$(OBJEXT)
+	sparse-linear-algebra/SPMV/src/csr.$(OBJEXT)
 csr_OBJECTS = $(am_csr_OBJECTS)
 csr_LDADD = $(LDADD)
 csr_DEPENDENCIES = include/common_args.o include/rdtsc.o libopts.a
@@ -454,18 +459,20 @@ AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
 am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(libopts_a_SOURCES) $(astar_SOURCES) $(bfs_SOURCES) \
-	$(cfd_SOURCES) $(clfft_SOURCES) $(crc_SOURCES) $(csr_SOURCES) \
-	$(gemnoui_SOURCES) $(kmeans_SOURCES) $(lud_SOURCES) \
-	$(needle_SOURCES) $(ocd_SOURCES) $(scl_SOURCES) \
-	$(srad_SOURCES) $(swat_SOURCES) $(tdm_SOURCES)
+	$(cfd_SOURCES) $(clfft_SOURCES) $(crc_SOURCES) \
+	$(createcsr_SOURCES) $(csr_SOURCES) $(gemnoui_SOURCES) \
+	$(kmeans_SOURCES) $(lud_SOURCES) $(needle_SOURCES) \
+	$(ocd_SOURCES) $(scl_SOURCES) $(srad_SOURCES) $(swat_SOURCES) \
+	$(tdm_SOURCES)
 DIST_SOURCES = $(libopts_a_SOURCES) $(am__astar_SOURCES_DIST) \
 	$(am__bfs_SOURCES_DIST) $(am__cfd_SOURCES_DIST) \
 	$(am__clfft_SOURCES_DIST) $(am__crc_SOURCES_DIST) \
-	$(am__csr_SOURCES_DIST) $(am__gemnoui_SOURCES_DIST) \
-	$(am__kmeans_SOURCES_DIST) $(am__lud_SOURCES_DIST) \
-	$(am__needle_SOURCES_DIST) $(ocd_SOURCES) \
-	$(am__scl_SOURCES_DIST) $(am__srad_SOURCES_DIST) \
-	$(am__swat_SOURCES_DIST) $(am__tdm_SOURCES_DIST)
+	$(am__createcsr_SOURCES_DIST) $(am__csr_SOURCES_DIST) \
+	$(am__gemnoui_SOURCES_DIST) $(am__kmeans_SOURCES_DIST) \
+	$(am__lud_SOURCES_DIST) $(am__needle_SOURCES_DIST) \
+	$(ocd_SOURCES) $(am__scl_SOURCES_DIST) \
+	$(am__srad_SOURCES_DIST) $(am__swat_SOURCES_DIST) \
+	$(am__tdm_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -489,7 +496,7 @@ AUTOMAKE = ${SHELL} /home/tjkenney/OpenDwarfs/m4/missing --run automake-1.11
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -g 
+CFLAGS =  
 CPP = gcc -E
 CPPFLAGS = 
 CXX = g++
@@ -514,9 +521,9 @@ INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LD = /usr/bin/ld -m elf_x86_64
-LDFLAGS = 
+LDFLAGS = -lOpenCL 
 LIBOBJS = 
-LIBS = -lOpenCL 
+LIBS = 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIPO = 
 LN_S = ln -s
@@ -645,7 +652,16 @@ kmeans_SOURCES = dense-linear-algebra/kmeans/kmeans.c \
 scl_SOURCES = samplecl/samplecl.c
 clfft_SOURCES = spectral-methods/fft/src/opencl/fft/fft.cpp spectral-methods/fft/src/opencl/fft/fftlib.cpp spectral-methods/fft/src/opencl/common/main.cpp spectral-methods/fft/src/opencl/common/Event.cpp spectral-methods/fft/src/opencl/common/OpenCLDeviceInfo.cpp spectral-methods/fft/src/opencl/common/OpenCLNodePlatformContainer.cpp spectral-methods/fft/src/opencl/common/OpenCLPlatform.cpp spectral-methods/fft/src/common/OptionParser.cpp spectral-methods/fft/src/common/ResultDatabase.cpp spectral-methods/fft/src/common/Timer.cpp spectral-methods/fft/src/common/Option.cpp spectral-methods/fft/src/common/InvalidArgValue.cpp 
 clfft_CPPFLAGS = -I$(top_srcdir)/spectral-methods/fft/src/common -I$(top_srcdir)/spectral-methods/fft/src/opencl/common
-csr_SOURCES = sparse-linear-algebra/SPMV/csr.c
+csr_SOURCES = sparse-linear-algebra/SPMV/src/csr.c
+createcsr_SOURCES = sparse-linear-algebra/SPMV/test-src/createcsr.c
+#createcsr_LDFLAGS = 
+createcsr_LDADD = 
+#createcsr_LIBS = 
+#createcsr_LIBADD = 
+#createcsr_LIBTOOLFLAGS = 
+#createcsr_LIBRARIES = 
+#createcsr_LTLIBRARIES = 
+createcsr_LINK = $(CCLD) -lm -o $@
 crc_LDFLAGS = -lm
 crc_SOURCES = combinational-logic/crc/crc_algo.c
 cfd_SOURCES = unstructured-grids/cfd/cfd.cpp
@@ -871,15 +887,27 @@ combinational-logic/crc/crc_algo.$(OBJEXT):  \
 crc$(EXEEXT): $(crc_OBJECTS) $(crc_DEPENDENCIES) 
 	@rm -f crc$(EXEEXT)
 	$(AM_V_CCLD)$(crc_LINK) $(crc_OBJECTS) $(crc_LDADD) $(LIBS)
-sparse-linear-algebra/SPMV/$(am__dirstamp):
-	@$(MKDIR_P) sparse-linear-algebra/SPMV
-	@: > sparse-linear-algebra/SPMV/$(am__dirstamp)
-sparse-linear-algebra/SPMV/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) sparse-linear-algebra/SPMV/$(DEPDIR)
-	@: > sparse-linear-algebra/SPMV/$(DEPDIR)/$(am__dirstamp)
-sparse-linear-algebra/SPMV/csr.$(OBJEXT):  \
-	sparse-linear-algebra/SPMV/$(am__dirstamp) \
-	sparse-linear-algebra/SPMV/$(DEPDIR)/$(am__dirstamp)
+sparse-linear-algebra/SPMV/test-src/$(am__dirstamp):
+	@$(MKDIR_P) sparse-linear-algebra/SPMV/test-src
+	@: > sparse-linear-algebra/SPMV/test-src/$(am__dirstamp)
+sparse-linear-algebra/SPMV/test-src/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) sparse-linear-algebra/SPMV/test-src/$(DEPDIR)
+	@: > sparse-linear-algebra/SPMV/test-src/$(DEPDIR)/$(am__dirstamp)
+sparse-linear-algebra/SPMV/test-src/createcsr.$(OBJEXT):  \
+	sparse-linear-algebra/SPMV/test-src/$(am__dirstamp) \
+	sparse-linear-algebra/SPMV/test-src/$(DEPDIR)/$(am__dirstamp)
+createcsr$(EXEEXT): $(createcsr_OBJECTS) $(createcsr_DEPENDENCIES) 
+	@rm -f createcsr$(EXEEXT)
+	$(AM_V_GEN)$(createcsr_LINK) $(createcsr_OBJECTS) $(createcsr_LDADD) $(LIBS)
+sparse-linear-algebra/SPMV/src/$(am__dirstamp):
+	@$(MKDIR_P) sparse-linear-algebra/SPMV/src
+	@: > sparse-linear-algebra/SPMV/src/$(am__dirstamp)
+sparse-linear-algebra/SPMV/src/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) sparse-linear-algebra/SPMV/src/$(DEPDIR)
+	@: > sparse-linear-algebra/SPMV/src/$(DEPDIR)/$(am__dirstamp)
+sparse-linear-algebra/SPMV/src/csr.$(OBJEXT):  \
+	sparse-linear-algebra/SPMV/src/$(am__dirstamp) \
+	sparse-linear-algebra/SPMV/src/$(DEPDIR)/$(am__dirstamp)
 csr$(EXEEXT): $(csr_OBJECTS) $(csr_DEPENDENCIES) 
 	@rm -f csr$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(csr_OBJECTS) $(csr_LDADD) $(LIBS)
@@ -1115,7 +1143,8 @@ mostlyclean-compile:
 	-rm -f n-body-methods/gem/gemnoui-write_xyzr.$(OBJEXT)
 	-rm -f opts/opts.$(OBJEXT)
 	-rm -f samplecl/samplecl.$(OBJEXT)
-	-rm -f sparse-linear-algebra/SPMV/csr.$(OBJEXT)
+	-rm -f sparse-linear-algebra/SPMV/src/csr.$(OBJEXT)
+	-rm -f sparse-linear-algebra/SPMV/test-src/createcsr.$(OBJEXT)
 	-rm -f spectral-methods/fft/src/common/clfft-InvalidArgValue.$(OBJEXT)
 	-rm -f spectral-methods/fft/src/common/clfft-Option.$(OBJEXT)
 	-rm -f spectral-methods/fft/src/common/clfft-OptionParser.$(OBJEXT)
@@ -1174,7 +1203,8 @@ include n-body-methods/gem/$(DEPDIR)/gemnoui-write_grid.Po
 include n-body-methods/gem/$(DEPDIR)/gemnoui-write_xyzr.Po
 include opts/$(DEPDIR)/opts.Po
 include samplecl/$(DEPDIR)/samplecl.Po
-include sparse-linear-algebra/SPMV/$(DEPDIR)/csr.Po
+include sparse-linear-algebra/SPMV/src/$(DEPDIR)/csr.Po
+include sparse-linear-algebra/SPMV/test-src/$(DEPDIR)/createcsr.Po
 include spectral-methods/fft/src/common/$(DEPDIR)/clfft-InvalidArgValue.Po
 include spectral-methods/fft/src/common/$(DEPDIR)/clfft-Option.Po
 include spectral-methods/fft/src/common/$(DEPDIR)/clfft-OptionParser.Po
@@ -1968,8 +1998,10 @@ distclean-generic:
 	-rm -f opts/$(am__dirstamp)
 	-rm -f samplecl/$(DEPDIR)/$(am__dirstamp)
 	-rm -f samplecl/$(am__dirstamp)
-	-rm -f sparse-linear-algebra/SPMV/$(DEPDIR)/$(am__dirstamp)
-	-rm -f sparse-linear-algebra/SPMV/$(am__dirstamp)
+	-rm -f sparse-linear-algebra/SPMV/src/$(DEPDIR)/$(am__dirstamp)
+	-rm -f sparse-linear-algebra/SPMV/src/$(am__dirstamp)
+	-rm -f sparse-linear-algebra/SPMV/test-src/$(DEPDIR)/$(am__dirstamp)
+	-rm -f sparse-linear-algebra/SPMV/test-src/$(am__dirstamp)
 	-rm -f spectral-methods/fft/src/common/$(DEPDIR)/$(am__dirstamp)
 	-rm -f spectral-methods/fft/src/common/$(am__dirstamp)
 	-rm -f spectral-methods/fft/src/opencl/common/$(DEPDIR)/$(am__dirstamp)
@@ -1991,7 +2023,7 @@ clean-am: clean-binPROGRAMS clean-generic clean-libtool clean-local \
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf branch-and-bound/astar/$(DEPDIR) combinational-logic/crc/$(DEPDIR) dense-linear-algebra/kmeans/$(DEPDIR) dense-linear-algebra/lud/$(DEPDIR) dynamic-programming/nw/$(DEPDIR) dynamic-programming/swat/$(DEPDIR) finite-state-machine/tdm/$(DEPDIR) graph-traversal/bfs/$(DEPDIR) include/$(DEPDIR) n-body-methods/gem/$(DEPDIR) opts/$(DEPDIR) samplecl/$(DEPDIR) sparse-linear-algebra/SPMV/$(DEPDIR) spectral-methods/fft/src/common/$(DEPDIR) spectral-methods/fft/src/opencl/common/$(DEPDIR) spectral-methods/fft/src/opencl/fft/$(DEPDIR) structured-grids/srad/$(DEPDIR) unstructured-grids/cfd/$(DEPDIR)
+	-rm -rf branch-and-bound/astar/$(DEPDIR) combinational-logic/crc/$(DEPDIR) dense-linear-algebra/kmeans/$(DEPDIR) dense-linear-algebra/lud/$(DEPDIR) dynamic-programming/nw/$(DEPDIR) dynamic-programming/swat/$(DEPDIR) finite-state-machine/tdm/$(DEPDIR) graph-traversal/bfs/$(DEPDIR) include/$(DEPDIR) n-body-methods/gem/$(DEPDIR) opts/$(DEPDIR) samplecl/$(DEPDIR) sparse-linear-algebra/SPMV/src/$(DEPDIR) sparse-linear-algebra/SPMV/test-src/$(DEPDIR) spectral-methods/fft/src/common/$(DEPDIR) spectral-methods/fft/src/opencl/common/$(DEPDIR) spectral-methods/fft/src/opencl/fft/$(DEPDIR) structured-grids/srad/$(DEPDIR) unstructured-grids/cfd/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -2039,7 +2071,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf branch-and-bound/astar/$(DEPDIR) combinational-logic/crc/$(DEPDIR) dense-linear-algebra/kmeans/$(DEPDIR) dense-linear-algebra/lud/$(DEPDIR) dynamic-programming/nw/$(DEPDIR) dynamic-programming/swat/$(DEPDIR) finite-state-machine/tdm/$(DEPDIR) graph-traversal/bfs/$(DEPDIR) include/$(DEPDIR) n-body-methods/gem/$(DEPDIR) opts/$(DEPDIR) samplecl/$(DEPDIR) sparse-linear-algebra/SPMV/$(DEPDIR) spectral-methods/fft/src/common/$(DEPDIR) spectral-methods/fft/src/opencl/common/$(DEPDIR) spectral-methods/fft/src/opencl/fft/$(DEPDIR) structured-grids/srad/$(DEPDIR) unstructured-grids/cfd/$(DEPDIR)
+	-rm -rf branch-and-bound/astar/$(DEPDIR) combinational-logic/crc/$(DEPDIR) dense-linear-algebra/kmeans/$(DEPDIR) dense-linear-algebra/lud/$(DEPDIR) dynamic-programming/nw/$(DEPDIR) dynamic-programming/swat/$(DEPDIR) finite-state-machine/tdm/$(DEPDIR) graph-traversal/bfs/$(DEPDIR) include/$(DEPDIR) n-body-methods/gem/$(DEPDIR) opts/$(DEPDIR) samplecl/$(DEPDIR) sparse-linear-algebra/SPMV/src/$(DEPDIR) sparse-linear-algebra/SPMV/test-src/$(DEPDIR) spectral-methods/fft/src/common/$(DEPDIR) spectral-methods/fft/src/opencl/common/$(DEPDIR) spectral-methods/fft/src/opencl/fft/$(DEPDIR) structured-grids/srad/$(DEPDIR) unstructured-grids/cfd/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -2128,10 +2160,10 @@ clfft-exec-local:
 	cp $(top_srcdir)/spectral-methods/fft/src/opencl/fft/fft.cl ${DESTDIR}${bindir}
 
 csr-all-local:
-	cp $(top_srcdir)/sparse-linear-algebra/SPMV/spmv_csr_kernel.cl .
+	cp $(top_srcdir)/sparse-linear-algebra/SPMV/src/spmv_csr_kernel.cl .
 
 csr-exec-local:
-	cp $(top_srcdir)/sparse-linear-algebra/SPMV/spmv_csr_kernel.cl ${DESTDIR}${bindir}
+	cp $(top_srcdir)/sparse-linear-algebra/SPMV/src/spmv_csr_kernel.cl ${DESTDIR}${bindir}
 
 dwarf-crc-all-local:
 	cp $(top_srcdir)/combinational-logic/crc/crc_algo_kernel.cl .

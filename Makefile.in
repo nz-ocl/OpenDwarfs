@@ -310,26 +310,16 @@ crc_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
 crc_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(crc_LDFLAGS) $(LDFLAGS) -o $@
-<<<<<<< HEAD
-<<<<<<< HEAD
-am__csr_SOURCES_DIST = sparse-linear-algebra/SPMV/csr.c
-=======
-=======
->>>>>>> restructured SPMV and added source code for generating CSR matrices.
+
 am__createcsr_SOURCES_DIST =  \
 	sparse-linear-algebra/SPMV/test-src/createcsr.c
 @build_csr_TRUE@am_createcsr_OBJECTS = sparse-linear-algebra/SPMV/test-src/createcsr.$(OBJEXT)
 createcsr_OBJECTS = $(am_createcsr_OBJECTS)
-<<<<<<< HEAD
-@build_csr_TRUE@createcsr_DEPENDENCIES = include/common_util.o
 am__csr_SOURCES_DIST = sparse-linear-algebra/SPMV/src/csr.c
->>>>>>> split include/common_args.x into include/common_ocl.x and
-=======
+
 createcsr_LDADD = $(LDADD)
 createcsr_DEPENDENCIES = include/common_args.o include/rdtsc.o \
 	libopts.a
-am__csr_SOURCES_DIST = sparse-linear-algebra/SPMV/src/csr.c
->>>>>>> restructured SPMV and added source code for generating CSR matrices.
 @build_csr_TRUE@am_csr_OBJECTS =  \
 @build_csr_TRUE@	sparse-linear-algebra/SPMV/src/csr.$(OBJEXT)
 csr_OBJECTS = $(am_csr_OBJECTS)
@@ -681,19 +671,21 @@ LDADD = include/common_ocl.o include/rdtsc.o libopts.a include/common_util.o
 @build_samplecl_TRUE@scl_SOURCES = samplecl/samplecl.c
 @build_fft_TRUE@clfft_SOURCES = spectral-methods/fft/src/opencl/fft/fft.cpp spectral-methods/fft/src/opencl/fft/fftlib.cpp spectral-methods/fft/src/opencl/common/main.cpp spectral-methods/fft/src/opencl/common/Event.cpp spectral-methods/fft/src/opencl/common/OpenCLDeviceInfo.cpp spectral-methods/fft/src/opencl/common/OpenCLNodePlatformContainer.cpp spectral-methods/fft/src/opencl/common/OpenCLPlatform.cpp spectral-methods/fft/src/common/OptionParser.cpp spectral-methods/fft/src/common/ResultDatabase.cpp spectral-methods/fft/src/common/Timer.cpp spectral-methods/fft/src/common/Option.cpp spectral-methods/fft/src/common/InvalidArgValue.cpp 
 @build_fft_TRUE@clfft_CPPFLAGS = -I$(top_srcdir)/spectral-methods/fft/src/common -I$(top_srcdir)/spectral-methods/fft/src/opencl/common
-<<<<<<< HEAD
-<<<<<<< HEAD
-@build_csr_TRUE@csr_SOURCES = sparse-linear-algebra/SPMV/csr.c
-=======
+
 @build_csr_TRUE@csr_SOURCES = sparse-linear-algebra/SPMV/src/csr.c
 @build_csr_TRUE@createcsr_SOURCES = sparse-linear-algebra/SPMV/test-src/createcsr.c 
 @build_csr_TRUE@createcsr_LDADD = include/common_util.o
 @build_csr_TRUE@createcsr_LINK = $(CCLD) -lm -o $@
->>>>>>> split include/common_args.x into include/common_ocl.x and
-=======
 @build_csr_TRUE@csr_SOURCES = sparse-linear-algebra/SPMV/src/csr.c
 @build_csr_TRUE@createcsr_SOURCES = sparse-linear-algebra/SPMV/test-src/createcsr.c
->>>>>>> restructured SPMV and added source code for generating CSR matrices.
+#createcsr_LDFLAGS = 
+@build_csr_TRUE@createcsr_LDADD = 
+#createcsr_LIBS = 
+#createcsr_LIBADD = 
+#createcsr_LIBTOOLFLAGS = 
+#createcsr_LIBRARIES = 
+#createcsr_LTLIBRARIES = 
+@build_csr_TRUE@createcsr_LINK = $(CCLD) -lm -o $@
 @build_crc_TRUE@crc_LDFLAGS = -lm
 @build_crc_TRUE@crc_SOURCES = combinational-logic/crc/crc_algo.c
 @build_cfd_TRUE@cfd_SOURCES = unstructured-grids/cfd/cfd.cpp
@@ -930,7 +922,7 @@ sparse-linear-algebra/SPMV/test-src/createcsr.$(OBJEXT):  \
 	sparse-linear-algebra/SPMV/test-src/$(DEPDIR)/$(am__dirstamp)
 createcsr$(EXEEXT): $(createcsr_OBJECTS) $(createcsr_DEPENDENCIES) 
 	@rm -f createcsr$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(createcsr_OBJECTS) $(createcsr_LDADD) $(LIBS)
+	$(AM_V_GEN)$(createcsr_LINK) $(createcsr_OBJECTS) $(createcsr_LDADD) $(LIBS)
 sparse-linear-algebra/SPMV/src/$(am__dirstamp):
 	@$(MKDIR_P) sparse-linear-algebra/SPMV/src
 	@: > sparse-linear-algebra/SPMV/src/$(am__dirstamp)
@@ -2236,10 +2228,6 @@ uninstall-am: uninstall-binPROGRAMS
 
 @build_astar_TRUE@astar-exec-local:
 @build_astar_TRUE@	cp $(top_srcdir)/branch-and-bound/astar/astar.cl ${DESTDIR}${bindir}
-
-#if build_createcsr
-#include sparse-linear-algebra/SPMV/test-src/Makefile.mk
-#endif
 
 #if build_bsort
 #include graph-traversal/bitonic-sort/Makefile.mk

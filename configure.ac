@@ -49,7 +49,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 # installed the system OpenCL library deleted his/her SDK source, we
 # will be in trouble.
 AC_ARG_WITH([opencl-sdk],
-	AC_HELP_STRING([--with-opencl-sdk],[path to the OpenCL SDK]),
+	AS_HELP_STRING([--with-opencl-sdk],[path to the OpenCL SDK]),
 	[OPENCL_SDK_PREFIX=$withval],[OPENCL_SDK_PREFIX=])
 
 if test ! -z "$OPENCL_SDK_PREFIX" ; then
@@ -70,7 +70,7 @@ AC_SUBST(OPENCL_SDK_PREFIX)
 
 
 ### We need OpenCL
-AC_ARG_WITH([opencl], AC_HELP_STRING([--with-opencl],[path to OpenCL]),
+AC_ARG_WITH([opencl], AS_HELP_STRING([--with-opencl],[path to OpenCL]),
 	[OPENCL_PREFIX=$withval],[OPENCL_PREFIX=])
 if test ! -z "$OPENCL_PREFIX" ; then
    PAC_APPEND_FLAG([-L${OPENCL_PREFIX}],[LDFLAGS])
@@ -83,12 +83,12 @@ AC_CHECK_HEADER([OpenCL/OpenCL.h], [HEADER_APPLE=1], [])
 if test ! -z "$HEADER_LINUX" ; then
     AC_DEFINE(OPENCL_HEADER_CL_CL, 1, [use non-apple header])
     ### Check for the libraries that we need
-    AC_CHECK_LIB(OpenCL,clGetPlatformIDs,[PAC_PREPEND_FLAG([-lOpenCL],[LIBS])],
+    AC_CHECK_LIB(OpenCL,clGetPlatformIDs,[PAC_PREPEND_FLAG([-lOpenCL],[LDFLAGS])],
             AC_MSG_ERROR([OpenCL library not found]))
 else
     if test ! -z "$HEADER_APPLE" ; then
         AC_DEFINE(OPENCL_HEADER_LONG, 1 , [use apple header])
-        PAC_PREPEND_FLAG([-framework OpenCL],[LIBS])
+        PAC_PREPEND_FLAG([-framework OpenCL],[LDFLAGS])
     else
         AC_MSG_ERROR([OpenCL header not found])
     fi
@@ -127,7 +127,7 @@ AC_LANG_POP([C++])
 #	AC_HELP_STRING([--with-apps],[Applications to build (gem,matmult,mattran,swat)]),
 #	[app_list=$withval],[app_list=gem,matmult,mattran,swat])
 AC_ARG_WITH([apps],
-	AC_HELP_STRING([--with-apps],[Applications to build (gem,nw,srad,lud,kmeans,fft,swat,samplecl,crc,cfd,bfs,csr,tdm,astar)]),
+	AS_HELP_STRING([--with-apps],[Applications to build (gem,nw,srad,lud,kmeans,fft,swat,samplecl,crc,cfd,bfs,csr,tdm,astar)]),
 	[app_list=$withval],[app_list=gem,nw,srad,lud,kmeans,fft,swat,samplecl,crc,cfd,bfs,csr,tdm,astar])
 app_names="`echo $app_list | sed -e 's/:/ /g' -e 's/,/ /g'`"
 
@@ -248,7 +248,7 @@ done
 #Enable or disable the OCD Timer Suite from ./include/rdtsc.h
 #Still doesn't seem to be taking effect
 AC_ARG_ENABLE([timing],
-	AC_HELP_STRING([--disable-timing], [Disable automatic macro-based timing (enabled by default)]),	, AC_DEFINE(ENABLE_TIMER, 1, [Enable the OCD suite of automatic timing and output macros.])
+	AS_HELP_STRING([--disable-timing], [Disable automatic macro-based timing (enabled by default)]),	, AC_DEFINE(ENABLE_TIMER, 1, [Enable the OCD suite of automatic timing and output macros.])
 )
 
 AC_MSG_RESULT([building applications... ${selected_apps}])
