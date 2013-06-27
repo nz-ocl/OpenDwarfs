@@ -8,9 +8,12 @@
 bin_PROGRAMS += csr
 bin_PROGRAMS += createcsr
 
+
 csr_SOURCES = sparse-linear-algebra/SPMV/src/csr.c
 createcsr_SOURCES = sparse-linear-algebra/SPMV/test-src/createcsr.c 
-createcsr_LDADD = 											##createcsr does not need -lOpenCl linker flag
+
+##createcsr does not need to be linked with any of the opencl common files
+createcsr_LDADD = include/common_util.o
 createcsr_LINK = $(CCLD) -lm -o $@
 
 all_local += csr-all-local
