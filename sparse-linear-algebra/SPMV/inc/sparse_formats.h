@@ -24,9 +24,8 @@
 #include<time.h>
 #include<string.h>
 
+#include "../../../include/common_util.h"
 #include "ziggurat.h"
-#include "ziggurat.c"
-#include "common.h"
 
 /*
  *  Compressed Sparse Row matrix (aka CSR)

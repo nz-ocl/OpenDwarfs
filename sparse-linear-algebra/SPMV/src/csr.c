@@ -7,19 +7,8 @@
 #include "../../../include/rdtsc.h"
 #include "../../../include/common_ocl.h"
 #include "../../../include/common_util.h"
-
-
-#define CHKERR(err, str) \
-    if (err != CL_SUCCESS) \
-    { \
-        fprintf(stderr, "CL Error %d: %s\n", err, str); \
-        exit(1); \
-    }
-
 #include "../inc/common.h"
-#include "../inc/common.c"
 #include "../inc/sparse_formats.h"
-#include "../inc/sparse_formats.c"
 
 //#define USEGPU 1
 static struct option long_options[] = {
@@ -35,29 +24,6 @@ static struct option long_options[] = {
 };
 
 int platform_id=PLATFORM_ID, n_device=DEVICE_ID;
-
-int main(int argc, char** argv)
-{
-	cl_int err;
-	int usegpu = USEGPU;
-    int be_verbose = 0,do_print=0,do_affirm=0;
-    unsigned long density_ppm = 500000;
-    unsigned int N = 512;
-    int opt, option_index=0,i;
-    char* file_path = NULL;
-
-    unsigned int correct;
-
-    const char* usage = "Usage: %s -f <file_path> [-v] [-c] [-p] [-a]\n\n \
-    		-f: Read CSR Matrix from file <file_path>\n \
-    		-v: Be Verbose \n \
-    		-c: use CPU\n \
-    		-p: Print matrices to stdout in standard (2-D Array) format - Warning: lots of output\n \
-    		-a: Affirm results with serial C code on CPU\n\n";
-
-    size_t global_size;
-    size_t local_size;
-=======
 
 /**
  * Compares N float values and prints error msg if any corresponding entries differ by greater than .001
@@ -111,7 +77,6 @@ int main(int argc, char** argv)
     		-r: Execute program with same data exactly <num_execs> times to increase sample size - Default is 1\n\n";
 
     size_t global_size,local_size,kernelLength,lengthRead;
->>>>>>> updated include statements to reflect changes in shared include/:sparse-linear-algebra/SPMV/src/csr.c
 
     cl_device_id device_id;
     cl_context context;
@@ -119,7 +84,6 @@ int main(int argc, char** argv)
     cl_program program;
     cl_kernel kernel;
 
-    stopwatch sw;
     cl_mem csr_ap,csr_aj,csr_ax,x_loc,y_loc;
 
     FILE *kernelFile;
@@ -223,19 +187,16 @@ int main(int argc, char** argv)
 
     /* Load kernel source */
     kernelFile = fopen("spmv_csr_kernel.cl", "r");
-    if(kernelFile == NULL)
-    	fprintf(stderr,"Cannot Open Kernel.\n");
+    check(kernelFile != NULL,"Cannot open file spmv_csr_kernel.cl");
     fseek(kernelFile, 0, SEEK_END);
     if(be_verbose) printf("Seeked to kernel end.\n");
     kernelLength = (size_t) ftell(kernelFile);
     if(be_verbose) printf("Kernel Source Read.\n");
     kernelSource = (char *) malloc(sizeof(char)*kernelLength);
-    if(kernelSource == NULL)
-    	fprintf(stderr,"Heap Overflow. Cannot Load Kernel Source.\n");
+    check(kernelSource != NULL,"csr.main() - Heap Overflow! Cannot allocate space for kernelSource.");
     rewind(kernelFile);
     lengthRead = fread((void *) kernelSource, kernelLength, 1, kernelFile);
     fclose(kernelFile);
-
     if(be_verbose) printf("kernel source loaded.\n");
 
     /* Create the compute program from the source buffer */
@@ -252,6 +213,7 @@ int main(int argc, char** argv)
         size_t logLen;
         err = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &logLen);
         buildLog = (char *) malloc(sizeof(char)*logLen);
+        check(buildLog != NULL,"csr.main() - Heap Overflow! Cannot allocate space for buildLog.");
         err = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, logLen, (void *) buildLog, NULL);
         fprintf(stderr, "CL Error %d: Failed to build program! Log:\n%s", err, buildLog);
         free(buildLog);
@@ -262,10 +224,8 @@ int main(int argc, char** argv)
     /* Create the compute kernel in the program we wish to run */
     kernel = clCreateKernel(program, "csr", &err);
     CHKERR(err, "Failed to create a compute kernel!");
-
     if(be_verbose) printf("kernel created\n");
 
- 
     size_t csr_ap_bytes,csr_aj_bytes,csr_ax_bytes,x_loc_bytes,y_loc_bytes;
     csr_ap_bytes = sizeof(unsigned int)*csr.num_rows+4;
     if(be_verbose) printf("Allocating %zu bytes for csr_ap...\n",csr_ap_bytes);
@@ -392,6 +352,7 @@ int main(int argc, char** argv)
     }
 
     /* Shutdown and cleanup */
+    if(do_affirm) free(host_out);
     free_csr(&csr);
     free(device_out);
     clReleaseMemObject(csr_ap);

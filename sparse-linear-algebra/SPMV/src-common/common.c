@@ -4,7 +4,7 @@
 #include <time.h>
 #include <math.h>
 
-#include "common.h"
+#include "../inc/common.h"
 
 void stopwatch_start(stopwatch *sw){
     if (sw == NULL)
@@ -111,7 +111,7 @@ create_matrix_from_random(float **mp, int size){
 
   for (i=0; i < size; i++) {
       for (j=0; j < size; j++) {
-          for (k=0; k <= MIN(i,j); k++)
+          for (k=0; k <= MINIMUM(i,j); k++)
             m[i*size+j] = l[i*size+k] * u[j*size+k];
       }
   }
@@ -144,7 +144,7 @@ lud_verify(float *m, float *lu, int matrix_dim){
     for (j=0; j< matrix_dim; j++) {
         float sum = 0;
         float l,u;
-        for (k=0; k <= MIN(i,j); k++){
+        for (k=0; k <= MINIMUM(i,j); k++){
             if ( i==k)
               l=1;
             else

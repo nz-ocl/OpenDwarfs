@@ -1,8 +1,10 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
-#include <time.h>
-#include <sys/time.h>
+#include<time.h>
+#include<sys/time.h>
+
+#include "../../../include/common_util.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,8 +14,6 @@ extern "C" {
 
 #define GET_RAND_FP ( (float)rand() /   \
                      ((float)(RAND_MAX)+(float)(1)) )
-
-#define MIN(i,j) ((i)<(j) ? (i) : (j))
 
 typedef enum _FUNC_RETURN_CODE {
     RET_SUCCESS,

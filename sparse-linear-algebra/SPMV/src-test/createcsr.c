@@ -1,5 +1,5 @@
+#include "../../../include/common_util.h"
 #include "../inc/sparse_formats.h"
-#include "../inc/sparse_formats.c"
 
 #include<stdio.h>
 #include<stdlib.h>
@@ -98,6 +98,7 @@ int main(int argc, char** argv)
 	if(!file_path)
 	{
 		file_path = malloc(sizeof(char)*CSR_NAME_MAX_LENGTH);
+		check(file_path != NULL,"createcsr.main() - Heap Overflow! Cannot allocate space for 'file_path'");
 		t = time(NULL);
 		tm = *localtime(&t);
 		normal_stddev_rounded = (int) round(normal_stddev * 100);
