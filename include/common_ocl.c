@@ -206,8 +206,6 @@ void ocd_finalize()
 	TIMER_FINISH;
 	#endif
 }
-<<<<<<< HEAD:include/common_args.c
-=======
 
 void ocd_print_device_info(cl_device_id device)
 {
@@ -281,4 +279,3 @@ void ocd_print_device_info(cl_device_id device)
 	printf("Device %d: Max Work Group Size=%d\n",device,size_val);
 
 }
->>>>>>> split include/common_args.x into include/common_ocl.x and:include/common_ocl.c

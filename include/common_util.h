@@ -5,4 +5,6 @@
 #include<stdlib.h>
 #include<stdio.h>
 
+#define MINIMUM(i,j) ((i)<(j) ? (i) : (j))
+
 extern void check();
