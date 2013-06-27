@@ -31,7 +31,7 @@
 #include <NodeInfo.h>
 #endif
 
-#include <include/common_args.h>
+#include <include/common_ocl.h>
 using namespace std;
 using namespace SHOC;
 

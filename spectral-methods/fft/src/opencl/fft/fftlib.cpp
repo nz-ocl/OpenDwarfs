@@ -8,7 +8,7 @@
 #include "OpenCLDeviceInfo.h"
 #include <math.h>
 #include "../../../../include/rdtsc.h"
-#include "../../../../include/common_args.h"
+#include "../../../../include/common_ocl.h"
 cl_device_id fftDev;
 cl_context fftCtx;
 cl_command_queue fftQueue;

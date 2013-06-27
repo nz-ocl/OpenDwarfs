@@ -79,7 +79,7 @@
 #include <omp.h>
 #include "kmeans.h"
 
-#include "../../include/common_args.h"
+#include "../../include/common_ocl.h"
 
 extern double wtime(void);
 extern int platform_id;

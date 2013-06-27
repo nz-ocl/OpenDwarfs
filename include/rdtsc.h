@@ -253,6 +253,13 @@ temp->endtime = 1000 * (t->timer.tv_sec*1000000L + t->timer.tv_usec);\
 #define TIMER_INIT {\
 gettimeofday(&fullExecTimer.timer, NULL);\
 fullExecTimer.starttime = 1000 * (fullExecTimer.timer.tv_sec*1000000L + fullExecTimer.timer.tv_usec);\
+TOTAL_EXEC = 0; \
+TOTAL_D2H = 0; \
+TOTAL_H2D = 0; \
+TOTAL_D2D = 0; \
+TOTAL_KERNEL = 0; \
+TOTAL_HOST = 0; \
+TOTAL_DUAL = 0; \
 }
 
 //and absolutely everything needed to finalize them

@@ -27,7 +27,7 @@
 #include <sys/time.h>
 
 #include <include/rdtsc.h>
-#include <include/common_args.h>
+#include <include/common_ocl.h>
 
 //#define USEGPU 1
 typedef long long int64;

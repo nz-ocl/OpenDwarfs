@@ -16,13 +16,13 @@ exec_local =
 
 
 bin_PROGRAMS += ocd
-ocd_SOURCES = include/common_args.c include/rdtsc.c
+ocd_SOURCES = include/common_ocl.c include/rdtsc.c include/common_util.c 
 ocd_LINK = true
 
 noinst_LIBRARIES = libopts.a
 libopts_a_SOURCES = opts/opts.c 
 
-LDADD = include/common_args.o include/rdtsc.o libopts.a
+LDADD = include/common_ocl.o include/rdtsc.o libopts.a include/common_util.o
 
 if build_gem
 include n-body-methods/gem/Makefile.mk

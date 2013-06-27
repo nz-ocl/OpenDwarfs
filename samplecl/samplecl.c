@@ -8,7 +8,7 @@
 #include <CL/opencl.h>
 #endif
 #include "../include/rdtsc.h"
-#include "../include/common_args.h"
+#include "../include/common_ocl.h"
 
 #define CHKERR(err, str) \
     if (err != CL_SUCCESS) \

@@ -10,7 +10,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "../../include/rdtsc.h"
-#include "../../include/common_args.h"
+#include "../../include/common_ocl.h"
 
 int platform_id = PLATFORM_ID, n_device = DEVICE_ID;
 // includes, project

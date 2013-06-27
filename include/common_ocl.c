@@ -1,4 +1,4 @@
-#include "common_args.h"
+#include "common_ocl.h"
 
 ocd_options _settings = {0, 0, 0};
 ocd_requirements _requirements = {0,0,0};
@@ -206,3 +206,79 @@ void ocd_finalize()
 	TIMER_FINISH;
 	#endif
 }
+<<<<<<< HEAD:include/common_args.c
+=======
+
+void ocd_print_device_info(cl_device_id device)
+{
+	cl_int err;
+	cl_uint int_val;
+	cl_bool bool_val;
+	cl_ulong long_val;
+	char char_array[256];
+	size_t ret_size,size_val;
+	cl_platform_id platform_val;
+	cl_device_type devtype_val;
+
+	err = clGetDeviceInfo(device,CL_DEVICE_NAME,sizeof(char)*256,char_array,&ret_size);
+	check(err == CL_SUCCESS,"Error Querying Device Name");
+	printf("Device %d: Name=%s\n",device,char_array);
+
+	err = clGetDeviceInfo(device,CL_DEVICE_PLATFORM,sizeof(cl_platform_id),&platform_val,&ret_size);
+	check(err == CL_SUCCESS,"Error Querying Device Platform ID");
+	printf("Device %d: Platform=%d\n",device,platform_val);
+
+	err = clGetDeviceInfo(device,CL_DEVICE_TYPE,sizeof(cl_device_type),&devtype_val,&ret_size);
+	check(err == CL_SUCCESS,"Error Querying Device Type");
+	printf("Device %d: Type=%d\n",device,devtype_val);
+
+	err = clGetDeviceInfo(device,CL_DEVICE_VENDOR,sizeof(char)*256,&char_array,&ret_size);
+	check(err == CL_SUCCESS,"Error Querying Device Vendor");
+	printf("Device %d: Vendor=%s\n",device,char_array);
+
+	err = clGetDeviceInfo(device,CL_DEVICE_VENDOR_ID,sizeof(cl_uint),&int_val,&ret_size);
+	check(err == CL_SUCCESS,"Error Querying Device Vendor ID");
+	printf("Device %d: Vendor ID=%d\n",device,int_val);
+
+	err = clGetDeviceInfo(device,CL_DEVICE_VERSION,sizeof(char)*256,&char_array,&ret_size);
+	check(err == CL_SUCCESS,"Error Querying Device Version");
+	printf("Device %d: Version=%s\n",device,char_array);
+
+	err = clGetDeviceInfo(device,CL_DEVICE_AVAILABLE,sizeof(cl_bool),&bool_val,&ret_size);
+	check(err == CL_SUCCESS,"Error Querying Device Availability");
+	printf("Device %d: Available=%d\n",device,bool_val);
+
+	err = clGetDeviceInfo(device,CL_DEVICE_ENDIAN_LITTLE,sizeof(cl_bool),&bool_val,&ret_size);
+	check(err == CL_SUCCESS,"Error Querying Device Endianness");
+	printf("Device %d: Little Endian=%d\n",device,bool_val);
+
+	err = clGetDeviceInfo(device,CL_DEVICE_GLOBAL_MEM_SIZE,sizeof(cl_ulong),&long_val,&ret_size);
+	check(err == CL_SUCCESS,"Error Querying Device Global Mem Size");
+	printf("Device %d: Global Mem Size =%u\n",device,long_val);
+
+	err = clGetDeviceInfo(device,CL_DEVICE_LOCAL_MEM_SIZE,sizeof(cl_ulong),&long_val,&ret_size);
+	check(err == CL_SUCCESS,"Error Querying Device Local Mem Size");
+	printf("Device %d: Local Mem Size=%u\n",device,long_val);
+
+	err = clGetDeviceInfo(device,CL_DEVICE_MAX_CLOCK_FREQUENCY,sizeof(cl_uint),&int_val,&ret_size);
+	check(err == CL_SUCCESS,"Error Querying Device Max Clock Frequency");
+	printf("Device %d: Max Clock Frequency=%u\n",device,int_val);
+
+	err = clGetDeviceInfo(device,CL_DEVICE_MAX_COMPUTE_UNITS,sizeof(cl_uint),&int_val,&ret_size);
+	check(err == CL_SUCCESS,"Error Querying Device Max Compute Units");
+	printf("Device %d: Max Compute Units=%u\n",device,int_val);
+
+	err = clGetDeviceInfo(device,CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE,sizeof(cl_ulong),&long_val,&ret_size);
+	check(err == CL_SUCCESS,"Error Querying Device Max Constant Buffer Size");
+	printf("Device %d: Max Constant Buffer Size=%u\n",device,long_val);
+
+	err = clGetDeviceInfo(device,CL_DEVICE_MAX_MEM_ALLOC_SIZE,sizeof(cl_ulong),&long_val,&ret_size);
+	check(err == CL_SUCCESS,"Error Querying Device Max Mem Alloc Size");
+	printf("Device %d: Max Mem Alloc Size=%u\n",device,long_val);
+
+	err = clGetDeviceInfo(device,CL_DEVICE_MAX_WORK_GROUP_SIZE,sizeof(size_t),&size_val,&ret_size);
+	check(err == CL_SUCCESS,"Error Querying Device Max Work Group Size");
+	printf("Device %d: Max Work Group Size=%d\n",device,size_val);
+
+}
+>>>>>>> split include/common_args.x into include/common_ocl.x and:include/common_ocl.c

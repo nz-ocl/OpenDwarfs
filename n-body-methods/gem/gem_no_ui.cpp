@@ -11,7 +11,7 @@
 #include "partitioned_open.h"
 #include "gem.h"
 
-#include <include/common_args.h>
+#include <include/common_ocl.h>
 
 using namespace std;
 extern int platform_id, device_id;

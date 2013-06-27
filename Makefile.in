@@ -256,7 +256,8 @@ am__astar_SOURCES_DIST = branch-and-bound/astar/astar.c
 @build_astar_TRUE@	branch-and-bound/astar/astar.$(OBJEXT)
 astar_OBJECTS = $(am_astar_OBJECTS)
 astar_LDADD = $(LDADD)
-astar_DEPENDENCIES = include/common_args.o include/rdtsc.o libopts.a
+astar_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
+	include/common_util.o
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
@@ -269,7 +270,8 @@ am__cfd_SOURCES_DIST = unstructured-grids/cfd/cfd.cpp
 @build_cfd_TRUE@am_cfd_OBJECTS = unstructured-grids/cfd/cfd.$(OBJEXT)
 cfd_OBJECTS = $(am_cfd_OBJECTS)
 cfd_LDADD = $(LDADD)
-cfd_DEPENDENCIES = include/common_args.o include/rdtsc.o libopts.a
+cfd_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
+	include/common_util.o
 am__clfft_SOURCES_DIST = spectral-methods/fft/src/opencl/fft/fft.cpp \
 	spectral-methods/fft/src/opencl/fft/fftlib.cpp \
 	spectral-methods/fft/src/opencl/common/main.cpp \
@@ -296,22 +298,34 @@ am__clfft_SOURCES_DIST = spectral-methods/fft/src/opencl/fft/fft.cpp \
 @build_fft_TRUE@	spectral-methods/fft/src/common/clfft-InvalidArgValue.$(OBJEXT)
 clfft_OBJECTS = $(am_clfft_OBJECTS)
 clfft_LDADD = $(LDADD)
-clfft_DEPENDENCIES = include/common_args.o include/rdtsc.o libopts.a
+clfft_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
+	include/common_util.o
 am__crc_SOURCES_DIST = combinational-logic/crc/crc_algo.c
 @build_crc_TRUE@am_crc_OBJECTS =  \
 @build_crc_TRUE@	combinational-logic/crc/crc_algo.$(OBJEXT)
 crc_OBJECTS = $(am_crc_OBJECTS)
 crc_LDADD = $(LDADD)
-crc_DEPENDENCIES = include/common_args.o include/rdtsc.o libopts.a
+crc_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
+	include/common_util.o
 crc_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(crc_LDFLAGS) $(LDFLAGS) -o $@
+<<<<<<< HEAD
 am__csr_SOURCES_DIST = sparse-linear-algebra/SPMV/csr.c
+=======
+am__createcsr_SOURCES_DIST =  \
+	sparse-linear-algebra/SPMV/test-src/createcsr.c
+@build_csr_TRUE@am_createcsr_OBJECTS = sparse-linear-algebra/SPMV/test-src/createcsr.$(OBJEXT)
+createcsr_OBJECTS = $(am_createcsr_OBJECTS)
+@build_csr_TRUE@createcsr_DEPENDENCIES = include/common_util.o
+am__csr_SOURCES_DIST = sparse-linear-algebra/SPMV/src/csr.c
+>>>>>>> split include/common_args.x into include/common_ocl.x and
 @build_csr_TRUE@am_csr_OBJECTS =  \
 @build_csr_TRUE@	sparse-linear-algebra/SPMV/csr.$(OBJEXT)
 csr_OBJECTS = $(am_csr_OBJECTS)
 csr_LDADD = $(LDADD)
-csr_DEPENDENCIES = include/common_args.o include/rdtsc.o libopts.a
+csr_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
+	include/common_util.o
 am__gemnoui_SOURCES_DIST = n-body-methods/gem/dump_vertices.c \
 	n-body-methods/gem/floating_centers.c \
 	n-body-methods/gem/radix_sort.c n-body-methods/gem/read_pqr.c \
@@ -345,7 +359,8 @@ am__gemnoui_SOURCES_DIST = n-body-methods/gem/dump_vertices.c \
 @build_gem_TRUE@	n-body-methods/gem/gemnoui-open_pqr_run_msms.$(OBJEXT)
 gemnoui_OBJECTS = $(am_gemnoui_OBJECTS)
 gemnoui_LDADD = $(LDADD)
-gemnoui_DEPENDENCIES = include/common_args.o include/rdtsc.o libopts.a
+gemnoui_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
+	include/common_util.o
 am__kmeans_SOURCES_DIST = dense-linear-algebra/kmeans/kmeans.c \
 	dense-linear-algebra/kmeans/cluster.c \
 	dense-linear-algebra/kmeans/getopt.c \
@@ -360,7 +375,8 @@ am__kmeans_SOURCES_DIST = dense-linear-algebra/kmeans/kmeans.c \
 @build_kmeans_TRUE@	dense-linear-algebra/kmeans/rmse.$(OBJEXT)
 kmeans_OBJECTS = $(am_kmeans_OBJECTS)
 kmeans_LDADD = $(LDADD)
-kmeans_DEPENDENCIES = include/common_args.o include/rdtsc.o libopts.a
+kmeans_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
+	include/common_util.o
 am__lud_SOURCES_DIST = dense-linear-algebra/lud/lud.c \
 	dense-linear-algebra/lud/common.c
 @build_lud_TRUE@am_lud_OBJECTS =  \
@@ -368,28 +384,34 @@ am__lud_SOURCES_DIST = dense-linear-algebra/lud/lud.c \
 @build_lud_TRUE@	dense-linear-algebra/lud/common.$(OBJEXT)
 lud_OBJECTS = $(am_lud_OBJECTS)
 lud_LDADD = $(LDADD)
-lud_DEPENDENCIES = include/common_args.o include/rdtsc.o libopts.a
+lud_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
+	include/common_util.o
 am__needle_SOURCES_DIST = dynamic-programming/nw/needle.c
 @build_nw_TRUE@am_needle_OBJECTS =  \
 @build_nw_TRUE@	dynamic-programming/nw/needle.$(OBJEXT)
 needle_OBJECTS = $(am_needle_OBJECTS)
 needle_LDADD = $(LDADD)
-needle_DEPENDENCIES = include/common_args.o include/rdtsc.o libopts.a
-am_ocd_OBJECTS = include/common_args.$(OBJEXT) include/rdtsc.$(OBJEXT)
+needle_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
+	include/common_util.o
+am_ocd_OBJECTS = include/common_ocl.$(OBJEXT) include/rdtsc.$(OBJEXT) \
+	include/common_util.$(OBJEXT)
 ocd_OBJECTS = $(am_ocd_OBJECTS)
 ocd_LDADD = $(LDADD)
-ocd_DEPENDENCIES = include/common_args.o include/rdtsc.o libopts.a
+ocd_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
+	include/common_util.o
 am__scl_SOURCES_DIST = samplecl/samplecl.c
 @build_samplecl_TRUE@am_scl_OBJECTS = samplecl/samplecl.$(OBJEXT)
 scl_OBJECTS = $(am_scl_OBJECTS)
 scl_LDADD = $(LDADD)
-scl_DEPENDENCIES = include/common_args.o include/rdtsc.o libopts.a
+scl_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
+	include/common_util.o
 am__srad_SOURCES_DIST = structured-grids/srad/srad.c
 @build_srad_TRUE@am_srad_OBJECTS =  \
 @build_srad_TRUE@	structured-grids/srad/srad.$(OBJEXT)
 srad_OBJECTS = $(am_srad_OBJECTS)
 srad_LDADD = $(LDADD)
-srad_DEPENDENCIES = include/common_args.o include/rdtsc.o libopts.a
+srad_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
+	include/common_util.o
 srad_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(srad_LDFLAGS) $(LDFLAGS) -o $@
@@ -407,13 +429,15 @@ am__swat_SOURCES_DIST = dynamic-programming/swat/alignments.cpp \
 @build_swat_TRUE@	dynamic-programming/swat/timeRec.$(OBJEXT)
 swat_OBJECTS = $(am_swat_OBJECTS)
 swat_LDADD = $(LDADD)
-swat_DEPENDENCIES = include/common_args.o include/rdtsc.o libopts.a
+swat_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
+	include/common_util.o
 am__tdm_SOURCES_DIST =  \
 	finite-state-machine/tdm/GpuTemporalDataMining.cpp
 @build_tdm_TRUE@am_tdm_OBJECTS = finite-state-machine/tdm/GpuTemporalDataMining.$(OBJEXT)
 tdm_OBJECTS = $(am_tdm_OBJECTS)
 tdm_LDADD = $(LDADD)
-tdm_DEPENDENCIES = include/common_args.o include/rdtsc.o libopts.a
+tdm_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
+	include/common_util.o
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/m4/depcomp
 am__depfiles_maybe = depfiles
@@ -609,11 +633,11 @@ exec_local = $(am__append_3) $(am__append_6) $(am__append_9) \
 	$(am__append_21) $(am__append_24) $(am__append_27) \
 	$(am__append_30) $(am__append_33) $(am__append_36) \
 	$(am__append_39) $(am__append_42)
-ocd_SOURCES = include/common_args.c include/rdtsc.c
+ocd_SOURCES = include/common_ocl.c include/rdtsc.c include/common_util.c 
 ocd_LINK = true
 noinst_LIBRARIES = libopts.a
 libopts_a_SOURCES = opts/opts.c 
-LDADD = include/common_args.o include/rdtsc.o libopts.a
+LDADD = include/common_ocl.o include/rdtsc.o libopts.a include/common_util.o
 @build_gem_TRUE@gemnoui_SOURCES = n-body-methods/gem/dump_vertices.c n-body-methods/gem/floating_centers.c \
 @build_gem_TRUE@	n-body-methods/gem/radix_sort.c n-body-methods/gem/read_pqr.c \
 @build_gem_TRUE@	n-body-methods/gem/vector_math.c n-body-methods/gem/write_grid.c \
@@ -645,7 +669,14 @@ LDADD = include/common_args.o include/rdtsc.o libopts.a
 @build_samplecl_TRUE@scl_SOURCES = samplecl/samplecl.c
 @build_fft_TRUE@clfft_SOURCES = spectral-methods/fft/src/opencl/fft/fft.cpp spectral-methods/fft/src/opencl/fft/fftlib.cpp spectral-methods/fft/src/opencl/common/main.cpp spectral-methods/fft/src/opencl/common/Event.cpp spectral-methods/fft/src/opencl/common/OpenCLDeviceInfo.cpp spectral-methods/fft/src/opencl/common/OpenCLNodePlatformContainer.cpp spectral-methods/fft/src/opencl/common/OpenCLPlatform.cpp spectral-methods/fft/src/common/OptionParser.cpp spectral-methods/fft/src/common/ResultDatabase.cpp spectral-methods/fft/src/common/Timer.cpp spectral-methods/fft/src/common/Option.cpp spectral-methods/fft/src/common/InvalidArgValue.cpp 
 @build_fft_TRUE@clfft_CPPFLAGS = -I$(top_srcdir)/spectral-methods/fft/src/common -I$(top_srcdir)/spectral-methods/fft/src/opencl/common
+<<<<<<< HEAD
 @build_csr_TRUE@csr_SOURCES = sparse-linear-algebra/SPMV/csr.c
+=======
+@build_csr_TRUE@csr_SOURCES = sparse-linear-algebra/SPMV/src/csr.c
+@build_csr_TRUE@createcsr_SOURCES = sparse-linear-algebra/SPMV/test-src/createcsr.c 
+@build_csr_TRUE@createcsr_LDADD = include/common_util.o
+@build_csr_TRUE@createcsr_LINK = $(CCLD) -lm -o $@
+>>>>>>> split include/common_args.x into include/common_ocl.x and
 @build_crc_TRUE@crc_LDFLAGS = -lm
 @build_crc_TRUE@crc_SOURCES = combinational-logic/crc/crc_algo.c
 @build_cfd_TRUE@cfd_SOURCES = unstructured-grids/cfd/cfd.cpp
@@ -1003,9 +1034,11 @@ include/$(am__dirstamp):
 include/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) include/$(DEPDIR)
 	@: > include/$(DEPDIR)/$(am__dirstamp)
-include/common_args.$(OBJEXT): include/$(am__dirstamp) \
+include/common_ocl.$(OBJEXT): include/$(am__dirstamp) \
 	include/$(DEPDIR)/$(am__dirstamp)
 include/rdtsc.$(OBJEXT): include/$(am__dirstamp) \
+	include/$(DEPDIR)/$(am__dirstamp)
+include/common_util.$(OBJEXT): include/$(am__dirstamp) \
 	include/$(DEPDIR)/$(am__dirstamp)
 ocd$(EXEEXT): $(ocd_OBJECTS) $(ocd_DEPENDENCIES) 
 	@rm -f ocd$(EXEEXT)
@@ -1094,7 +1127,8 @@ mostlyclean-compile:
 	-rm -f dynamic-programming/swat/timeRec.$(OBJEXT)
 	-rm -f finite-state-machine/tdm/GpuTemporalDataMining.$(OBJEXT)
 	-rm -f graph-traversal/bfs/bfs.$(OBJEXT)
-	-rm -f include/common_args.$(OBJEXT)
+	-rm -f include/common_ocl.$(OBJEXT)
+	-rm -f include/common_util.$(OBJEXT)
 	-rm -f include/rdtsc.$(OBJEXT)
 	-rm -f n-body-methods/gem/gemnoui-calculate_potential.$(OBJEXT)
 	-rm -f n-body-methods/gem/gemnoui-check_cmdline.$(OBJEXT)
@@ -1153,7 +1187,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@dynamic-programming/swat/$(DEPDIR)/timeRec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@finite-state-machine/tdm/$(DEPDIR)/GpuTemporalDataMining.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@graph-traversal/bfs/$(DEPDIR)/bfs.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@include/$(DEPDIR)/common_args.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@include/$(DEPDIR)/common_ocl.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@include/$(DEPDIR)/common_util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@include/$(DEPDIR)/rdtsc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@n-body-methods/gem/$(DEPDIR)/gemnoui-calculate_potential.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@n-body-methods/gem/$(DEPDIR)/gemnoui-check_cmdline.Po@am__quote@

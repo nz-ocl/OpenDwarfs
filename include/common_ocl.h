@@ -14,8 +14,10 @@ extern "C" {
 #include <OpenCL/opencl.h>
 #endif
 #include <string.h>
-#include "rdtsc.h"
 #include <stdio.h>
+
+#include "rdtsc.h"
+#include "common_util.h"
 
 #define USEGPU 1
 
@@ -50,6 +52,7 @@ extern int ocd_register_arg(int type, char abbr, char* name, char* desc, void* v
 extern void ocd_usage();
 extern void ocd_init(int* argc, char*** argv, ocd_requirements* reqs);
 extern void ocd_finalize();
+extern void ocd_print_device_info();
 
 #ifdef __cplusplus
 }

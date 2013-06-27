@@ -4,7 +4,7 @@
 #include <math.h>
 #include <assert.h>
 #include "../../include/rdtsc.h"
-#include "../../include/common_args.h"
+#include "../../include/common_ocl.h"
 
 #include <omp.h>
 

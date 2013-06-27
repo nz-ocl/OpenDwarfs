@@ -7,7 +7,7 @@
 #include <CL/cl.h>
 #endif
 #include "../../include/rdtsc.h"
-#include "../../include/common_args.h"
+#include "../../include/common_ocl.h"
 
 /*************************************************************
  **************** Version 1 **********************************

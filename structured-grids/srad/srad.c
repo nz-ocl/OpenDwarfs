@@ -8,7 +8,7 @@
 
 int  BLOCK_SIZE = 16;
 #include "../../include/rdtsc.h"
-#include "../../include/common_args.h"
+#include "../../include/common_ocl.h"
 int platform_id = PLATFORM_ID, device_id = DEVICE_ID;
 // includes, project
 

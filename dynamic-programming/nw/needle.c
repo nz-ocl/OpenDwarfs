@@ -6,7 +6,7 @@
 #include "needle.h"
 #include <sys/time.h>
 #include "../../include/rdtsc.h"
-#include "../../include/common_args.h"
+#include "../../include/common_ocl.h"
 
 #define CHECKERR(err) \
     if (err != CL_SUCCESS) \

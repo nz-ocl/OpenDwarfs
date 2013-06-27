@@ -11,7 +11,7 @@
 #include <string.h>
 #include <math.h>
 #include "../../include/rdtsc.h"
-#include "../../include/common_args.h"
+#include "../../include/common_ocl.h"
 
 #include <utility>
 #define __NO_STD_VECTOR // Use cl::vector and cl::string and 
