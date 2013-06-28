@@ -14,9 +14,10 @@
 static struct option long_options[] = {
       /* name, has_arg, flag, val */
       {"cpu", 0, NULL, 'c'},
+      {"fpga",0, NULL, 'f'},
       {"device", 1, NULL, 'd'},
       {"verbose", 0, NULL, 'v'},
-      {"csr_file",1,NULL,'f'},
+      {"input_file",1,NULL,'i'},
       {"print",0,NULL,'p'},
       {"affirm",0,NULL,'a'},
       {"repeat",1,NULL,'r'},
@@ -63,15 +64,16 @@ void spmv_csr_cpu(const csr_matrix* csr,const float* x,const float* y,float* out
 int main(int argc, char** argv)
 {
 	cl_int err;
-	int usegpu = USEGPU,num_wg,be_verbose = 0,do_print=0,do_affirm=0,opt, option_index=0;
+	int usegpu = USEGPU,num_wg,be_verbose = 0,do_print=0,do_affirm=0,opt, option_index=0,use_fpga=0;
     unsigned long density_ppm = 500000;
     unsigned int N = 512,num_execs=1,i,ii,j;
     char* file_path = NULL;
 
-    const char* usage = "Usage: %s -f <file_path> [-v] [-c] [-p] [-a] [-r <num_execs>]\n\n \
-    		-f: Read CSR Matrix from file <file_path>\n \
+    const char* usage = "Usage: %s -i <file_path> [-v] [-c] [-f] [-p] [-a] [-r <num_execs>]\n\n \
+    		-i: Read CSR Matrix from file <file_path>\n \
     		-v: Be Verbose \n \
     		-c: use CPU\n \
+    		-f: use FPGA\n \
     		-p: Print matrices to stdout in standard (2-D Array) format - Warning: lots of output\n \
     		-a: Affirm results with serial C code on CPU\n \
     		-r: Execute program with same data exactly <num_execs> times to increase sample size - Default is 1\n\n";
@@ -95,7 +97,7 @@ int main(int argc, char** argv)
     platform_id = opts.platform_id;
     n_device = opts.device_id;
 
-    while ((opt = getopt_long(argc, argv, "::vcf:par:::", long_options, &option_index)) != -1 )
+    while ((opt = getopt_long(argc, argv, "::vcfi:par:::", long_options, &option_index)) != -1 )
     {
     	switch(opt)
 		{
@@ -108,6 +110,10 @@ int main(int argc, char** argv)
 				usegpu = 0;
 				break;
 			case 'f':
+				printf("using FPGA\n");
+				use_fpga = 1;
+				break;
+			case 'i':
 				if(optarg != NULL)
 					file_path = optarg;
 				else
