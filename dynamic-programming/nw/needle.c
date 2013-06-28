@@ -178,7 +178,7 @@ void runTest( int argc, char** argv)
     char *kernelSource;
     size_t kernelLength;
 	
-    clDevice = GetDevice(platform_id, n_device,USEGPU);
+    clDevice = GetDevice(platform_id, n_device,USEGPU ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU);
   
  
     clContext = clCreateContext(NULL, 1, &clDevice, NULL, NULL, &errcode);

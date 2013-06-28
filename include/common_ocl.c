@@ -277,5 +277,59 @@ void ocd_print_device_info(cl_device_id device)
 	err = clGetDeviceInfo(device,CL_DEVICE_MAX_WORK_GROUP_SIZE,sizeof(size_t),&size_val,&ret_size);
 	check(err == CL_SUCCESS,"Error Querying Device Max Work Group Size");
 	printf("Device %d: Max Work Group Size=%d\n",device,size_val);
+}
 
+cl_device_id GetDevice(int platform, int device, cl_int dev_type)
+{
+    cl_int err;
+    cl_uint nPlatforms = 1;
+    err = clGetPlatformIDs(0, NULL, &nPlatforms);
+    CHECK_ERROR(err);
+
+    if (nPlatforms <= 0) {
+        printf("No OpenCL platforms found. Exiting.\n");
+        exit(0);
+    }
+    if (platform < 0 || platform >= nPlatforms) // platform ID out of range
+    {
+        printf("Platform index %d is out of range. \n", platform);
+        exit(-4);
+    }
+    cl_platform_id *platforms = (cl_platform_id *) malloc(sizeof (cl_platform_id) * nPlatforms);
+    err = clGetPlatformIDs(nPlatforms, platforms, NULL);
+    CHECK_ERROR(err);
+
+    cl_uint nDevices = 1;
+    char platformName[100];
+    err = clGetPlatformInfo(platforms[0], CL_PLATFORM_VENDOR, sizeof (platformName), platformName, NULL);
+    CHECK_ERROR(err);
+    printf("Platform Chosen : %s\n", platformName);
+
+    // query devices
+	err = clGetDeviceIDs(platforms[platform], dev_type, 0, NULL, &nDevices);
+	if(err == CL_DEVICE_NOT_FOUND)
+	{
+		fprintf(stderr,"No Supported Device Found of Type %d. Falling back to CPU.\n",dev_type);
+		dev_type = CL_DEVICE_TYPE_CPU;
+		err = clGetDeviceIDs(platforms[platform], dev_type, 0, NULL, &nDevices);
+	}
+	CHECK_ERROR(err);
+
+    if (nDevices <= 0) {
+        printf("No OpenCL Device found. Exiting.\n");
+        exit(0);
+    }
+    if (device < 0 || device >= nDevices) // platform ID out of range
+    {
+        printf("Device index %d is out of range. \n", device);
+        exit(-4);
+    }
+    cl_device_id* devices = (cl_device_id *) malloc(sizeof (cl_device_id) * nDevices);
+    err = clGetDeviceIDs(platforms[platform], dev_type, nDevices, devices, NULL);
+    char DeviceName[100];
+    err = clGetDeviceInfo(devices[device], CL_DEVICE_NAME, sizeof (DeviceName), DeviceName, NULL);
+    CHECK_ERROR(err);
+    printf("Device Chosen : %s\n", DeviceName);
+
+    return devices[device];
 }

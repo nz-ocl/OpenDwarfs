@@ -52,7 +52,7 @@ void initGpu()
     /////////////////////////////////////////////////////////////
     // Basic OpenCL Setup
 
-   device_id = GetDevice(platform_id, n_device,USEGPU);
+   device_id = GetDevice(platform_id, n_device,USEGPU ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU);
  
 
     // Create a compute context

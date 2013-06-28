@@ -61,6 +61,7 @@ extern void ocd_usage();
 extern void ocd_init(int* argc, char*** argv, ocd_requirements* reqs);
 extern void ocd_finalize();
 extern void ocd_print_device_info();
+extern cl_device_id GetDevice(int platform, int device, cl_int dev_type);
 
 #ifdef __cplusplus
 }

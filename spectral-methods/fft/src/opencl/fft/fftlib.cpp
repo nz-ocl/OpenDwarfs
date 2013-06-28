@@ -332,7 +332,7 @@ init(OptionParser& op, bool _do_dp, int fftn)
 #ifndef ENABLE_TIMER
 		fftDev = GetDevice(platform, device);
 #else
-		fftDev = GetDevice(PLATFORM_ID, DEVICE_ID, USEGPU);
+		fftDev = GetDevice(PLATFORM_ID, DEVICE_ID, USEGPU ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU);
 #endif 
 		fftCtx = clCreateContext(NULL, 1, &fftDev, NULL, NULL, &err);
 		CL_CHECK_ERROR(err);

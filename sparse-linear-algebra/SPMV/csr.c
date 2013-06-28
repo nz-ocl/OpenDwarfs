@@ -113,7 +113,7 @@ int main(int argc, char** argv)
 	printf("input generated.\n");
 
     /* Retrieve an OpenCL platform */
-    device_id = GetDevice(platform_id, n_device,usegpu);
+    device_id = GetDevice(platform_id, n_device,usegpu ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU);
 
     if(do_verify)
       printf("platform ID retrieved.\n");
