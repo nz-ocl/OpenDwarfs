@@ -64,7 +64,7 @@ void spmv_csr_cpu(const csr_matrix* csr,const float* x,const float* y,float* out
 int main(int argc, char** argv)
 {
 	cl_int err;
-	int usegpu = USEGPU,num_wg,be_verbose = 0,do_print=0,do_affirm=0,opt, option_index=0,use_fpga=0;
+	int num_wg,be_verbose = 0,do_print=0,do_affirm=0,opt, option_index=0;
     unsigned long density_ppm = 500000;
     unsigned int N = 512,num_execs=1,i,ii,j;
     char* file_path = NULL;
@@ -78,9 +78,10 @@ int main(int argc, char** argv)
     		-a: Affirm results with serial C code on CPU\n \
     		-r: Execute program with same data exactly <num_execs> times to increase sample size - Default is 1\n\n";
 
-    size_t global_size,local_size,kernelLength,lengthRead;
+    size_t global_size,local_size,kernelLength,items_read;
 
     cl_device_id device_id;
+    cl_int dev_type;
     cl_context context;
     cl_command_queue commands;
     cl_program program;
@@ -89,13 +90,19 @@ int main(int argc, char** argv)
     cl_mem csr_ap,csr_aj,csr_ax,x_loc,y_loc;
 
     FILE *kernelFile;
-    char *kernelSource;
+    char *kernelSource,*kernelFile_name,*kernelFile_mode;
 
     ocd_parse(&argc, &argv);
 	ocd_check_requirements(NULL);
     ocd_options opts = ocd_get_options();
     platform_id = opts.platform_id;
     n_device = opts.device_id;
+
+	#ifdef USEGPU
+    	 dev_type = CL_DEVICE_TYPE_GPU;
+	#else
+    	dev_type = CL_DEVICE_TYPE_CPU;
+	#endif
 
     while ((opt = getopt_long(argc, argv, "::vcfi:par:::", long_options, &option_index)) != -1 )
     {
@@ -107,11 +114,11 @@ int main(int argc, char** argv)
     			break;
 			case 'c':
 				printf("using cpu\n");
-				usegpu = 0;
+				dev_type = CL_DEVICE_TYPE_CPU;
 				break;
 			case 'f':
 				printf("using FPGA\n");
-				use_fpga = 1;
+				dev_type = CL_DEVICE_TYPE_ACCELERATOR;
 				break;
 			case 'i':
 				if(optarg != NULL)
@@ -141,7 +148,7 @@ int main(int argc, char** argv)
 
     if(!file_path)
 	{
-    	fprintf(stderr,"-f Option must be supplied\n\n",opt);
+    	fprintf(stderr,"-i Option must be supplied\n\n",opt);
 		fprintf(stderr, usage,argv[0]);
 		exit(EXIT_FAILURE);
 	}
@@ -149,11 +156,12 @@ int main(int argc, char** argv)
     read_csr(&csr,file_path);
 
     if(do_print) print_csr_std(&csr,stdout);
+    else if(be_verbose) print_csr_metadata(&csr,stdout);
 
     //The other inputs
     float * x_host = float_new_array(csr.num_cols);
     float * y_host = float_new_array(csr.num_rows);
-   for(ii = 0; ii < csr.num_cols; ii++)
+    for(ii = 0; ii < csr.num_cols; ii++)
     {
         x_host[ii] = rand() / (RAND_MAX + 1.0);
         if(do_print) printf("x[%d] = %6.2f\n",ii,x_host[ii]);
@@ -179,7 +187,7 @@ int main(int argc, char** argv)
 	}
 
     /* Retrieve an OpenCL platform */
-    device_id = GetDevice(platform_id, n_device,usegpu ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU);
+    device_id = GetDevice(platform_id, n_device,dev_type);
 
     if(be_verbose) ocd_print_device_info(device_id);
 
@@ -192,22 +200,36 @@ int main(int argc, char** argv)
     CHKERR(err, "Failed to create a command queue!");
 
     /* Load kernel source */
-    kernelFile = fopen("spmv_csr_kernel.cl", "r");
-    check(kernelFile != NULL,"Cannot open file spmv_csr_kernel.cl");
-    fseek(kernelFile, 0, SEEK_END);
-    if(be_verbose) printf("Seeked to kernel end.\n");
-    kernelLength = (size_t) ftell(kernelFile);
-    if(be_verbose) printf("Kernel Source Read.\n");
-    kernelSource = (char *) malloc(sizeof(char)*kernelLength);
-    check(kernelSource != NULL,"csr.main() - Heap Overflow! Cannot allocate space for kernelSource.");
-    rewind(kernelFile);
-    lengthRead = fread((void *) kernelSource, kernelLength, 1, kernelFile);
-    fclose(kernelFile);
-    if(be_verbose) printf("kernel source loaded.\n");
+    if(dev_type != CL_DEVICE_TYPE_ACCELERATOR) //CPU or GPU
+    {
+    	kernelFile_name = "spmv_csr_kernel.cl";
+    	kernelFile_mode = "r";
+    }
+    else //Altera FPGA
+    {
+    	kernelFile_name = "spmv_csr_kernel.aocx";
+    	kernelFile_mode = "rb";
+    }
+
+	kernelFile = fopen(kernelFile_name, kernelFile_mode);
+	check(kernelFile != NULL,"Cannot open file spmv_csr_kernel.cl");
+	fseek(kernelFile, 0, SEEK_END);
+	kernelLength = (size_t) ftell(kernelFile);
+	kernelSource = (char *) malloc(sizeof(char)*kernelLength);
+	check(kernelSource != NULL,"csr.main() - Heap Overflow! Cannot allocate space for kernelSource.");
+	rewind(kernelFile);
+	items_read = fread((void *) kernelSource, kernelLength, 1, kernelFile);
+	check(items_read == 1,"csr.main() - Error reading from kernelFile");
+	fclose(kernelFile);
+
+	if(be_verbose) printf("kernel source loaded.\n");
 
     /* Create the compute program from the source buffer */
-    program = clCreateProgramWithSource(context, 1, (const char **) &kernelSource, &kernelLength, &err);
-    CHKERR(err, "Failed to create a compute program!");
+    if(dev_type == CL_DEVICE_TYPE_ACCELERATOR) //use Altera FPGA
+    	program = clCreateProgramWithBinary(context,1,&device_id,&kernelLength,(const unsigned char**)&kernelSource,NULL,&err);
+    else //CPU or GPU
+		program = clCreateProgramWithSource(context, 1, (const char **) &kernelSource, &kernelLength, &err);
+	CHKERR(err, "Failed to create a compute program!");
 
     free(kernelSource); /* Free kernel source */
 
