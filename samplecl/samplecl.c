@@ -19,13 +19,12 @@
 
 #define EPSILON 0.0001
 
-#define USEGPU 1
 #define DATA_SIZE 1048576
 
 int main(int argc, char** argv)
 {
 	ocd_init(&argc, &argv, NULL);
-	cl_int err;
+	cl_int err,dev_type;
     float *input = (float*)malloc(DATA_SIZE*sizeof(float));
     float *output = (float*)malloc(DATA_SIZE*sizeof(float));
     unsigned int correct;
@@ -58,7 +57,16 @@ int main(int argc, char** argv)
 	int n_platform_id = opts.platform_id;
 	int n_device_id = opts.device_id;
 
-	device_id = GetDevice(n_platform_id, n_device_id,USEGPU ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU);
+
+	#ifdef USEGPU
+		 dev_type = CL_DEVICE_TYPE_GPU;
+	#elif defined(USE_AFPGA)
+		 dev_type = CL_DEVICE_TYPE_ACCELERATOR;
+	#else
+		dev_type = CL_DEVICE_TYPE_CPU;
+	#endif
+
+	device_id = GetDevice(n_platform_id, n_device_id,dev_type);
     /* Create a compute context */
     context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
     CHKERR(err, "Failed to create a compute context!");

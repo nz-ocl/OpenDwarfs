@@ -74,8 +74,17 @@ int ocd_parse(int* argc, char*** argv)
 
 cl_device_id _ocd_get_device(int platform, int device)
 {
-	cl_int err;
+	cl_int err,dev_type;
 	cl_uint nPlatforms = 1;
+
+	#ifdef USE_AFPGA
+	dev_type = CL_DEVICE_TYPE_ACCELERATOR;
+	#elif defined(USEGPU)
+	dev_type = CL_DEVICE_TYPE_GPU;
+	#else
+	dev_type = CL_DEVICE_TYPE_CPU;
+	#endif
+
 	err = clGetPlatformIDs(0, NULL, &nPlatforms);
 	CHECK_ERROR(err);
 
@@ -99,7 +108,7 @@ cl_device_id _ocd_get_device(int platform, int device)
 	CHECK_ERROR(err);
 	printf("Platform Chosen : %s\n", platformName);
 	// query devices
-	err = clGetDeviceIDs(platforms[platform], USEGPU ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU, 0, NULL, &nDevices);
+	err = clGetDeviceIDs(platforms[platform], dev_type, 0, NULL, &nDevices);
 	CHECK_ERROR(err);
 	if (nDevices <= 0)
 	{
@@ -112,7 +121,7 @@ cl_device_id _ocd_get_device(int platform, int device)
 		exit(-4);
 	}
 	cl_device_id* devices = (cl_device_id *) malloc (sizeof(cl_device_id) * nDevices);
-	err = clGetDeviceIDs(platforms[platform], USEGPU ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU, nDevices, devices, NULL);
+	err = clGetDeviceIDs(platforms[platform], dev_type, nDevices, devices, NULL);
 	char DeviceName[100];
 	err = clGetDeviceInfo(devices[device], CL_DEVICE_NAME, sizeof(DeviceName), DeviceName, NULL);
 	CHECK_ERROR(err);
@@ -123,14 +132,24 @@ cl_device_id _ocd_get_device(int platform, int device)
 
 int ocd_check_requirements(ocd_requirements* reqs)
 {
+	cl_int dev_type;
+
 	if(reqs == NULL)
 		return 1;
 
 	int pass = 1;
 
+	#ifdef USE_AFPGA
+	dev_type = CL_DEVICE_TYPE_ACCELERATOR;
+	#elif defined(USEGPU)
+	dev_type = CL_DEVICE_TYPE_GPU;
+	#else
+	dev_type = CL_DEVICE_TYPE_CPU;
+	#endif
+
 	ocd_options opts = ocd_get_options();
 //	cl_device_id d_id = _ocd_get_device(opts.platform_id, opts.device_id);
-	cl_device_id d_id = GetDevice(opts.platform_id, opts.device_id,USEGPU);
+	cl_device_id d_id = GetDevice(opts.platform_id, opts.device_id,dev_type);
 
 	cl_ulong local_mem;
 	clGetDeviceInfo(d_id, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(cl_ulong), &local_mem, NULL);

@@ -229,7 +229,7 @@ getGlobalRadix(int n, int *radix, int *Radix1, int *Radix2, int *num_radix)
 	void 
 init2(OptionParser& op, bool _do_dp, int fftn1, int fftn2)
 {
-	cl_int err;
+	cl_int err,dev_type;
 		
 	do_dp = _do_dp;
 
@@ -242,11 +242,21 @@ init2(OptionParser& op, bool _do_dp, int fftn1, int fftn2)
 		else {
 			device = 0;
 		}
-#ifndef ENABLE_TIMER
-		fftDev = GetDevice(platform, device);
-#else
-		fftDev = GetDevice(PLATFORM_ID, DEVICE_ID,USEGPU);
-#endif 
+
+	#ifdef USEGPU
+		 dev_type = CL_DEVICE_TYPE_GPU;
+	#elif defined(USE_AFPGA)
+		 dev_type = CL_DEVICE_TYPE_ACCELERATOR;
+	#else
+		dev_type = CL_DEVICE_TYPE_CPU;
+	#endif
+
+
+	#ifndef ENABLE_TIMER
+		fftDev = GetDevice(platform, device,dev_type));
+	#else
+		fftDev = GetDevice(PLATFORM_ID, DEVICE_ID,dev_type);
+	#endif
 		// now get the context
 		fftCtx = clCreateContext(NULL, 1, &fftDev, NULL, NULL, &err);
 		CL_CHECK_ERROR(err);
@@ -316,7 +326,7 @@ init2(OptionParser& op, bool _do_dp, int fftn1, int fftn2)
 	void 
 init(OptionParser& op, bool _do_dp, int fftn)
 {
-	cl_int err;
+	cl_int err,dev_type;
 		do_dp = _do_dp;
 
 	if (!fftCtx) {
@@ -329,10 +339,19 @@ init(OptionParser& op, bool _do_dp, int fftn)
 			device = 0;
 		}
 
+	#ifdef USEGPU
+		 dev_type = CL_DEVICE_TYPE_GPU;
+	#elif defined(USE_AFPGA)
+		 dev_type = CL_DEVICE_TYPE_ACCELERATOR;
+	#else
+		dev_type = CL_DEVICE_TYPE_CPU;
+	#endif
+
+
 #ifndef ENABLE_TIMER
-		fftDev = GetDevice(platform, device);
+		fftDev = GetDevice(platform, device,dev_type);
 #else
-		fftDev = GetDevice(PLATFORM_ID, DEVICE_ID, USEGPU ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU);
+		fftDev = GetDevice(PLATFORM_ID, DEVICE_ID, dev_type);
 #endif 
 		fftCtx = clCreateContext(NULL, 1, &fftDev, NULL, NULL, &err);
 		CL_CHECK_ERROR(err);

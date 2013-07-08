@@ -48,11 +48,19 @@ struct Node
 
 void initGpu()
 {
-    int err;
+    int err,dev_type;
     /////////////////////////////////////////////////////////////
     // Basic OpenCL Setup
 
-   device_id = GetDevice(platform_id, n_device,USEGPU ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU);
+	#ifdef USEGPU
+		 dev_type = CL_DEVICE_TYPE_GPU;
+	#elif defined(USE_AFPGA)
+		 dev_type = CL_DEVICE_TYPE_ACCELERATOR;
+	#else
+		dev_type = CL_DEVICE_TYPE_CPU;
+	#endif
+
+   device_id = GetDevice(platform_id, n_device,dev_type);
  
 
     // Create a compute context

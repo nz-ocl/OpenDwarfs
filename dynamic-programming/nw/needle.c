@@ -172,13 +172,21 @@ void runTest( int argc, char** argv)
     cl_kernel clKernel_nw1;
     cl_kernel clKernel_nw2;
 
-    cl_int errcode;
+    cl_int errcode,dev_type;
 
     FILE *kernelFile;
     char *kernelSource;
     size_t kernelLength;
+
+	#ifdef USEGPU
+    	 dev_type = CL_DEVICE_TYPE_GPU;
+	#elif defined(USE_AFPGA)
+    	 dev_type = CL_DEVICE_TYPE_ACCELERATOR;
+	#else
+    	dev_type = CL_DEVICE_TYPE_CPU;
+	#endif
 	
-    clDevice = GetDevice(platform_id, n_device,USEGPU ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU);
+    clDevice = GetDevice(platform_id, n_device,dev_type);
   
  
     clContext = clCreateContext(NULL, 1, &clDevice, NULL, NULL, &errcode);

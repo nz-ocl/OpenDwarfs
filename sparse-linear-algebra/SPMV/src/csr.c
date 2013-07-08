@@ -14,7 +14,6 @@
 static struct option long_options[] = {
       /* name, has_arg, flag, val */
       {"cpu", 0, NULL, 'c'},
-      {"fpga",0, NULL, 'f'},
       {"device", 1, NULL, 'd'},
       {"verbose", 0, NULL, 'v'},
       {"input_file",1,NULL,'i'},
@@ -69,11 +68,10 @@ int main(int argc, char** argv)
     unsigned int N = 512,num_execs=1,i,ii,j;
     char* file_path = NULL;
 
-    const char* usage = "Usage: %s -i <file_path> [-v] [-c] [-f] [-p] [-a] [-r <num_execs>]\n\n \
+    const char* usage = "Usage: %s -i <file_path> [-v] [-c] [-p] [-a] [-r <num_execs>]\n\n \
     		-i: Read CSR Matrix from file <file_path>\n \
     		-v: Be Verbose \n \
     		-c: use CPU\n \
-    		-f: use FPGA\n \
     		-p: Print matrices to stdout in standard (2-D Array) format - Warning: lots of output\n \
     		-a: Affirm results with serial C code on CPU\n \
     		-r: Execute program with same data exactly <num_execs> times to increase sample size - Default is 1\n\n";
@@ -100,11 +98,13 @@ int main(int argc, char** argv)
 
 	#ifdef USEGPU
     	 dev_type = CL_DEVICE_TYPE_GPU;
+	#elif defined(USE_AFPGA)
+    	 dev_type = CL_DEVICE_TYPE_ACCELERATOR;
 	#else
     	dev_type = CL_DEVICE_TYPE_CPU;
 	#endif
 
-    while ((opt = getopt_long(argc, argv, "::vcfi:par:::", long_options, &option_index)) != -1 )
+    while ((opt = getopt_long(argc, argv, "::vci:par:::", long_options, &option_index)) != -1 )
     {
     	switch(opt)
 		{
@@ -115,10 +115,6 @@ int main(int argc, char** argv)
 			case 'c':
 				printf("using cpu\n");
 				dev_type = CL_DEVICE_TYPE_CPU;
-				break;
-			case 'f':
-				printf("using FPGA\n");
-				dev_type = CL_DEVICE_TYPE_ACCELERATOR;
 				break;
 			case 'i':
 				if(optarg != NULL)
@@ -158,9 +154,33 @@ int main(int argc, char** argv)
     if(do_print) print_csr_std(&csr,stdout);
     else if(be_verbose) print_csr_metadata(&csr,stdout);
 
-    //The other inputs
-    float * x_host = float_new_array(csr.num_cols);
-    float * y_host = float_new_array(csr.num_rows);
+    //The other arrays
+    float *x_host, *y_host, *device_out, *host_out;
+	#ifdef USE_AFPGA //Altera FPGA
+		//Memory must be properly aligned for DMA transfers across PCIe
+		void *x,*y,*d;
+		posix_memalign(&x,ACL_ALIGNMENT,csr.num_cols);
+		x_host = x;
+		posix_memalign(&y,ACL_ALIGNMENT,csr.num_rows);
+		y_host = y;
+		posix_memalign(&d,ACL_ALIGNMENT,csr.num_rows);
+		device_out = d;
+	#else
+		x_host = float_new_array(csr.num_cols);
+		y_host = float_new_array(csr.num_rows);
+		device_out = float_new_array(csr.num_rows);
+	#endif
+
+    check(x_host != NULL,"csr.main() - Heap Overflow! Cannot Allocate Space for 'x_host'");
+	check(y_host != NULL,"csr.main() - Heap Overflow! Cannot Allocate Space for 'y_host'");
+	check(device_out != NULL,"csr.main() - Heap Overflow! Cannot Allocate Space for 'device_out'");
+
+	if(do_affirm)
+	{
+		host_out = malloc(sizeof(float)*csr.num_rows);
+		check(host_out != NULL,"csr.main() - Heap Overflow! Cannot Allocate Space for 'host_out'");
+	}
+
     for(ii = 0; ii < csr.num_cols; ii++)
     {
         x_host[ii] = rand() / (RAND_MAX + 1.0);
@@ -173,18 +193,6 @@ int main(int argc, char** argv)
     }
 
     if(be_verbose) printf("Input Generated.\n");
-
-    //Output arrays
-	float* device_out;
-	device_out = malloc(sizeof(float)*csr.num_rows); //Store device_out on heap so data can be scaled beyond size of stack
-	check(device_out != NULL,"csr.main() - Heap Overflow! Cannot Allocate Space for 'device_out'");
-
-	float* host_out;
-	if(do_affirm)
-	{
-		host_out = malloc(sizeof(float)*csr.num_rows);
-		check(host_out != NULL,"csr.main() - Heap Overflow! Cannot Allocate Space for 'host_out'");
-	}
 
     /* Retrieve an OpenCL platform */
     device_id = GetDevice(platform_id, n_device,dev_type);
@@ -200,16 +208,13 @@ int main(int argc, char** argv)
     CHKERR(err, "Failed to create a command queue!");
 
     /* Load kernel source */
-    if(dev_type != CL_DEVICE_TYPE_ACCELERATOR) //CPU or GPU
-    {
+	#ifdef USE_AFPGA
+    	kernelFile_name = "spmv_csr_kernel.aocx";
+		kernelFile_mode = "rb";
+	#else //CPU or GPU
     	kernelFile_name = "spmv_csr_kernel.cl";
     	kernelFile_mode = "r";
-    }
-    else //Altera FPGA
-    {
-    	kernelFile_name = "spmv_csr_kernel.aocx";
-    	kernelFile_mode = "rb";
-    }
+	#endif
 
 	kernelFile = fopen(kernelFile_name, kernelFile_mode);
 	check(kernelFile != NULL,"Cannot open file spmv_csr_kernel.cl");
@@ -225,10 +230,11 @@ int main(int argc, char** argv)
 	if(be_verbose) printf("kernel source loaded.\n");
 
     /* Create the compute program from the source buffer */
-    if(dev_type == CL_DEVICE_TYPE_ACCELERATOR) //use Altera FPGA
+	#ifdef USE_AFPGA //use Altera FPGA
     	program = clCreateProgramWithBinary(context,1,&device_id,&kernelLength,(const unsigned char**)&kernelSource,NULL,&err);
-    else //CPU or GPU
+	#else //CPU or GPU
 		program = clCreateProgramWithSource(context, 1, (const char **) &kernelSource, &kernelLength, &err);
+	#endif
 	CHKERR(err, "Failed to create a compute program!");
 
     free(kernelSource); /* Free kernel source */
@@ -380,6 +386,8 @@ int main(int argc, char** argv)
     }
 
     /* Shutdown and cleanup */
+    free(x_host);
+    free(y_host);
     if(do_affirm) free(host_out);
     free_csr(&csr);
     free(device_out);

@@ -77,33 +77,43 @@ if test ! -z "$OPENCL_PREFIX" ; then
    PAC_APPEND_FLAG([-Wl,-rpath=${OPENCL_PREFIX}],[LDFLAGS])
 fi
 
+###Specify build with Altera OpenCL SDK
+AC_ARG_WITH([AOCL], AS_HELP_STRING([--with-AOCL],[path to Altera OpenCl SDK]),
+	[AOCL_ROOT=$withval],[AOCL_ROOT=])
+
+
 AC_CHECK_HEADER([CL/cl.h], [HEADER_LINUX=1], [])
 AC_CHECK_HEADER([OpenCL/OpenCL.h], [HEADER_APPLE=1], [])
-
-if test ! -z "$HEADER_LINUX" ; then
+	
+if test ! -z "$HEADER_LINUX";
+then
     AC_DEFINE(OPENCL_HEADER_CL_CL, 1, [use non-apple header])
-    ### Check for the libraries that we need
-    AC_CHECK_LIB(OpenCL,clGetPlatformIDs,[PAC_PREPEND_FLAG([-lOpenCL],[LDFLAGS])],
-            AC_MSG_ERROR([OpenCL library not found]))
+    if test -n "$AOCL_ROOT";
+	then	###If AOCL option passed (build for Altera FPGA)
+		PAC_APPEND_FLAG([-I${AOCL_ROOT}/host/include],[CPPFLAGS])
+		PAC_APPEND_FLAG([-L${AOCL_ROOT}/linux64/lib],[LDFLAGS])	
+		PAC_APPEND_FLAG([-L${AOCL_ROOT}/host/linux64/lib],[LDFLAGS])
+		PAC_APPEND_FLAG([-lalterahalmmd],[LDFLAGS])
+		PAC_APPEND_FLAG([-lalterammdpcie],[LDFLAGS])
+		PAC_APPEND_FLAG([-lpkg_editor],[LDFLAGS])
+		PAC_APPEND_FLAG([-lalteracl],[LDFLAGS])
+		PAC_APPEND_FLAG([-lelf],[LDFLAGS])
+		PAC_APPEND_FLAG([-lrt],[LDFLAGS])
+		PAC_APPEND_FLAG([-lstdc++],[LDFLAGS])
+		AC_DEFINE(USE_AFPGA,1,[Use Altera FPGA])
+	else	### default (CPU or GPU)
+   		AC_CHECK_LIB(OpenCL,clGetPlatformIDs,[PAC_PREPEND_FLAG([-lOpenCL],[LDFLAGS])],AC_MSG_ERROR([OpenCL library not found]))  ### Check for the libraries that we need
+   		AC_DEFINE(USEGPU,1,[Use GPU as target device])
+    fi
 else
     if test ! -z "$HEADER_APPLE" ; then
         AC_DEFINE(OPENCL_HEADER_LONG, 1 , [use apple header])
         PAC_PREPEND_FLAG([-framework OpenCL],[LDFLAGS])
+        AC_DEFINE(USEGPU,1,[Use GPU as target device])
     else
         AC_MSG_ERROR([OpenCL header not found])
     fi
 fi
-
-
-###AC_ARG_WITH([opts], AC_HELP_STRING([--with-opts],[path to Opts argument library]),
-###	[OPTS_PREFIX=$withval],[OPTS_PREFIX=])
-###if test ! -z "$OPTS_PREFIX" ; then
-###   PAC_APPEND_FLAG([-L${OPTS_PREFIX}],[LDFLAGS])
-###   PAC_APPEND_FLAG([-I${OPTS_PREFIX}],[CPPFLAGS])
-###fi
-###AC_CHECK_LIB(opts,optsload,[PAC_PREPEND_FLAG([-lopts],[LIBS])],
-###	AC_MSG_ERROR([opts library not found]))
-
 
 AC_LANG_PUSH([C++])
 PAC_PUSH_FLAG([LIBS])

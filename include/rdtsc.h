@@ -20,7 +20,6 @@ extern "C" {
 #include <OpenCL/opencl.h>
 #endif
 
-#define USEGPU 1
 #define PLATFORM_ID 0
 #define DEVICE_ID 0
 #include <stdint.h>

@@ -48,6 +48,7 @@ main ( int argc, char *argv[] )
   cl_kernel clKernel_diagonal;
   cl_kernel clKernel_perimeter;
   cl_kernel clKernel_internal;
+  cl_int dev_type;
 
   cl_int errcode;
 
@@ -119,7 +120,16 @@ main ( int argc, char *argv[] )
 //
 //  errcode = clGetDeviceIDs(clPlatform[PLATFORM_ID], USEGPU ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU, 1, &clDevice, NULL);
 //  CHECKERR(errcode);
-clDevice = GetDevice(platform_id, device_id,USEGPU ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU);
+#ifdef USEGPU
+	 dev_type = CL_DEVICE_TYPE_GPU;
+#elif defined(USE_AFPGA)
+	 dev_type = CL_DEVICE_TYPE_ACCELERATOR;
+#else
+	dev_type = CL_DEVICE_TYPE_CPU;
+#endif
+
+
+clDevice = GetDevice(platform_id, device_id,dev_type);
  size_t max_worksize[3];
  errcode = clGetDeviceInfo(clDevice, CL_DEVICE_MAX_WORK_ITEM_SIZES,sizeof(size_t)*3, &max_worksize, NULL);
  CHECKERR(errcode);

@@ -944,6 +944,7 @@ enable_cache
 enable_silent_rules
 with_opencl_sdk
 with_opencl
+with_AOCL
 with_apps
 enable_timing
 '
@@ -1612,6 +1613,7 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-opencl-sdk       path to the OpenCL SDK
   --with-opencl           path to OpenCL
+  --with-AOCL             path to Altera OpenCl SDK
   --with-apps             Applications to build
                           (gem,nw,srad,lud,kmeans,fft,swat,samplecl,crc,cfd,bfs,csr,tdm,astar)
 
@@ -4572,13 +4574,13 @@ if test "${lt_cv_nm_interface+set}" = set; then
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:4575: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:4577: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4578: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:4580: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4581: output\"" >&5)
+  (eval echo "\"\$as_me:4583: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -5784,7 +5786,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 5787 "configure"' > conftest.$ac_ext
+  echo '#line 5789 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7641,11 +7643,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7644: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7646: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7648: \$? = $ac_status" >&5
+   echo "$as_me:7650: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7980,11 +7982,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7983: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7985: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7987: \$? = $ac_status" >&5
+   echo "$as_me:7989: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8085,11 +8087,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8088: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8090: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8092: \$? = $ac_status" >&5
+   echo "$as_me:8094: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8140,11 +8142,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8143: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8145: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8147: \$? = $ac_status" >&5
+   echo "$as_me:8149: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10943,7 +10945,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10946 "configure"
+#line 10948 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11039,7 +11041,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11042 "configure"
+#line 11044 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -15113,11 +15115,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15116: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15118: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15120: \$? = $ac_status" >&5
+   echo "$as_me:15122: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -15212,11 +15214,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15215: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15217: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15219: \$? = $ac_status" >&5
+   echo "$as_me:15221: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15264,11 +15266,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15267: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15269: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15271: \$? = $ac_status" >&5
+   echo "$as_me:15273: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17830,6 +17832,17 @@ fi
 
 fi
 
+###Specify build with Altera OpenCL SDK
+
+# Check whether --with-AOCL was given.
+if test "${with_AOCL+set}" = set; then
+  withval=$with_AOCL; AOCL_ROOT=$withval
+else
+  AOCL_ROOT=
+fi
+
+
+
 if test "${ac_cv_header_CL_cl_h+set}" = set; then
   { $as_echo "$as_me:$LINENO: checking for CL/cl.h" >&5
 $as_echo_n "checking for CL/cl.h... " >&6; }
@@ -18095,14 +18108,132 @@ fi
 
 
 
-if test ! -z "$HEADER_LINUX" ; then
+if test ! -z "$HEADER_LINUX";
+then
 
 cat >>confdefs.h <<\_ACEOF
 #define OPENCL_HEADER_CL_CL 1
 _ACEOF
 
-    ### Check for the libraries that we need
-    { $as_echo "$as_me:$LINENO: checking for clGetPlatformIDs in -lOpenCL" >&5
+    if test -n "$AOCL_ROOT";
+	then	###If AOCL option passed (build for Altera FPGA)
+
+
+	if echo "$CPPFLAGS" | $FGREP -e '-I${AOCL_ROOT}/host/include' >/dev/null 2>&1; then
+  echo "CPPFLAGS(='$CPPFLAGS') contains '-I${AOCL_ROOT}/host/include', not appending" >&5
+else
+  echo "CPPFLAGS(='$CPPFLAGS') does not contain '-I${AOCL_ROOT}/host/include', appending" >&5
+		CPPFLAGS="$CPPFLAGS -I${AOCL_ROOT}/host/include"
+
+fi
+
+
+
+
+	if echo "$LDFLAGS" | $FGREP -e '-L${AOCL_ROOT}/linux64/lib' >/dev/null 2>&1; then
+  echo "LDFLAGS(='$LDFLAGS') contains '-L${AOCL_ROOT}/linux64/lib', not appending" >&5
+else
+  echo "LDFLAGS(='$LDFLAGS') does not contain '-L${AOCL_ROOT}/linux64/lib', appending" >&5
+		LDFLAGS="$LDFLAGS -L${AOCL_ROOT}/linux64/lib"
+
+fi
+
+
+
+
+	if echo "$LDFLAGS" | $FGREP -e '-L${AOCL_ROOT}/host/linux64/lib' >/dev/null 2>&1; then
+  echo "LDFLAGS(='$LDFLAGS') contains '-L${AOCL_ROOT}/host/linux64/lib', not appending" >&5
+else
+  echo "LDFLAGS(='$LDFLAGS') does not contain '-L${AOCL_ROOT}/host/linux64/lib', appending" >&5
+		LDFLAGS="$LDFLAGS -L${AOCL_ROOT}/host/linux64/lib"
+
+fi
+
+
+
+
+	if echo "$LDFLAGS" | $FGREP -e '-lalterahalmmd' >/dev/null 2>&1; then
+  echo "LDFLAGS(='$LDFLAGS') contains '-lalterahalmmd', not appending" >&5
+else
+  echo "LDFLAGS(='$LDFLAGS') does not contain '-lalterahalmmd', appending" >&5
+		LDFLAGS="$LDFLAGS -lalterahalmmd"
+
+fi
+
+
+
+
+	if echo "$LDFLAGS" | $FGREP -e '-lalterammdpcie' >/dev/null 2>&1; then
+  echo "LDFLAGS(='$LDFLAGS') contains '-lalterammdpcie', not appending" >&5
+else
+  echo "LDFLAGS(='$LDFLAGS') does not contain '-lalterammdpcie', appending" >&5
+		LDFLAGS="$LDFLAGS -lalterammdpcie"
+
+fi
+
+
+
+
+	if echo "$LDFLAGS" | $FGREP -e '-lpkg_editor' >/dev/null 2>&1; then
+  echo "LDFLAGS(='$LDFLAGS') contains '-lpkg_editor', not appending" >&5
+else
+  echo "LDFLAGS(='$LDFLAGS') does not contain '-lpkg_editor', appending" >&5
+		LDFLAGS="$LDFLAGS -lpkg_editor"
+
+fi
+
+
+
+
+	if echo "$LDFLAGS" | $FGREP -e '-lalteracl' >/dev/null 2>&1; then
+  echo "LDFLAGS(='$LDFLAGS') contains '-lalteracl', not appending" >&5
+else
+  echo "LDFLAGS(='$LDFLAGS') does not contain '-lalteracl', appending" >&5
+		LDFLAGS="$LDFLAGS -lalteracl"
+
+fi
+
+
+
+
+	if echo "$LDFLAGS" | $FGREP -e '-lelf' >/dev/null 2>&1; then
+  echo "LDFLAGS(='$LDFLAGS') contains '-lelf', not appending" >&5
+else
+  echo "LDFLAGS(='$LDFLAGS') does not contain '-lelf', appending" >&5
+		LDFLAGS="$LDFLAGS -lelf"
+
+fi
+
+
+
+
+	if echo "$LDFLAGS" | $FGREP -e '-lrt' >/dev/null 2>&1; then
+  echo "LDFLAGS(='$LDFLAGS') contains '-lrt', not appending" >&5
+else
+  echo "LDFLAGS(='$LDFLAGS') does not contain '-lrt', appending" >&5
+		LDFLAGS="$LDFLAGS -lrt"
+
+fi
+
+
+
+
+	if echo "$LDFLAGS" | $FGREP -e '-lstdc++' >/dev/null 2>&1; then
+  echo "LDFLAGS(='$LDFLAGS') contains '-lstdc++', not appending" >&5
+else
+  echo "LDFLAGS(='$LDFLAGS') does not contain '-lstdc++', appending" >&5
+		LDFLAGS="$LDFLAGS -lstdc++"
+
+fi
+
+
+
+cat >>confdefs.h <<\_ACEOF
+#define USE_AFPGA 1
+_ACEOF
+
+	else	### default (CPU or GPU)
+   		{ $as_echo "$as_me:$LINENO: checking for clGetPlatformIDs in -lOpenCL" >&5
 $as_echo_n "checking for clGetPlatformIDs in -lOpenCL... " >&6; }
 if test "${ac_cv_lib_OpenCL_clGetPlatformIDs+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -18184,7 +18315,13 @@ else
 $as_echo "$as_me: error: OpenCL library not found" >&2;}
    { (exit 1); exit 1; }; }
 fi
+  ### Check for the libraries that we need
 
+cat >>confdefs.h <<\_ACEOF
+#define USEGPU 1
+_ACEOF
+
+    fi
 else
     if test ! -z "$HEADER_APPLE" ; then
 
@@ -18203,23 +18340,17 @@ else
 fi
 
 
+
+cat >>confdefs.h <<\_ACEOF
+#define USEGPU 1
+_ACEOF
+
     else
         { { $as_echo "$as_me:$LINENO: error: OpenCL header not found" >&5
 $as_echo "$as_me: error: OpenCL header not found" >&2;}
    { (exit 1); exit 1; }; }
     fi
 fi
-
-
-###AC_ARG_WITH([opts], AC_HELP_STRING([--with-opts],[path to Opts argument library]),
-###	[OPTS_PREFIX=$withval],[OPTS_PREFIX=])
-###if test ! -z "$OPTS_PREFIX" ; then
-###   PAC_APPEND_FLAG([-L${OPTS_PREFIX}],[LDFLAGS])
-###   PAC_APPEND_FLAG([-I${OPTS_PREFIX}],[CPPFLAGS])
-###fi
-###AC_CHECK_LIB(opts,optsload,[PAC_PREPEND_FLAG([-lopts],[LIBS])],
-###	AC_MSG_ERROR([opts library not found]))
-
 
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'

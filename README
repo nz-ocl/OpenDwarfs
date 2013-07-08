@@ -55,14 +55,22 @@ To run:
 Building
 --------
 
-To build all of the included applications:
+To build all of the included applications for CPU or GPU:
 
     $ ./autogen.sh
     $ mkdir build
     $ cd build
     $ ../configure
     $ make
+    
+To build all of the included applications for an Altera FPGA:
 
+	$ ./autogen.sh
+    $ mkdir build
+    $ cd build
+    $ ../configure --with-AOCL=/path/to/AOCL
+    $ make
+    
 To build only the applications you select, call configure with the --with-apps
 option:
 

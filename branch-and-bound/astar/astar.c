@@ -114,7 +114,7 @@ void CPUsearch(
 
 int main(int argc, char** argv) {
 	ocd_init(&argc, &argv, NULL);
-	cl_int err;
+	cl_int err,dev_type;
     int i, j, k;
 
     unsigned int correct;
@@ -171,7 +171,15 @@ int main(int argc, char** argv) {
         118, -1, -1, -1, 111, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         75, -1, -1, -1, -1, -1, -1, -1, 71, -1, -1, -1, -1, -1};
 
-	device_id = GetDevice(platform_id, n_device,USEGPU ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU);
+	#ifdef USEGPU
+		 dev_type = CL_DEVICE_TYPE_GPU;
+	#elif defined(USE_AFPGA)
+		 dev_type = CL_DEVICE_TYPE_ACCELERATOR;
+	#else
+		dev_type = CL_DEVICE_TYPE_CPU;
+	#endif
+
+	device_id = GetDevice(platform_id, n_device,dev_type);
 
     /* Create a compute context */
     context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);

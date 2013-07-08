@@ -251,10 +251,19 @@ unsigned char computeCRC(unsigned char* h_num, unsigned long N, unsigned char cr
 
 void setupGPU()
 {
-	cl_int err;
+	cl_int err,dev_type;
 	// Retrieve an OpenCL platform
 	printf("Getting Device %d %d \n", platform_id, n_device);
-	device_id = GetDevice(platform_id, n_device,USEGPU ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU);
+	#ifdef USEGPU
+		 dev_type = CL_DEVICE_TYPE_GPU;
+	#elif defined(USE_AFPGA)
+		 dev_type = CL_DEVICE_TYPE_ACCELERATOR;
+	#else
+		dev_type = CL_DEVICE_TYPE_CPU;
+	#endif
+
+
+	device_id = GetDevice(platform_id, n_device,dev_type);
 
 	printf("Getting Device\n");
 	context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);

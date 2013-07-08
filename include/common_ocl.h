@@ -16,10 +16,10 @@ extern "C" {
 #include <string.h>
 #include <stdio.h>
 
+#include <config.h>
 #include "rdtsc.h"
 #include "common_util.h"
 
-#define USEGPU 1
 
 typedef struct ocd_options
 {
@@ -42,6 +42,7 @@ typedef struct ocd_requirements
         fprintf(stderr, "CL Error %d: %s\n", err, str); \
         exit(1); \
     }
+#define ACL_ALIGNMENT 64 // Min good alignment for DMA
 
 extern ocd_requirements _requirements;
 
