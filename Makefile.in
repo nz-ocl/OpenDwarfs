@@ -543,6 +543,7 @@ EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 GREP = @GREP@
+INCLUDEFLAGS = @INCLUDEFLAGS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -550,6 +551,7 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
+LIBFLAGS = @LIBFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
@@ -573,6 +575,8 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 RANLIB = @RANLIB@
+RPATHFLAGS = @RPATHFLAGS@
+SEARCHFLAGS = @SEARCHFLAGS@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -633,7 +637,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -Werror
+AM_CPPFLAGS = -Werror @INCLUDEFLAGS@
+AM_LDFLAGS = @SEARCHFLAGS@ @LIBFLAGS@ @RPATHFLAGS@
 all_local = $(am__append_2) $(am__append_5) $(am__append_8) \
 	$(am__append_11) $(am__append_14) $(am__append_17) \
 	$(am__append_20) $(am__append_23) $(am__append_26) \
@@ -668,7 +673,7 @@ LDADD = include/common_ocl.o include/rdtsc.o libopts.a include/common_util.o
 @build_swat_TRUE@				 dynamic-programming/swat/param.cpp dynamic-programming/swat/timeRec.cpp
 
 @build_srad_TRUE@srad_SOURCES = structured-grids/srad/srad.c
-@build_srad_TRUE@srad_LDFLAGS = -lm
+@build_srad_TRUE@srad_LDFLAGS = -lm @SEARCHFLAGS@ @LIBFLAGS@ @RPATHFLAGS@
 @build_lud_TRUE@lud_SOURCES = dense-linear-algebra/lud/lud.c dense-linear-algebra/lud/common.c
 @build_kmeans_TRUE@kmeans_SOURCES = dense-linear-algebra/kmeans/kmeans.c \
 @build_kmeans_TRUE@	dense-linear-algebra/kmeans/cluster.c \
@@ -679,12 +684,12 @@ LDADD = include/common_ocl.o include/rdtsc.o libopts.a include/common_util.o
 
 @build_samplecl_TRUE@scl_SOURCES = samplecl/samplecl.c
 @build_fft_TRUE@clfft_SOURCES = spectral-methods/fft/src/opencl/fft/fft.cpp spectral-methods/fft/src/opencl/fft/fftlib.cpp spectral-methods/fft/src/opencl/common/main.cpp spectral-methods/fft/src/opencl/common/Event.cpp spectral-methods/fft/src/opencl/common/OpenCLDeviceInfo.cpp spectral-methods/fft/src/opencl/common/OpenCLNodePlatformContainer.cpp spectral-methods/fft/src/opencl/common/OpenCLPlatform.cpp spectral-methods/fft/src/common/OptionParser.cpp spectral-methods/fft/src/common/ResultDatabase.cpp spectral-methods/fft/src/common/Timer.cpp spectral-methods/fft/src/common/Option.cpp spectral-methods/fft/src/common/InvalidArgValue.cpp 
-@build_fft_TRUE@clfft_CPPFLAGS = -I$(top_srcdir)/spectral-methods/fft/src/common -I$(top_srcdir)/spectral-methods/fft/src/opencl/common
+@build_fft_TRUE@clfft_CPPFLAGS = -I$(top_srcdir)/spectral-methods/fft/src/common -I$(top_srcdir)/spectral-methods/fft/src/opencl/common @INCLUDEFLAGS@
 @build_csr_TRUE@csr_SOURCES = sparse-linear-algebra/SPMV/src/csr.c sparse-linear-algebra/SPMV/src-common/sparse_formats.c sparse-linear-algebra/SPMV/src-common/ziggurat.c sparse-linear-algebra/SPMV/src-common/common.c
 @build_csr_TRUE@createcsr_SOURCES = sparse-linear-algebra/SPMV/src-test/createcsr.c sparse-linear-algebra/SPMV/src-common/sparse_formats.c sparse-linear-algebra/SPMV/src-common/ziggurat.c sparse-linear-algebra/SPMV/src-common/common.c
 @build_csr_TRUE@createcsr_LDADD = include/common_util.o
 @build_csr_TRUE@createcsr_LINK = $(CCLD) -lm -o $@
-@build_crc_TRUE@crc_LDFLAGS = -lm
+@build_crc_TRUE@crc_LDFLAGS = -lm @SEARCHFLAGS@ @LIBFLAGS@ @RPATHFLAGS@
 @build_crc_TRUE@crc_SOURCES = combinational-logic/crc/crc_algo.c
 @build_cfd_TRUE@cfd_SOURCES = unstructured-grids/cfd/cfd.cpp
 @build_bfs_TRUE@bfs_SOURCES = graph-traversal/bfs/bfs.cpp

@@ -526,7 +526,7 @@ CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS =  
 CPP = gcc -E
-CPPFLAGS =  -I/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include
+CPPFLAGS = 
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
@@ -543,13 +543,15 @@ EGREP = /bin/grep -E
 EXEEXT = 
 FGREP = /bin/grep -F
 GREP = /bin/grep
+INCLUDEFLAGS =  -I/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include
 INSTALL = /usr/bin/install -c
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LD = /usr/bin/ld -m elf_x86_64
-LDFLAGS =  -L/home/fpga_tools/altera/13.0_0156_050713/AOCL/linux64/lib -L/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/linux64/lib -lalterahalmmd -lalterammdpcie -lpkg_editor -lalteracl -lelf -lrt -lstdc++
+LDFLAGS = 
+LIBFLAGS =  -lalterahalmmd -lalterammdpcie -lpkg_editor -lalteracl -lelf -lrt -lstdc++
 LIBOBJS = 
 LIBS = 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
@@ -573,6 +575,8 @@ PACKAGE_TARNAME = opencl-apps
 PACKAGE_VERSION = 0
 PATH_SEPARATOR = :
 RANLIB = ranlib
+RPATHFLAGS = 
+SEARCHFLAGS =  -L/home/fpga_tools/altera/13.0_0156_050713/AOCL/linux64/lib -L/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/linux64/lib
 SED = /bin/sed
 SET_MAKE = 
 SHELL = /bin/sh
@@ -633,7 +637,8 @@ top_builddir = .
 top_srcdir = ..
 AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -Werror
+AM_CPPFLAGS = -Werror  -I/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include 
+AM_LDFLAGS =  -L/home/fpga_tools/altera/13.0_0156_050713/AOCL/linux64/lib -L/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/linux64/lib  -lalterahalmmd -lalterammdpcie -lpkg_editor -lalteracl -lelf -lrt -lstdc++
 all_local = $(am__append_2) $(am__append_5) $(am__append_8) \
 	$(am__append_11) $(am__append_14) $(am__append_17) \
 	$(am__append_20) $(am__append_23) $(am__append_26) \
@@ -679,7 +684,7 @@ kmeans_SOURCES = dense-linear-algebra/kmeans/kmeans.c \
 
 scl_SOURCES = samplecl/samplecl.c
 clfft_SOURCES = spectral-methods/fft/src/opencl/fft/fft.cpp spectral-methods/fft/src/opencl/fft/fftlib.cpp spectral-methods/fft/src/opencl/common/main.cpp spectral-methods/fft/src/opencl/common/Event.cpp spectral-methods/fft/src/opencl/common/OpenCLDeviceInfo.cpp spectral-methods/fft/src/opencl/common/OpenCLNodePlatformContainer.cpp spectral-methods/fft/src/opencl/common/OpenCLPlatform.cpp spectral-methods/fft/src/common/OptionParser.cpp spectral-methods/fft/src/common/ResultDatabase.cpp spectral-methods/fft/src/common/Timer.cpp spectral-methods/fft/src/common/Option.cpp spectral-methods/fft/src/common/InvalidArgValue.cpp 
-clfft_CPPFLAGS = -I$(top_srcdir)/spectral-methods/fft/src/common -I$(top_srcdir)/spectral-methods/fft/src/opencl/common
+clfft_CPPFLAGS = -I$(top_srcdir)/spectral-methods/fft/src/common -I$(top_srcdir)/spectral-methods/fft/src/opencl/common  -I/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include 
 csr_SOURCES = sparse-linear-algebra/SPMV/src/csr.c sparse-linear-algebra/SPMV/src-common/sparse_formats.c sparse-linear-algebra/SPMV/src-common/ziggurat.c sparse-linear-algebra/SPMV/src-common/common.c
 createcsr_SOURCES = sparse-linear-algebra/SPMV/src-test/createcsr.c sparse-linear-algebra/SPMV/src-common/sparse_formats.c sparse-linear-algebra/SPMV/src-common/ziggurat.c sparse-linear-algebra/SPMV/src-common/common.c
 createcsr_LDADD = include/common_util.o

@@ -20,7 +20,9 @@ structured-grids/srad/srad.o: ../structured-grids/srad/srad.c \
  /usr/include/bits/nan.h /usr/include/bits/mathdef.h \
  /usr/include/bits/mathcalls.h ../structured-grids/srad/srad.h \
  ../structured-grids/srad/../../include/rdtsc.h /usr/include/sys/time.h \
- config.h /usr/include/CL/cl.h /usr/include/CL/cl_platform.h \
+ config.h \
+ /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h \
+ /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h \
  /usr/include/stdint.h /usr/include/bits/wchar.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/xmmintrin.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mmintrin.h \
@@ -118,9 +120,9 @@ structured-grids/srad/srad.o: ../structured-grids/srad/srad.c \
 
 config.h:
 
-/usr/include/CL/cl.h:
+/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h:
 
-/usr/include/CL/cl_platform.h:
+/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h:
 
 /usr/include/stdint.h:
 

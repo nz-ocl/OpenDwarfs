@@ -13,9 +13,10 @@ n-body-methods/gem/gemnoui-read_msms.o: ../n-body-methods/gem/read_msms.c \
  /usr/include/bits/mathdef.h /usr/include/bits/mathcalls.h \
  ../n-body-methods/gem/include/file_io.h \
  ../n-body-methods/gem/include/structures.h \
- ../n-body-methods/gem/include/calculations.h /usr/include/CL/cl.h \
- /usr/include/CL/cl_platform.h /usr/include/stdint.h \
- /usr/include/bits/wchar.h \
+ ../n-body-methods/gem/include/calculations.h \
+ /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h \
+ /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h \
+ /usr/include/stdint.h /usr/include/bits/wchar.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/xmmintrin.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mmintrin.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mm_malloc.h \
@@ -81,9 +82,9 @@ n-body-methods/gem/gemnoui-read_msms.o: ../n-body-methods/gem/read_msms.c \
 
 ../n-body-methods/gem/include/calculations.h:
 
-/usr/include/CL/cl.h:
+/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h:
 
-/usr/include/CL/cl_platform.h:
+/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h:
 
 /usr/include/stdint.h:
 

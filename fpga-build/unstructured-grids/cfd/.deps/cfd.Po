@@ -97,7 +97,9 @@ unstructured-grids/cfd/cfd.o: ../unstructured-grids/cfd/cfd.cpp \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/../../../../include/c++/4.4.6/bits/fstream.tcc \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/../../../../include/c++/4.4.6/iostream \
  ../unstructured-grids/cfd/../../include/rdtsc.h /usr/include/sys/time.h \
- config.h /usr/include/CL/cl.h /usr/include/CL/cl_platform.h \
+ config.h \
+ /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h \
+ /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h \
  /usr/include/stdint.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/xmmintrin.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mmintrin.h \
@@ -358,9 +360,9 @@ unstructured-grids/cfd/cfd.o: ../unstructured-grids/cfd/cfd.cpp \
 
 config.h:
 
-/usr/include/CL/cl.h:
+/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h:
 
-/usr/include/CL/cl_platform.h:
+/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h:
 
 /usr/include/stdint.h:
 

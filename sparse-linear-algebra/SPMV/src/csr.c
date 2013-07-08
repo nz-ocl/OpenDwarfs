@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <assert.h>
+#include <errno.h>
 
 #include "../../../include/rdtsc.h"
 #include "../../../include/common_ocl.h"
@@ -156,20 +157,24 @@ int main(int argc, char** argv)
 
     //The other arrays
     float *x_host, *y_host, *device_out, *host_out;
-	#ifdef USE_AFPGA //Altera FPGA
-		//Memory must be properly aligned for DMA transfers across PCIe
-		void *x,*y,*d;
-		posix_memalign(&x,ACL_ALIGNMENT,csr.num_cols);
-		x_host = x;
-		posix_memalign(&y,ACL_ALIGNMENT,csr.num_rows);
-		y_host = y;
-		posix_memalign(&d,ACL_ALIGNMENT,csr.num_rows);
-		device_out = d;
-	#else
+//    int pmerr;
+//	#ifdef USE_AFPGA //Altera FPGA
+//		//Memory must be properly aligned for DMA transfers across PCIe
+//		void *x,*y,*d;
+//		pmerr = posix_memalign(&x,ACL_ALIGNMENT,csr.num_cols);
+//		check(pmerr != EINVAL && pmerr != ENOMEM);
+//		x_host = (float*)x;
+//		pmerr = posix_memalign(&y,ACL_ALIGNMENT,csr.num_rows);
+//		check(pmerr != EINVAL && pmerr != ENOMEM);
+//		y_host = (float*)y;
+//		pmerr = posix_memalign(&d,ACL_ALIGNMENT,csr.num_rows);
+//		check(pmerr != EINVAL && pmerr != ENOMEM);
+//		device_out = (float*)d;
+//	#else
 		x_host = float_new_array(csr.num_cols);
 		y_host = float_new_array(csr.num_rows);
 		device_out = float_new_array(csr.num_rows);
-	#endif
+//	#endif
 
     check(x_host != NULL,"csr.main() - Heap Overflow! Cannot Allocate Space for 'x_host'");
 	check(y_host != NULL,"csr.main() - Heap Overflow! Cannot Allocate Space for 'y_host'");

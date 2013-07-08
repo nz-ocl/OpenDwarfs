@@ -9,7 +9,7 @@ bin_PROGRAMS += srad
 
 srad_SOURCES = structured-grids/srad/srad.c
 
-srad_LDFLAGS = -lm
+srad_LDFLAGS = -lm @SEARCHFLAGS@ @LIBFLAGS@ @RPATHFLAGS@
 
 all_local += srad-all-local
 exec_local += srad-exec-local

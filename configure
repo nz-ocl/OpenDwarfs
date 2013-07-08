@@ -815,6 +815,10 @@ build_nw_FALSE
 build_nw_TRUE
 build_gem_FALSE
 build_gem_TRUE
+RPATHFLAGS
+LIBFLAGS
+SEARCHFLAGS
+INCLUDEFLAGS
 OPENCL_SDK_PREFIX
 AM_BACKSLASH
 AM_DEFAULT_VERBOSITY
@@ -4574,13 +4578,13 @@ if test "${lt_cv_nm_interface+set}" = set; then
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:4577: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:4581: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4580: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:4584: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4583: output\"" >&5)
+  (eval echo "\"\$as_me:4587: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -5786,7 +5790,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 5789 "configure"' > conftest.$ac_ext
+  echo '#line 5793 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7643,11 +7647,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7646: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7650: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7650: \$? = $ac_status" >&5
+   echo "$as_me:7654: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7982,11 +7986,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7985: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7989: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7989: \$? = $ac_status" >&5
+   echo "$as_me:7993: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8087,11 +8091,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8090: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8094: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8094: \$? = $ac_status" >&5
+   echo "$as_me:8098: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8142,11 +8146,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8145: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8149: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8149: \$? = $ac_status" >&5
+   echo "$as_me:8153: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10945,7 +10949,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10948 "configure"
+#line 10952 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11041,7 +11045,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11044 "configure"
+#line 11048 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -15115,11 +15119,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15118: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15122: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15122: \$? = $ac_status" >&5
+   echo "$as_me:15126: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -15214,11 +15218,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15217: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15221: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15221: \$? = $ac_status" >&5
+   echo "$as_me:15225: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15266,11 +15270,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15269: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15273: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15273: \$? = $ac_status" >&5
+   echo "$as_me:15277: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17727,22 +17731,22 @@ if test ! -z "$OPENCL_SDK_PREFIX" ; then
    # FIXME: check for when the 32-bit version is required
 
 
-	if echo "$CPPFLAGS" | $FGREP -e '-I${OPENCL_SDK_PREFIX}/include' >/dev/null 2>&1; then
-  echo "CPPFLAGS(='$CPPFLAGS') contains '-I${OPENCL_SDK_PREFIX}/include', not appending" >&5
+	if echo "$INCLUDEFLAGS" | $FGREP -e '-I${OPENCL_SDK_PREFIX}/include' >/dev/null 2>&1; then
+  echo "INCLUDEFLAGS(='$INCLUDEFLAGS') contains '-I${OPENCL_SDK_PREFIX}/include', not appending" >&5
 else
-  echo "CPPFLAGS(='$CPPFLAGS') does not contain '-I${OPENCL_SDK_PREFIX}/include', appending" >&5
-		CPPFLAGS="$CPPFLAGS -I${OPENCL_SDK_PREFIX}/include"
+  echo "INCLUDEFLAGS(='$INCLUDEFLAGS') does not contain '-I${OPENCL_SDK_PREFIX}/include', appending" >&5
+		INCLUDEFLAGS="$INCLUDEFLAGS -I${OPENCL_SDK_PREFIX}/include"
 
 fi
 
 
 
 
-	if echo "$CPPFLAGS" | $FGREP -e '-I${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/include' >/dev/null 2>&1; then
-  echo "CPPFLAGS(='$CPPFLAGS') contains '-I${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/include', not appending" >&5
+	if echo "$INCLUDEFLAGS" | $FGREP -e '-I${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/include' >/dev/null 2>&1; then
+  echo "INCLUDEFLAGS(='$INCLUDEFLAGS') contains '-I${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/include', not appending" >&5
 else
-  echo "CPPFLAGS(='$CPPFLAGS') does not contain '-I${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/include', appending" >&5
-		CPPFLAGS="$CPPFLAGS -I${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/include"
+  echo "INCLUDEFLAGS(='$INCLUDEFLAGS') does not contain '-I${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/include', appending" >&5
+		INCLUDEFLAGS="$INCLUDEFLAGS -I${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/include"
 
 fi
 
@@ -17750,22 +17754,22 @@ fi
 
 
 
-	if echo "$LDFLAGS" | $FGREP -e '-L${OPENCL_SDK_PREFIX}/lib/x86_64' >/dev/null 2>&1; then
-  echo "LDFLAGS(='$LDFLAGS') contains '-L${OPENCL_SDK_PREFIX}/lib/x86_64', not appending" >&5
+	if echo "$SEARCHFLAGS" | $FGREP -e '-L${OPENCL_SDK_PREFIX}/lib/x86_64' >/dev/null 2>&1; then
+  echo "SEARCHFLAGS(='$SEARCHFLAGS') contains '-L${OPENCL_SDK_PREFIX}/lib/x86_64', not appending" >&5
 else
-  echo "LDFLAGS(='$LDFLAGS') does not contain '-L${OPENCL_SDK_PREFIX}/lib/x86_64', appending" >&5
-		LDFLAGS="$LDFLAGS -L${OPENCL_SDK_PREFIX}/lib/x86_64"
+  echo "SEARCHFLAGS(='$SEARCHFLAGS') does not contain '-L${OPENCL_SDK_PREFIX}/lib/x86_64', appending" >&5
+		SEARCHFLAGS="$SEARCHFLAGS -L${OPENCL_SDK_PREFIX}/lib/x86_64"
 
 fi
 
 
 
 
-	if echo "$LDFLAGS" | $FGREP -e '-L${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64' >/dev/null 2>&1; then
-  echo "LDFLAGS(='$LDFLAGS') contains '-L${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64', not appending" >&5
+	if echo "$SEARCHFLAGS" | $FGREP -e '-L${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64' >/dev/null 2>&1; then
+  echo "SEARCHFLAGS(='$SEARCHFLAGS') contains '-L${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64', not appending" >&5
 else
-  echo "LDFLAGS(='$LDFLAGS') does not contain '-L${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64', appending" >&5
-		LDFLAGS="$LDFLAGS -L${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64"
+  echo "SEARCHFLAGS(='$SEARCHFLAGS') does not contain '-L${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64', appending" >&5
+		SEARCHFLAGS="$SEARCHFLAGS -L${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64"
 
 fi
 
@@ -17774,22 +17778,22 @@ fi
    # Use rpath to force the use of these libraries
 
 
-	if echo "$LDFLAGS" | $FGREP -e '-Wl,-rpath=${OPENCL_SDK_PREFIX}/lib/x86_64' >/dev/null 2>&1; then
-  echo "LDFLAGS(='$LDFLAGS') contains '-Wl,-rpath=${OPENCL_SDK_PREFIX}/lib/x86_64', not appending" >&5
+	if echo "$RPATHFLAGS" | $FGREP -e '-Wl,-rpath=${OPENCL_SDK_PREFIX}/lib/x86_64' >/dev/null 2>&1; then
+  echo "RPATHFLAGS(='$RPATHFLAGS') contains '-Wl,-rpath=${OPENCL_SDK_PREFIX}/lib/x86_64', not appending" >&5
 else
-  echo "LDFLAGS(='$LDFLAGS') does not contain '-Wl,-rpath=${OPENCL_SDK_PREFIX}/lib/x86_64', appending" >&5
-		LDFLAGS="$LDFLAGS -Wl,-rpath=${OPENCL_SDK_PREFIX}/lib/x86_64"
+  echo "RPATHFLAGS(='$RPATHFLAGS') does not contain '-Wl,-rpath=${OPENCL_SDK_PREFIX}/lib/x86_64', appending" >&5
+		RPATHFLAGS="$RPATHFLAGS -Wl,-rpath=${OPENCL_SDK_PREFIX}/lib/x86_64"
 
 fi
 
 
 
 
-	if echo "$LDFLAGS" | $FGREP -e '-Wl,-rpath=${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64' >/dev/null 2>&1; then
-  echo "LDFLAGS(='$LDFLAGS') contains '-Wl,-rpath=${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64', not appending" >&5
+	if echo "$RPATHFLAGS" | $FGREP -e '-Wl,-rpath=${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64' >/dev/null 2>&1; then
+  echo "RPATHFLAGS(='$RPATHFLAGS') contains '-Wl,-rpath=${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64', not appending" >&5
 else
-  echo "LDFLAGS(='$LDFLAGS') does not contain '-Wl,-rpath=${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64', appending" >&5
-		LDFLAGS="$LDFLAGS -Wl,-rpath=${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64"
+  echo "RPATHFLAGS(='$RPATHFLAGS') does not contain '-Wl,-rpath=${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64', appending" >&5
+		RPATHFLAGS="$RPATHFLAGS -Wl,-rpath=${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64"
 
 fi
 
@@ -17810,22 +17814,22 @@ fi
 if test ! -z "$OPENCL_PREFIX" ; then
 
 
-	if echo "$LDFLAGS" | $FGREP -e '-L${OPENCL_PREFIX}' >/dev/null 2>&1; then
-  echo "LDFLAGS(='$LDFLAGS') contains '-L${OPENCL_PREFIX}', not appending" >&5
+	if echo "$SEARCHFLAGS" | $FGREP -e '-L${OPENCL_PREFIX}' >/dev/null 2>&1; then
+  echo "SEARCHFLAGS(='$SEARCHFLAGS') contains '-L${OPENCL_PREFIX}', not appending" >&5
 else
-  echo "LDFLAGS(='$LDFLAGS') does not contain '-L${OPENCL_PREFIX}', appending" >&5
-		LDFLAGS="$LDFLAGS -L${OPENCL_PREFIX}"
+  echo "SEARCHFLAGS(='$SEARCHFLAGS') does not contain '-L${OPENCL_PREFIX}', appending" >&5
+		SEARCHFLAGS="$SEARCHFLAGS -L${OPENCL_PREFIX}"
 
 fi
 
 
 
 
-	if echo "$LDFLAGS" | $FGREP -e '-Wl,-rpath=${OPENCL_PREFIX}' >/dev/null 2>&1; then
-  echo "LDFLAGS(='$LDFLAGS') contains '-Wl,-rpath=${OPENCL_PREFIX}', not appending" >&5
+	if echo "$RPATHFLAGS" | $FGREP -e '-Wl,-rpath=${OPENCL_PREFIX}' >/dev/null 2>&1; then
+  echo "RPATHFLAGS(='$RPATHFLAGS') contains '-Wl,-rpath=${OPENCL_PREFIX}', not appending" >&5
 else
-  echo "LDFLAGS(='$LDFLAGS') does not contain '-Wl,-rpath=${OPENCL_PREFIX}', appending" >&5
-		LDFLAGS="$LDFLAGS -Wl,-rpath=${OPENCL_PREFIX}"
+  echo "RPATHFLAGS(='$RPATHFLAGS') does not contain '-Wl,-rpath=${OPENCL_PREFIX}', appending" >&5
+		RPATHFLAGS="$RPATHFLAGS -Wl,-rpath=${OPENCL_PREFIX}"
 
 fi
 
@@ -18119,110 +18123,110 @@ _ACEOF
 	then	###If AOCL option passed (build for Altera FPGA)
 
 
-	if echo "$CPPFLAGS" | $FGREP -e '-I${AOCL_ROOT}/host/include' >/dev/null 2>&1; then
-  echo "CPPFLAGS(='$CPPFLAGS') contains '-I${AOCL_ROOT}/host/include', not appending" >&5
+	if echo "$INCLUDEFLAGS" | $FGREP -e '-I${AOCL_ROOT}/host/include' >/dev/null 2>&1; then
+  echo "INCLUDEFLAGS(='$INCLUDEFLAGS') contains '-I${AOCL_ROOT}/host/include', not appending" >&5
 else
-  echo "CPPFLAGS(='$CPPFLAGS') does not contain '-I${AOCL_ROOT}/host/include', appending" >&5
-		CPPFLAGS="$CPPFLAGS -I${AOCL_ROOT}/host/include"
+  echo "INCLUDEFLAGS(='$INCLUDEFLAGS') does not contain '-I${AOCL_ROOT}/host/include', appending" >&5
+		INCLUDEFLAGS="$INCLUDEFLAGS -I${AOCL_ROOT}/host/include"
 
 fi
 
 
 
 
-	if echo "$LDFLAGS" | $FGREP -e '-L${AOCL_ROOT}/linux64/lib' >/dev/null 2>&1; then
-  echo "LDFLAGS(='$LDFLAGS') contains '-L${AOCL_ROOT}/linux64/lib', not appending" >&5
+	if echo "$SEARCHFLAGS" | $FGREP -e '-L${AOCL_ROOT}/linux64/lib' >/dev/null 2>&1; then
+  echo "SEARCHFLAGS(='$SEARCHFLAGS') contains '-L${AOCL_ROOT}/linux64/lib', not appending" >&5
 else
-  echo "LDFLAGS(='$LDFLAGS') does not contain '-L${AOCL_ROOT}/linux64/lib', appending" >&5
-		LDFLAGS="$LDFLAGS -L${AOCL_ROOT}/linux64/lib"
+  echo "SEARCHFLAGS(='$SEARCHFLAGS') does not contain '-L${AOCL_ROOT}/linux64/lib', appending" >&5
+		SEARCHFLAGS="$SEARCHFLAGS -L${AOCL_ROOT}/linux64/lib"
 
 fi
 
 
 
 
-	if echo "$LDFLAGS" | $FGREP -e '-L${AOCL_ROOT}/host/linux64/lib' >/dev/null 2>&1; then
-  echo "LDFLAGS(='$LDFLAGS') contains '-L${AOCL_ROOT}/host/linux64/lib', not appending" >&5
+	if echo "$SEARCHFLAGS" | $FGREP -e '-L${AOCL_ROOT}/host/linux64/lib' >/dev/null 2>&1; then
+  echo "SEARCHFLAGS(='$SEARCHFLAGS') contains '-L${AOCL_ROOT}/host/linux64/lib', not appending" >&5
 else
-  echo "LDFLAGS(='$LDFLAGS') does not contain '-L${AOCL_ROOT}/host/linux64/lib', appending" >&5
-		LDFLAGS="$LDFLAGS -L${AOCL_ROOT}/host/linux64/lib"
+  echo "SEARCHFLAGS(='$SEARCHFLAGS') does not contain '-L${AOCL_ROOT}/host/linux64/lib', appending" >&5
+		SEARCHFLAGS="$SEARCHFLAGS -L${AOCL_ROOT}/host/linux64/lib"
 
 fi
 
 
 
 
-	if echo "$LDFLAGS" | $FGREP -e '-lalterahalmmd' >/dev/null 2>&1; then
-  echo "LDFLAGS(='$LDFLAGS') contains '-lalterahalmmd', not appending" >&5
+	if echo "$LIBFLAGS" | $FGREP -e '-lalterahalmmd' >/dev/null 2>&1; then
+  echo "LIBFLAGS(='$LIBFLAGS') contains '-lalterahalmmd', not appending" >&5
 else
-  echo "LDFLAGS(='$LDFLAGS') does not contain '-lalterahalmmd', appending" >&5
-		LDFLAGS="$LDFLAGS -lalterahalmmd"
+  echo "LIBFLAGS(='$LIBFLAGS') does not contain '-lalterahalmmd', appending" >&5
+		LIBFLAGS="$LIBFLAGS -lalterahalmmd"
 
 fi
 
 
 
 
-	if echo "$LDFLAGS" | $FGREP -e '-lalterammdpcie' >/dev/null 2>&1; then
-  echo "LDFLAGS(='$LDFLAGS') contains '-lalterammdpcie', not appending" >&5
+	if echo "$LIBFLAGS" | $FGREP -e '-lalterammdpcie' >/dev/null 2>&1; then
+  echo "LIBFLAGS(='$LIBFLAGS') contains '-lalterammdpcie', not appending" >&5
 else
-  echo "LDFLAGS(='$LDFLAGS') does not contain '-lalterammdpcie', appending" >&5
-		LDFLAGS="$LDFLAGS -lalterammdpcie"
+  echo "LIBFLAGS(='$LIBFLAGS') does not contain '-lalterammdpcie', appending" >&5
+		LIBFLAGS="$LIBFLAGS -lalterammdpcie"
 
 fi
 
 
 
 
-	if echo "$LDFLAGS" | $FGREP -e '-lpkg_editor' >/dev/null 2>&1; then
-  echo "LDFLAGS(='$LDFLAGS') contains '-lpkg_editor', not appending" >&5
+	if echo "$LIBFLAGS" | $FGREP -e '-lpkg_editor' >/dev/null 2>&1; then
+  echo "LIBFLAGS(='$LIBFLAGS') contains '-lpkg_editor', not appending" >&5
 else
-  echo "LDFLAGS(='$LDFLAGS') does not contain '-lpkg_editor', appending" >&5
-		LDFLAGS="$LDFLAGS -lpkg_editor"
+  echo "LIBFLAGS(='$LIBFLAGS') does not contain '-lpkg_editor', appending" >&5
+		LIBFLAGS="$LIBFLAGS -lpkg_editor"
 
 fi
 
 
 
 
-	if echo "$LDFLAGS" | $FGREP -e '-lalteracl' >/dev/null 2>&1; then
-  echo "LDFLAGS(='$LDFLAGS') contains '-lalteracl', not appending" >&5
+	if echo "$LIBFLAGS" | $FGREP -e '-lalteracl' >/dev/null 2>&1; then
+  echo "LIBFLAGS(='$LIBFLAGS') contains '-lalteracl', not appending" >&5
 else
-  echo "LDFLAGS(='$LDFLAGS') does not contain '-lalteracl', appending" >&5
-		LDFLAGS="$LDFLAGS -lalteracl"
+  echo "LIBFLAGS(='$LIBFLAGS') does not contain '-lalteracl', appending" >&5
+		LIBFLAGS="$LIBFLAGS -lalteracl"
 
 fi
 
 
 
 
-	if echo "$LDFLAGS" | $FGREP -e '-lelf' >/dev/null 2>&1; then
-  echo "LDFLAGS(='$LDFLAGS') contains '-lelf', not appending" >&5
+	if echo "$LIBFLAGS" | $FGREP -e '-lelf' >/dev/null 2>&1; then
+  echo "LIBFLAGS(='$LIBFLAGS') contains '-lelf', not appending" >&5
 else
-  echo "LDFLAGS(='$LDFLAGS') does not contain '-lelf', appending" >&5
-		LDFLAGS="$LDFLAGS -lelf"
+  echo "LIBFLAGS(='$LIBFLAGS') does not contain '-lelf', appending" >&5
+		LIBFLAGS="$LIBFLAGS -lelf"
 
 fi
 
 
 
 
-	if echo "$LDFLAGS" | $FGREP -e '-lrt' >/dev/null 2>&1; then
-  echo "LDFLAGS(='$LDFLAGS') contains '-lrt', not appending" >&5
+	if echo "$LIBFLAGS" | $FGREP -e '-lrt' >/dev/null 2>&1; then
+  echo "LIBFLAGS(='$LIBFLAGS') contains '-lrt', not appending" >&5
 else
-  echo "LDFLAGS(='$LDFLAGS') does not contain '-lrt', appending" >&5
-		LDFLAGS="$LDFLAGS -lrt"
+  echo "LIBFLAGS(='$LIBFLAGS') does not contain '-lrt', appending" >&5
+		LIBFLAGS="$LIBFLAGS -lrt"
 
 fi
 
 
 
 
-	if echo "$LDFLAGS" | $FGREP -e '-lstdc++' >/dev/null 2>&1; then
-  echo "LDFLAGS(='$LDFLAGS') contains '-lstdc++', not appending" >&5
+	if echo "$LIBFLAGS" | $FGREP -e '-lstdc++' >/dev/null 2>&1; then
+  echo "LIBFLAGS(='$LIBFLAGS') contains '-lstdc++', not appending" >&5
 else
-  echo "LDFLAGS(='$LDFLAGS') does not contain '-lstdc++', appending" >&5
-		LDFLAGS="$LDFLAGS -lstdc++"
+  echo "LIBFLAGS(='$LIBFLAGS') does not contain '-lstdc++', appending" >&5
+		LIBFLAGS="$LIBFLAGS -lstdc++"
 
 fi
 
@@ -18231,6 +18235,7 @@ fi
 cat >>confdefs.h <<\_ACEOF
 #define USE_AFPGA 1
 _ACEOF
+
 
 	else	### default (CPU or GPU)
    		{ $as_echo "$as_me:$LINENO: checking for clGetPlatformIDs in -lOpenCL" >&5
@@ -18301,11 +18306,11 @@ $as_echo "$ac_cv_lib_OpenCL_clGetPlatformIDs" >&6; }
 if test "x$ac_cv_lib_OpenCL_clGetPlatformIDs" = x""yes; then
 
 
-        if echo "$LDFLAGS" | $FGREP -e '-lOpenCL' >/dev/null 2>&1; then
-  echo "LDFLAGS(='$LDFLAGS') contains '-lOpenCL', not prepending" >&5
+        if echo "$LIBFLAGS" | $FGREP -e '-lOpenCL' >/dev/null 2>&1; then
+  echo "LIBFLAGS(='$LIBFLAGS') contains '-lOpenCL', not prepending" >&5
 else
-  echo "LDFLAGS(='$LDFLAGS') does not contain '-lOpenCL', prepending" >&5
-                LDFLAGS="-lOpenCL $LDFLAGS"
+  echo "LIBFLAGS(='$LIBFLAGS') does not contain '-lOpenCL', prepending" >&5
+                LIBFLAGS="-lOpenCL $LIBFLAGS"
 
 fi
 
@@ -18331,11 +18336,11 @@ _ACEOF
 
 
 
-        if echo "$LDFLAGS" | $FGREP -e '-framework OpenCL' >/dev/null 2>&1; then
-  echo "LDFLAGS(='$LDFLAGS') contains '-framework OpenCL', not prepending" >&5
+        if echo "$LIBFLAGS" | $FGREP -e '-framework OpenCL' >/dev/null 2>&1; then
+  echo "LIBFLAGS(='$LIBFLAGS') contains '-framework OpenCL', not prepending" >&5
 else
-  echo "LDFLAGS(='$LDFLAGS') does not contain '-framework OpenCL', prepending" >&5
-                LDFLAGS="-framework OpenCL $LDFLAGS"
+  echo "LIBFLAGS(='$LIBFLAGS') does not contain '-framework OpenCL', prepending" >&5
+                LIBFLAGS="-framework OpenCL $LIBFLAGS"
 
 fi
 
@@ -18351,6 +18356,10 @@ $as_echo "$as_me: error: OpenCL header not found" >&2;}
    { (exit 1); exit 1; }; }
     fi
 fi
+
+
+
+
 
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'

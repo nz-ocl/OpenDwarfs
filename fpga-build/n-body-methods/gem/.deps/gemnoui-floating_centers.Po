@@ -1,9 +1,10 @@
 n-body-methods/gem/gemnoui-floating_centers.o: \
  ../n-body-methods/gem/floating_centers.c \
  ../n-body-methods/gem/include/calculations.h \
- ../n-body-methods/gem/include/structures.h /usr/include/CL/cl.h \
- /usr/include/CL/cl_platform.h /usr/include/stdint.h \
- /usr/include/features.h /usr/include/sys/cdefs.h \
+ ../n-body-methods/gem/include/structures.h \
+ /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h \
+ /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h \
+ /usr/include/stdint.h /usr/include/features.h /usr/include/sys/cdefs.h \
  /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
  /usr/include/gnu/stubs-64.h /usr/include/bits/wchar.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/stddef.h \
@@ -34,9 +35,9 @@ n-body-methods/gem/gemnoui-floating_centers.o: \
 
 ../n-body-methods/gem/include/structures.h:
 
-/usr/include/CL/cl.h:
+/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h:
 
-/usr/include/CL/cl_platform.h:
+/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h:
 
 /usr/include/stdint.h:
 

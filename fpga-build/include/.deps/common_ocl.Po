@@ -11,8 +11,9 @@ include/common_ocl.o: ../include/common_ocl.c ../include/common_ocl.h \
  ../include/rdtsc.h /usr/include/sys/time.h /usr/include/time.h \
  /usr/include/bits/time.h /usr/include/sys/select.h \
  /usr/include/bits/select.h /usr/include/bits/sigset.h \
- /usr/include/CL/cl.h /usr/include/CL/cl_platform.h /usr/include/stdint.h \
- /usr/include/bits/wchar.h \
+ /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h \
+ /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h \
+ /usr/include/stdint.h /usr/include/bits/wchar.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/xmmintrin.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mmintrin.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mm_malloc.h \
@@ -78,9 +79,9 @@ config.h:
 
 /usr/include/bits/sigset.h:
 
-/usr/include/CL/cl.h:
+/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h:
 
-/usr/include/CL/cl_platform.h:
+/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h:
 
 /usr/include/stdint.h:
 

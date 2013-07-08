@@ -7,6 +7,7 @@ extern "C" {
 
 
 #include <opts/opts.h>
+#include <config.h>
 #ifdef OPENCL_HEADER_CL_CL
 #include <CL/cl.h>
 #endif
@@ -16,7 +17,6 @@ extern "C" {
 #include <string.h>
 #include <stdio.h>
 
-#include <config.h>
 #include "rdtsc.h"
 #include "common_util.h"
 

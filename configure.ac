@@ -54,17 +54,17 @@ AC_ARG_WITH([opencl-sdk],
 
 if test ! -z "$OPENCL_SDK_PREFIX" ; then
    # FIXME: check for when the 32-bit version is required
-   PAC_APPEND_FLAG([-I${OPENCL_SDK_PREFIX}/include],[CPPFLAGS])
-   PAC_APPEND_FLAG([-I${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/include],[CPPFLAGS])
+   PAC_APPEND_FLAG([-I${OPENCL_SDK_PREFIX}/include],[INCLUDEFLAGS])
+   PAC_APPEND_FLAG([-I${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/include],[INCLUDEFLAGS])
 
-   PAC_APPEND_FLAG([-L${OPENCL_SDK_PREFIX}/lib/x86_64],[LDFLAGS])
-   PAC_APPEND_FLAG([-L${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64],[LDFLAGS])
+   PAC_APPEND_FLAG([-L${OPENCL_SDK_PREFIX}/lib/x86_64],[SEARCHFLAGS])
+   PAC_APPEND_FLAG([-L${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64],[SEARCHFLAGS])
 
    # Use rpath to force the use of these libraries
-   PAC_APPEND_FLAG([-Wl,-rpath=${OPENCL_SDK_PREFIX}/lib/x86_64],[LDFLAGS])
+   PAC_APPEND_FLAG([-Wl,-rpath=${OPENCL_SDK_PREFIX}/lib/x86_64],[RPATHFLAGS])
    PAC_APPEND_FLAG(
 	[-Wl,-rpath=${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64],
-	[LDFLAGS])
+	[RPATHFLAGS])
 fi
 AC_SUBST(OPENCL_SDK_PREFIX)
 
@@ -73,8 +73,8 @@ AC_SUBST(OPENCL_SDK_PREFIX)
 AC_ARG_WITH([opencl], AS_HELP_STRING([--with-opencl],[path to OpenCL]),
 	[OPENCL_PREFIX=$withval],[OPENCL_PREFIX=])
 if test ! -z "$OPENCL_PREFIX" ; then
-   PAC_APPEND_FLAG([-L${OPENCL_PREFIX}],[LDFLAGS])
-   PAC_APPEND_FLAG([-Wl,-rpath=${OPENCL_PREFIX}],[LDFLAGS])
+   PAC_APPEND_FLAG([-L${OPENCL_PREFIX}],[SEARCHFLAGS])
+   PAC_APPEND_FLAG([-Wl,-rpath=${OPENCL_PREFIX}],[RPATHFLAGS])
 fi
 
 ###Specify build with Altera OpenCL SDK
@@ -90,30 +90,35 @@ then
     AC_DEFINE(OPENCL_HEADER_CL_CL, 1, [use non-apple header])
     if test -n "$AOCL_ROOT";
 	then	###If AOCL option passed (build for Altera FPGA)
-		PAC_APPEND_FLAG([-I${AOCL_ROOT}/host/include],[CPPFLAGS])
-		PAC_APPEND_FLAG([-L${AOCL_ROOT}/linux64/lib],[LDFLAGS])	
-		PAC_APPEND_FLAG([-L${AOCL_ROOT}/host/linux64/lib],[LDFLAGS])
-		PAC_APPEND_FLAG([-lalterahalmmd],[LDFLAGS])
-		PAC_APPEND_FLAG([-lalterammdpcie],[LDFLAGS])
-		PAC_APPEND_FLAG([-lpkg_editor],[LDFLAGS])
-		PAC_APPEND_FLAG([-lalteracl],[LDFLAGS])
-		PAC_APPEND_FLAG([-lelf],[LDFLAGS])
-		PAC_APPEND_FLAG([-lrt],[LDFLAGS])
-		PAC_APPEND_FLAG([-lstdc++],[LDFLAGS])
+		PAC_APPEND_FLAG([-I${AOCL_ROOT}/host/include],[INCLUDEFLAGS])
+		PAC_APPEND_FLAG([-L${AOCL_ROOT}/linux64/lib],[SEARCHFLAGS])	
+		PAC_APPEND_FLAG([-L${AOCL_ROOT}/host/linux64/lib],[SEARCHFLAGS])
+		PAC_APPEND_FLAG([-lalterahalmmd],[LIBFLAGS])
+		PAC_APPEND_FLAG([-lalterammdpcie],[LIBFLAGS])
+		PAC_APPEND_FLAG([-lpkg_editor],[LIBFLAGS])
+		PAC_APPEND_FLAG([-lalteracl],[LIBFLAGS])
+		PAC_APPEND_FLAG([-lelf],[LIBFLAGS])
+		PAC_APPEND_FLAG([-lrt],[LIBFLAGS])
+		PAC_APPEND_FLAG([-lstdc++],[LIBFLAGS])
 		AC_DEFINE(USE_AFPGA,1,[Use Altera FPGA])
+		AC_SUBST(INCLUDEFLAGS)
 	else	### default (CPU or GPU)
-   		AC_CHECK_LIB(OpenCL,clGetPlatformIDs,[PAC_PREPEND_FLAG([-lOpenCL],[LDFLAGS])],AC_MSG_ERROR([OpenCL library not found]))  ### Check for the libraries that we need
+   		AC_CHECK_LIB(OpenCL,clGetPlatformIDs,[PAC_PREPEND_FLAG([-lOpenCL],[LIBFLAGS])],AC_MSG_ERROR([OpenCL library not found]))  ### Check for the libraries that we need
    		AC_DEFINE(USEGPU,1,[Use GPU as target device])
     fi
 else
     if test ! -z "$HEADER_APPLE" ; then
         AC_DEFINE(OPENCL_HEADER_LONG, 1 , [use apple header])
-        PAC_PREPEND_FLAG([-framework OpenCL],[LDFLAGS])
+        PAC_PREPEND_FLAG([-framework OpenCL],[LIBFLAGS])
         AC_DEFINE(USEGPU,1,[Use GPU as target device])
     else
         AC_MSG_ERROR([OpenCL header not found])
     fi
 fi
+AC_SUBST(INCLUDEFLAGS)
+AC_SUBST(SEARCHFLAGS)
+AC_SUBST(LIBFLAGS)
+AC_SUBST(RPATHFLAGS)
 
 AC_LANG_PUSH([C++])
 PAC_PUSH_FLAG([LIBS])
