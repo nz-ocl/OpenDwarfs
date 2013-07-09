@@ -13,7 +13,7 @@ include/common_util.o: ../include/common_util.c ../include/common_util.h \
  /usr/include/alloca.h /usr/include/stdio.h /usr/include/libio.h \
  /usr/include/_G_config.h /usr/include/wchar.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/stdarg.h \
- /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h
+ /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h config.h
 
 ../include/common_util.h:
 
@@ -76,3 +76,5 @@ include/common_util.o: ../include/common_util.c ../include/common_util.h \
 /usr/include/bits/stdio_lim.h:
 
 /usr/include/bits/sys_errlist.h:
+
+config.h:

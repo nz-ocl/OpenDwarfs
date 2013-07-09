@@ -15,7 +15,7 @@ sparse-linear-algebra/SPMV/src-test/createcsr.o: \
  /usr/include/alloca.h /usr/include/stdio.h /usr/include/libio.h \
  /usr/include/_G_config.h /usr/include/wchar.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/stdarg.h \
- /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
+ /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h config.h \
  ../sparse-linear-algebra/SPMV/src-test/../inc/sparse_formats.h \
  /usr/include/math.h /usr/include/bits/huge_val.h \
  /usr/include/bits/huge_valf.h /usr/include/bits/huge_vall.h \
@@ -89,6 +89,8 @@ sparse-linear-algebra/SPMV/src-test/createcsr.o: \
 /usr/include/bits/stdio_lim.h:
 
 /usr/include/bits/sys_errlist.h:
+
+config.h:
 
 ../sparse-linear-algebra/SPMV/src-test/../inc/sparse_formats.h:
 

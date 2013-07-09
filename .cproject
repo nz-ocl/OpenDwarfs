@@ -66,17 +66,17 @@
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
 		<buildTargets>
-			<target name="fpga-all" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="fpga-all-debug" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
-				<buildArguments>-C ./fpga-build</buildArguments>
+				<buildArguments>-C ./fpga-build CPPFLAGS='-g'</buildArguments>
 				<buildTarget>all</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>false</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
-			<target name="xpu-all" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="xpu-all-debug" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
-				<buildArguments>-C ./xpu-build</buildArguments>
+				<buildArguments>-C ./xpu-build CPPFLAGS='-g'</buildArguments>
 				<buildTarget>all</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>false</useDefaultCommand>

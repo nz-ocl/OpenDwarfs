@@ -22,7 +22,8 @@ sparse-linear-algebra/SPMV/src-common/common.o: \
  /usr/include/bits/mathdef.h /usr/include/bits/mathcalls.h \
  ../sparse-linear-algebra/SPMV/src-common/../inc/common.h \
  /usr/include/sys/time.h \
- ../sparse-linear-algebra/SPMV/src-common/../inc/../../../include/common_util.h
+ ../sparse-linear-algebra/SPMV/src-common/../inc/../../../include/common_util.h \
+ config.h
 
 /usr/include/string.h:
 
@@ -109,3 +110,5 @@ sparse-linear-algebra/SPMV/src-common/common.o: \
 /usr/include/sys/time.h:
 
 ../sparse-linear-algebra/SPMV/src-common/../inc/../../../include/common_util.h:
+
+config.h:

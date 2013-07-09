@@ -21,6 +21,7 @@ static struct option long_options[] = {
       {"print",0,NULL,'p'},
       {"affirm",0,NULL,'a'},
       {"repeat",1,NULL,'r'},
+      {"kernel_file",1,NULL,'k'},
       {0,0,0,0}
 };
 
@@ -64,13 +65,14 @@ void spmv_csr_cpu(const csr_matrix* csr,const float* x,const float* y,float* out
 int main(int argc, char** argv)
 {
 	cl_int err;
-	int num_wg,be_verbose = 0,do_print=0,do_affirm=0,opt, option_index=0;
+	int num_wg,be_verbose = 0,do_print=0,do_affirm=0,do_mem_align=0,opt, option_index=0;
     unsigned long density_ppm = 500000;
     unsigned int N = 512,num_execs=1,i,ii,j;
     char* file_path = NULL;
 
-    const char* usage = "Usage: %s -i <file_path> [-v] [-c] [-p] [-a] [-r <num_execs>]\n\n \
+    const char* usage = "Usage: %s -i <file_path> [-k kernel_file>] [-v] [-c] [-p] [-a] [-r <num_execs>]\n\n \
     		-i: Read CSR Matrix from file <file_path>\n \
+    		-k: Read Kernel from file <kernel_file> - Necessary if built for Altera FPGA, disregarded otherwise\n \
     		-v: Be Verbose \n \
     		-c: use CPU\n \
     		-p: Print matrices to stdout in standard (2-D Array) format - Warning: lots of output\n \
@@ -89,7 +91,7 @@ int main(int argc, char** argv)
     cl_mem csr_ap,csr_aj,csr_ax,x_loc,y_loc;
 
     FILE *kernelFile;
-    char *kernelSource,*kernelFile_name,*kernelFile_mode;
+    char *kernelSource,*kernelFile_name=NULL,*kernelFile_mode;
 
     ocd_parse(&argc, &argv);
 	ocd_check_requirements(NULL);
@@ -105,7 +107,7 @@ int main(int argc, char** argv)
     	dev_type = CL_DEVICE_TYPE_CPU;
 	#endif
 
-    while ((opt = getopt_long(argc, argv, "::vci:par:::", long_options, &option_index)) != -1 )
+    while ((opt = getopt_long(argc, argv, "::vcmk:i:par:::", long_options, &option_index)) != -1 )
     {
     	switch(opt)
 		{
@@ -137,6 +139,13 @@ int main(int argc, char** argv)
 					num_execs = atoi(argv[optind]);
 				printf("Executing %d times\n",num_execs);
 				break;
+			case 'k':
+				if(optarg != NULL)
+					kernelFile_name = optarg;
+				else
+					kernelFile_name = argv[optind];
+				printf("Kernel File = '%s'\n",kernelFile_name);
+				break;
 			default:
 				fprintf(stderr, usage,argv[0]);
 				exit(EXIT_FAILURE);
@@ -145,10 +154,20 @@ int main(int argc, char** argv)
 
     if(!file_path)
 	{
-    	fprintf(stderr,"-i Option must be supplied\n\n",opt);
+    	fprintf(stderr,"-i Option must be supplied\n\n");
 		fprintf(stderr, usage,argv[0]);
 		exit(EXIT_FAILURE);
 	}
+
+	#ifdef USE_AFPGA
+    	if(!kernelFile_name)
+    	{
+    		fprintf(stderr,"-k Option must be supplied for Altera FPGA\n\n");
+    		fprintf(stderr,usage,argv[0]);
+    		exit(EXIT_FAILURE)
+    	}
+	#endif
+
     csr_matrix csr;
     read_csr(&csr,file_path);
 
@@ -157,28 +176,9 @@ int main(int argc, char** argv)
 
     //The other arrays
     float *x_host, *y_host, *device_out, *host_out;
-//    int pmerr;
-//	#ifdef USE_AFPGA //Altera FPGA
-//		//Memory must be properly aligned for DMA transfers across PCIe
-//		void *x,*y,*d;
-//		pmerr = posix_memalign(&x,ACL_ALIGNMENT,csr.num_cols);
-//		check(pmerr != EINVAL && pmerr != ENOMEM);
-//		x_host = (float*)x;
-//		pmerr = posix_memalign(&y,ACL_ALIGNMENT,csr.num_rows);
-//		check(pmerr != EINVAL && pmerr != ENOMEM);
-//		y_host = (float*)y;
-//		pmerr = posix_memalign(&d,ACL_ALIGNMENT,csr.num_rows);
-//		check(pmerr != EINVAL && pmerr != ENOMEM);
-//		device_out = (float*)d;
-//	#else
-		x_host = float_new_array(csr.num_cols);
-		y_host = float_new_array(csr.num_rows);
-		device_out = float_new_array(csr.num_rows);
-//	#endif
-
-    check(x_host != NULL,"csr.main() - Heap Overflow! Cannot Allocate Space for 'x_host'");
-	check(y_host != NULL,"csr.main() - Heap Overflow! Cannot Allocate Space for 'y_host'");
-	check(device_out != NULL,"csr.main() - Heap Overflow! Cannot Allocate Space for 'device_out'");
+	x_host = float_new_array(csr.num_cols,"csr.main() - Heap Overflow! Cannot Allocate Space for x_host");
+	y_host = float_new_array(csr.num_rows,"csr.main() - Heap Overflow! Cannot Allocate Space for y_host");
+	device_out = float_new_array(csr.num_rows,"csr.main() - Heap Overflow! Cannot Allocate Space for device_out");
 
 	if(do_affirm)
 	{
@@ -214,7 +214,7 @@ int main(int argc, char** argv)
 
     /* Load kernel source */
 	#ifdef USE_AFPGA
-    	kernelFile_name = "spmv_csr_kernel.aocx";
+//    	kernelFile_name = "spmv_csr_kernel.aocx";
 		kernelFile_mode = "rb";
 	#else //CPU or GPU
     	kernelFile_name = "spmv_csr_kernel.cl";

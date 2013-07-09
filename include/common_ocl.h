@@ -42,7 +42,6 @@ typedef struct ocd_requirements
         fprintf(stderr, "CL Error %d: %s\n", err, str); \
         exit(1); \
     }
-#define ACL_ALIGNMENT 64 // Min good alignment for DMA
 
 extern ocd_requirements _requirements;
 

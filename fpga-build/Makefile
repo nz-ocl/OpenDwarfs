@@ -637,8 +637,8 @@ top_builddir = .
 top_srcdir = ..
 AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -Werror  -I/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include 
-AM_LDFLAGS =  -L/home/fpga_tools/altera/13.0_0156_050713/AOCL/linux64/lib -L/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/linux64/lib  -lalterahalmmd -lalterammdpcie -lpkg_editor -lalteracl -lelf -lrt -lstdc++
+AM_CPPFLAGS = -Werror  -I/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include
+AM_LDFLAGS =  -L/home/fpga_tools/altera/13.0_0156_050713/AOCL/linux64/lib -L/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/linux64/lib  -lalterahalmmd -lalterammdpcie -lpkg_editor -lalteracl -lelf -lrt -lstdc++ 
 all_local = $(am__append_2) $(am__append_5) $(am__append_8) \
 	$(am__append_11) $(am__append_14) $(am__append_17) \
 	$(am__append_20) $(am__append_23) $(am__append_26) \
@@ -673,7 +673,7 @@ swat_SOURCES = dynamic-programming/swat/alignments.cpp dynamic-programming/swat/
 				 dynamic-programming/swat/param.cpp dynamic-programming/swat/timeRec.cpp
 
 srad_SOURCES = structured-grids/srad/srad.c
-srad_LDFLAGS = -lm
+srad_LDFLAGS = -lm  -L/home/fpga_tools/altera/13.0_0156_050713/AOCL/linux64/lib -L/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/linux64/lib  -lalterahalmmd -lalterammdpcie -lpkg_editor -lalteracl -lelf -lrt -lstdc++ 
 lud_SOURCES = dense-linear-algebra/lud/lud.c dense-linear-algebra/lud/common.c
 kmeans_SOURCES = dense-linear-algebra/kmeans/kmeans.c \
 	dense-linear-algebra/kmeans/cluster.c \
@@ -684,12 +684,12 @@ kmeans_SOURCES = dense-linear-algebra/kmeans/kmeans.c \
 
 scl_SOURCES = samplecl/samplecl.c
 clfft_SOURCES = spectral-methods/fft/src/opencl/fft/fft.cpp spectral-methods/fft/src/opencl/fft/fftlib.cpp spectral-methods/fft/src/opencl/common/main.cpp spectral-methods/fft/src/opencl/common/Event.cpp spectral-methods/fft/src/opencl/common/OpenCLDeviceInfo.cpp spectral-methods/fft/src/opencl/common/OpenCLNodePlatformContainer.cpp spectral-methods/fft/src/opencl/common/OpenCLPlatform.cpp spectral-methods/fft/src/common/OptionParser.cpp spectral-methods/fft/src/common/ResultDatabase.cpp spectral-methods/fft/src/common/Timer.cpp spectral-methods/fft/src/common/Option.cpp spectral-methods/fft/src/common/InvalidArgValue.cpp 
-clfft_CPPFLAGS = -I$(top_srcdir)/spectral-methods/fft/src/common -I$(top_srcdir)/spectral-methods/fft/src/opencl/common  -I/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include 
+clfft_CPPFLAGS = -I$(top_srcdir)/spectral-methods/fft/src/common -I$(top_srcdir)/spectral-methods/fft/src/opencl/common  -I/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include
 csr_SOURCES = sparse-linear-algebra/SPMV/src/csr.c sparse-linear-algebra/SPMV/src-common/sparse_formats.c sparse-linear-algebra/SPMV/src-common/ziggurat.c sparse-linear-algebra/SPMV/src-common/common.c
 createcsr_SOURCES = sparse-linear-algebra/SPMV/src-test/createcsr.c sparse-linear-algebra/SPMV/src-common/sparse_formats.c sparse-linear-algebra/SPMV/src-common/ziggurat.c sparse-linear-algebra/SPMV/src-common/common.c
 createcsr_LDADD = include/common_util.o
 createcsr_LINK = $(CCLD) -lm -o $@
-crc_LDFLAGS = -lm
+crc_LDFLAGS = -lm  -L/home/fpga_tools/altera/13.0_0156_050713/AOCL/linux64/lib -L/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/linux64/lib  -lalterahalmmd -lalterammdpcie -lpkg_editor -lalteracl -lelf -lrt -lstdc++ 
 crc_SOURCES = combinational-logic/crc/crc_algo.c
 cfd_SOURCES = unstructured-grids/cfd/cfd.cpp
 bfs_SOURCES = graph-traversal/bfs/bfs.cpp

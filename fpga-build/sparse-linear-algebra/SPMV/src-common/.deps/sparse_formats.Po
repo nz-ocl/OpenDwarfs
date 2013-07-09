@@ -22,7 +22,7 @@ sparse-linear-algebra/SPMV/src-common/sparse_formats.o: \
  /usr/include/bits/waitstatus.h /usr/include/alloca.h \
  /usr/include/xlocale.h /usr/include/string.h \
  ../sparse-linear-algebra/SPMV/src-common/../inc/../../../include/common_util.h \
- ../sparse-linear-algebra/SPMV/src-common/../inc/ziggurat.h
+ config.h ../sparse-linear-algebra/SPMV/src-common/../inc/ziggurat.h
 
 ../sparse-linear-algebra/SPMV/src-common/../inc/sparse_formats.h:
 
@@ -107,5 +107,7 @@ sparse-linear-algebra/SPMV/src-common/sparse_formats.o: \
 /usr/include/string.h:
 
 ../sparse-linear-algebra/SPMV/src-common/../inc/../../../include/common_util.h:
+
+config.h:
 
 ../sparse-linear-algebra/SPMV/src-common/../inc/ziggurat.h:

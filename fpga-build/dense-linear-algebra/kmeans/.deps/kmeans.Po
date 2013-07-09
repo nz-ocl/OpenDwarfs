@@ -29,8 +29,7 @@ dense-linear-algebra/kmeans/kmeans.o: \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/omp.h \
  ../dense-linear-algebra/kmeans/kmeans.h \
  ../dense-linear-algebra/kmeans/../../include/common_ocl.h ../opts/opts.h \
- config.h ../dense-linear-algebra/kmeans/../../include/rdtsc.h \
- /usr/include/sys/time.h \
+ config.h \
  /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h \
  /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h \
  /usr/include/stdint.h /usr/include/bits/wchar.h \
@@ -38,6 +37,8 @@ dense-linear-algebra/kmeans/kmeans.o: \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mmintrin.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mm_malloc.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/emmintrin.h \
+ ../dense-linear-algebra/kmeans/../../include/rdtsc.h \
+ /usr/include/sys/time.h \
  ../dense-linear-algebra/kmeans/../../include/common_util.h
 
 /usr/include/stdio.h:
@@ -150,10 +151,6 @@ dense-linear-algebra/kmeans/kmeans.o: \
 
 config.h:
 
-../dense-linear-algebra/kmeans/../../include/rdtsc.h:
-
-/usr/include/sys/time.h:
-
 /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h:
 
 /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h:
@@ -169,5 +166,9 @@ config.h:
 /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mm_malloc.h:
 
 /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/emmintrin.h:
+
+../dense-linear-algebra/kmeans/../../include/rdtsc.h:
+
+/usr/include/sys/time.h:
 
 ../dense-linear-algebra/kmeans/../../include/common_util.h:

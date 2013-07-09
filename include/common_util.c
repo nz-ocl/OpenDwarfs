@@ -8,3 +8,45 @@ void check(int b,const char* msg)
 		exit(-1);
 	}
 }
+
+void* int_new_array(const size_t N,const char* error_msg)
+{
+	void* ptr;
+	int err;
+	#ifdef USE_AFPGA
+		err = posix_memalign(&ptr,ACL_ALIGNMENT,N * sizeof(int));
+		check(err == 0,error_msg);
+	#else
+		ptr = malloc(N * sizeof(int));
+		check(ptr != NULL,error_msg);
+	#endif
+	return ptr;
+}
+
+void* long_new_array(const size_t N,const char* error_msg)
+{
+	void* ptr;
+	int err;
+	#ifdef USE_AFPGA
+		err = posix_memalign(&ptr,ACL_ALIGNMENT,N * sizeof(long));
+		check(err == 0,error_msg);
+	#else
+		ptr = malloc(N * sizeof(long));
+		check(ptr != NULL,error_msg);
+	#endif
+	return ptr;
+}
+
+void* float_new_array(const size_t N,const char* error_msg)
+{
+	void* ptr;
+	int err;
+	#ifdef USE_AFPGA
+		err = posix_memalign(&ptr,ACL_ALIGNMENT,N * sizeof(float));
+		check(!err,error_msg);
+	#else
+		ptr = malloc(N * sizeof(float));
+		check(ptr != NULL,error_msg);
+	#endif
+	return ptr;
+}

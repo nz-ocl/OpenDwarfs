@@ -1,20 +1,5 @@
 #include "../inc/sparse_formats.h"
 
-unsigned int * int_new_array(const size_t N) {
-    //dispatch on location
-    return (unsigned int*) malloc(N * sizeof(unsigned int));
-}
-
-unsigned long * long_new_array(const size_t N) {
-	//dispatch on location
-	return (unsigned long*) malloc(N * sizeof(unsigned long));
-}
-
-float * float_new_array(const size_t N) {
-    //dispatch on location
-    return (float*) malloc(N * sizeof(float));
-}
-
 triplet* triplet_new_array(const size_t N) {
 	//dispatch on location
 	return (triplet*) malloc(N * sizeof(triplet));
@@ -86,22 +71,19 @@ void read_csr(csr_matrix* csr,const char* file_path)
 	check(read_count == 7,"sparse_formats.read_csr() - Input File Corrupted! Read count for header info differs from 9");
 
 	read_count = 0;
-	csr->Ap = int_new_array(csr->num_rows+1);
-	check(csr->Ap != NULL,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Ap");
+	csr->Ap = int_new_array(csr->num_rows+1,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Ap");
 	for(i=0; i<=csr->num_rows; i++)
 	  read_count += fscanf(fp,"%u ",csr->Ap+i);
 	check(read_count == (csr->num_rows+1),"sparse_formats.read_csr() - Input File Corrupted! Read count for Ap differs from csr->num_rows+1");
 
 	read_count = 0;
-	csr->Aj = int_new_array(csr->num_nonzeros);
-	check(csr->Aj != NULL,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Aj");
+	csr->Aj = int_new_array(csr->num_nonzeros,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Aj");
 	for(i=0; i<csr->num_nonzeros; i++)
 	  read_count += fscanf(fp,"%u ",csr->Aj+i);
 	check(read_count == (csr->num_nonzeros),"sparse_formats.read_csr() - Input File Corrupted! Read count for Aj differs from csr->num_nonzeros");
 
 	read_count = 0;
-	csr->Ax = float_new_array(csr->num_nonzeros);
-	check(csr->Ax != NULL,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Ax");
+	csr->Ax = float_new_array(csr->num_nonzeros,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Ax");
 	for(i=0; i<csr->num_nonzeros; i++)
 	  read_count += fscanf(fp,"%f ",csr->Ax+i);
 	check(read_count == (csr->num_nonzeros),"sparse_formats.read_csr() - Input File Corrupted! Read count for Ax differs from csr->num_nonzeros");
@@ -134,9 +116,9 @@ csr_matrix laplacian_5pt(const unsigned int N)
     csr.num_cols = N*N;
     csr.num_nonzeros = 5*N*N - 4*N;
 
-    csr.Ap = int_new_array(csr.num_rows+4);
-    csr.Aj = int_new_array(csr.num_nonzeros);
-    csr.Ax = float_new_array(csr.num_nonzeros);
+    csr.Ap = int_new_array(csr.num_rows+4,"sparse_formats.laplacian_5pt() - Heap Overflow! Cannot allocate space for csr.Ap");
+    csr.Aj = int_new_array(csr.num_nonzeros,"sparse_formats.laplacian_5pt() - Heap Overflow! Cannot allocate space for csr.Aj");
+    csr.Ax = float_new_array(csr.num_nonzeros,"sparse_formats.laplacian_5pt() - Heap Overflow! Cannot allocate space for csr.Ax");
 
     unsigned int nz = 0;
     unsigned int i = 0;
@@ -341,9 +323,9 @@ csr_matrix coo_to_csr(const coo_matrix* coo,FILE* log)
 	csr.num_cols = coo->num_cols;
 	csr.num_nonzeros = coo->num_nonzeros;
 
-	csr.Ap = int_new_array(csr.num_rows+1);
-	csr.Aj = int_new_array(csr.num_nonzeros);
-	csr.Ax = float_new_array(csr.num_nonzeros);
+	csr.Ap = int_new_array(csr.num_rows+1,"sparse_formats.coo_to_csr() - Heap Overflow! Cannot allocate space for csr.Ap");
+	csr.Aj = int_new_array(csr.num_nonzeros,"sparse_formats.coo_to_csr() - Heap Overflow! Cannot allocate space for csr.Aj");
+	csr.Ax = float_new_array(csr.num_nonzeros,"sparse_formats.coo_to_csr() - Heap Overflow! Cannot allocate space for csr.Ax");
 
 	print_timestamp(log);
 	fprintf(log,"Memory Allocated. Copying column indices & values...\n");
@@ -400,17 +382,15 @@ csr_matrix rand_csr(const unsigned int N,const unsigned int density, const doubl
 	fprintf(log,"Target Density: %u ppm = %g%%\n",density,csr.density_perc);
 	fprintf(log,"Approximate NUM_nonzeros: %d\n",csr.num_nonzeros);
 
-	csr.Ap = int_new_array(csr.num_rows+1);
-	check(csr.Ap != NULL,"rand_square_csr2() - Heap Overflow! Cannot Allocate Space for csr.Ap");
-	csr.Aj = int_new_array(csr.num_nonzeros);
-	check(csr.Aj != NULL,"rand_square_csr2() - Heap Overflow! Cannot Allocate Space for csr.Aj");
+	csr.Ap = int_new_array(csr.num_rows+1,"rand_csr() - Heap Overflow! Cannot Allocate Space for csr.Ap");
+	csr.Aj = int_new_array(csr.num_nonzeros,"rand_csr() - Heap Overflow! Cannot Allocate Space for csr.Aj");
 
 	csr.Ap[0] = 0;
 	nnz = 0;
 	nz_per_row_doubled = 2*csr.nz_per_row; //limit nnz_ith_row to double the average because negative values are rounded up to 0. This
 	high_bound = MINIMUM(csr.num_cols,nz_per_row_doubled); //limitation ensures the distribution will be symmetric about the mean, albeit not truly normal.
 	used_cols = malloc(csr.num_cols*sizeof(char));
-	check(used_cols != NULL,"rand_square_csr2() - Heap Overflow! Cannot allocate space for used_cols");
+	check(used_cols != NULL,"rand_csr() - Heap Overflow! Cannot allocate space for used_cols");
 
 	r4_nor_setup(kn,fn,wn);
 
@@ -464,8 +444,7 @@ csr_matrix rand_csr(const unsigned int N,const unsigned int density, const doubl
 	fprintf(log,"Actual Density: %u ppm = %g%%\n",csr.density_ppm,csr.density_perc);
 
 	free(used_cols);
-	csr.Ax = float_new_array(csr.num_nonzeros);
-	check(csr.Ax != NULL,"rand_square_csr2() - Heap Overflow! Cannot Allocate Space for csr.Ax");
+	csr.Ax = float_new_array(csr.num_nonzeros,"rand_csr() - Heap Overflow! Cannot Allocate Space for csr.Ax");
 	for(i=0; i<csr.num_nonzeros; i++)
 	{
 		csr.Ax[i] = 1.0 - 2.0 * (rand() / (2147483647 + 1.0));

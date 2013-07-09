@@ -64,12 +64,6 @@ coo_matrix;
 
 void chck(int b, const char* msg);
 
-unsigned int * int_new_array(const size_t N);
-
-unsigned long * long_new_array(const size_t N);
-
-float * float_new_array(const size_t N);
-
 triplet* triplet_new_array(const size_t N);
 
 /*
