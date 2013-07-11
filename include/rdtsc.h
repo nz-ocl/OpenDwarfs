@@ -154,6 +154,8 @@ extern void simpleNameTally();
 //now culls off zero-value timers
 extern void simpleNamePrint();
 
+extern void resetNameList();
+
 //chews up the timer list from head to tail, deallocating all nodes
 extern void destTimerList();
 
@@ -265,15 +267,19 @@ TOTAL_DUAL = 0; \
 // performs timer aggregation and printing
 // deconstructs timer list and name tree/list
     //TODO-free all our data structures
-#define TIMER_FINISH {\
+#define TIMER_PRINT {\
 gettimeofday(&fullExecTimer.timer, NULL);\
 fullExecTimer.endtime = 1000 * (fullExecTimer.timer.tv_sec*1000000L + fullExecTimer.timer.tv_usec);\
     simpleNameTally();\
     OCD_PRINT_TIMERS\
     simpleNamePrint();\
-    destNameList();\
+    resetNameList();\
     destTimerList();\
     }
+
+#define TIMER_FINISH {\
+	    destNameList();\
+}
 //starts the dual timer specified by events a and b, assumes a is the "first" event
 #define START_DUAL_TIMER(a, b, n, p) {void * ptr = getDualTimePtr(a, b); \
                         if (ptr == (void *) -1) {\

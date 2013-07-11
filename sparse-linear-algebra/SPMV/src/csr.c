@@ -11,7 +11,6 @@
 #include "../inc/common.h"
 #include "../inc/sparse_formats.h"
 
-//#define USEGPU 1
 static struct option long_options[] = {
       /* name, has_arg, flag, val */
       {"cpu", 0, NULL, 'c'},
@@ -22,6 +21,7 @@ static struct option long_options[] = {
       {"affirm",0,NULL,'a'},
       {"repeat",1,NULL,'r'},
       {"kernel_file",1,NULL,'k'},
+      {"wg_size",1,NULL,'w'},
       {0,0,0,0}
 };
 
@@ -35,8 +35,8 @@ void float_array_comp(const float* a, const float* b, const unsigned int N)
 	unsigned int j;
 	for (j = 0; j < N; j++)
 	{
-		if((fabsf(a[j]) - fabsf(b[j])) > .001)
-			 printf("Possible error, difference greater then .001 at row %d \n", j);
+		if((fabsf(a[j] - b[j])) > .001)
+			 fprintf(stderr,"Possible error, difference greater then .001 at row %d \n", j);
 	}
 }
 
@@ -70,16 +70,19 @@ int main(int argc, char** argv)
     unsigned int N = 512,num_execs=1,i,ii,j;
     char* file_path = NULL;
 
-    const char* usage = "Usage: %s -i <file_path> [-k kernel_file>] [-v] [-c] [-p] [-a] [-r <num_execs>]\n\n \
+    const char* usage = "Usage: %s -i <file_path> -k <kernel_file> [-v] [-c] [-p] [-a] [-r <num_execs>] [-w <wg_size>]\n\n \
     		-i: Read CSR Matrix from file <file_path>\n \
-    		-k: Read Kernel from file <kernel_file> - Necessary if built for Altera FPGA, disregarded otherwise\n \
+    		-k: Read Kernel from file <kernel_file>\n \
     		-v: Be Verbose \n \
     		-c: use CPU\n \
     		-p: Print matrices to stdout in standard (2-D Array) format - Warning: lots of output\n \
     		-a: Affirm results with serial C code on CPU\n \
-    		-r: Execute program with same data exactly <num_execs> times to increase sample size - Default is 1\n\n";
+    		-r: Execute program with same data exactly <num_execs> times to increase sample size - Default is 1\n \
+    		-w: Use <wg_size> as the work-group size - Default is the maximum possible (limited either by the device or the size of the input)\n\n";
 
-    size_t global_size,local_size,kernelLength,items_read;
+    size_t global_size;
+    size_t wg_size=0;
+    size_t max_wg_size,kernelLength,items_read;
 
     cl_device_id device_id;
     cl_int dev_type;
@@ -91,7 +94,7 @@ int main(int argc, char** argv)
     cl_mem csr_ap,csr_aj,csr_ax,x_loc,y_loc;
 
     FILE *kernelFile;
-    char *kernelSource,*kernelFile_name=NULL,*kernelFile_mode;
+    char *kernelSource,*kernel_file_name=NULL,*kernelFile_mode;
 
     ocd_parse(&argc, &argv);
 	ocd_check_requirements(NULL);
@@ -107,7 +110,7 @@ int main(int argc, char** argv)
     	dev_type = CL_DEVICE_TYPE_CPU;
 	#endif
 
-    while ((opt = getopt_long(argc, argv, "::vcmk:i:par:::", long_options, &option_index)) != -1 )
+    while ((opt = getopt_long(argc, argv, "::vcmw:k:i:par:::", long_options, &option_index)) != -1 )
     {
     	switch(opt)
 		{
@@ -141,10 +144,17 @@ int main(int argc, char** argv)
 				break;
 			case 'k':
 				if(optarg != NULL)
-					kernelFile_name = optarg;
+					kernel_file_name = optarg;
 				else
-					kernelFile_name = argv[optind];
-				printf("Kernel File = '%s'\n",kernelFile_name);
+					kernel_file_name = argv[optind];
+				printf("Kernel File = '%s'\n",kernel_file_name);
+				break;
+			case 'w':
+				if(optarg != NULL)
+					wg_size = atoi(optarg);
+				else
+					wg_size = atoi(argv[optind]);
+				printf("Kernel File = '%s'\n",kernel_file_name);
 				break;
 			default:
 				fprintf(stderr, usage,argv[0]);
@@ -158,15 +168,6 @@ int main(int argc, char** argv)
 		fprintf(stderr, usage,argv[0]);
 		exit(EXIT_FAILURE);
 	}
-
-	#ifdef USE_AFPGA
-    	if(!kernelFile_name)
-    	{
-    		fprintf(stderr,"-k Option must be supplied for Altera FPGA\n\n");
-    		fprintf(stderr,usage,argv[0]);
-    		exit(EXIT_FAILURE)
-    	}
-	#endif
 
     csr_matrix csr;
     read_csr(&csr,file_path);
@@ -214,14 +215,14 @@ int main(int argc, char** argv)
 
     /* Load kernel source */
 	#ifdef USE_AFPGA
-//    	kernelFile_name = "spmv_csr_kernel.aocx";
+    	if(!kernel_file_name) kernel_file_name = "spmv_csr_kernel.aocx";
 		kernelFile_mode = "rb";
 	#else //CPU or GPU
-    	kernelFile_name = "spmv_csr_kernel.cl";
+		if(!kernel_file_name) kernel_file_name = "spmv_csr_kernel.cl";
     	kernelFile_mode = "r";
 	#endif
 
-	kernelFile = fopen(kernelFile_name, kernelFile_mode);
+	kernelFile = fopen(kernel_file_name, kernelFile_mode);
 	check(kernelFile != NULL,"Cannot open file spmv_csr_kernel.cl");
 	fseek(kernelFile, 0, SEEK_END);
 	kernelLength = (size_t) ftell(kernelFile);
@@ -303,27 +304,36 @@ int main(int argc, char** argv)
 	if(be_verbose) printf("set kernel arguments\n");
 
 	/* Get the maximum work group size for executing the kernel on the device */
-	err = clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &local_size, NULL);
-	if(be_verbose) printf("Kernel Max Work Group Size: %d\n",local_size);
+	err = clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &max_wg_size, NULL);
+	if(be_verbose) printf("Kernel Max Work Group Size: %d\n",max_wg_size);
 	CHKERR(err, "Failed to retrieve kernel work group info!");
 
 	/* Execute the kernel over the entire range of our 1d input data set */
 	/* using the maximum number of work group items for this device */
 	global_size = csr.num_rows;
-	num_wg = global_size / local_size;
-	if(global_size % local_size != 0)
+	if(wg_size) //if wg_size was specified on command line
 	{
-		num_wg++;
-		local_size = global_size / (num_wg);
+		check(wg_size <= max_wg_size,"Illegal wg_size!");
+		num_wg = global_size / wg_size;
 	}
-	if(be_verbose) printf("globalsize: %d - num_wg: %d - local_size: %d\n",global_size,num_wg,local_size);
+	else
+	{
+		wg_size = max_wg_size;
+		num_wg = global_size / wg_size;
+		if(global_size % wg_size != 0) //if wg_size is not a factor of global_size
+		{							//use min num_wg such that wg_size < global_size
+			num_wg++;
+			wg_size = global_size / (num_wg);
+		}
+	}
+	if(be_verbose) printf("globalsize: %d - num_wg: %d - wg_size: %d\n",global_size,num_wg,wg_size);
    
     for(i=0; i<num_execs; i++) //repeat Host-Device transfer, kernel execution, and device-host transfer num_execs times
     {						//to gather multiple samples of data
     	if(be_verbose) printf("Beginning execution #%d of %d\n",i+1,num_execs);
 
 		#ifdef ENABLE_TIMER
-    	TIMER_INIT
+    		TIMER_INIT
 		#endif
 
 		/* Write our data set into the input array in device memory */
@@ -358,7 +368,7 @@ int main(int argc, char** argv)
 		CHKERR(err, "Failed to write to source array!");
 		END_TIMER(ocdTempTimer)
 
-		err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global_size, &local_size, 0, NULL, &ocdTempEvent);
+		err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global_size, &wg_size, 0, NULL, &ocdTempEvent);
 		clFinish(commands);
 		START_TIMER(ocdTempEvent, OCD_TIMER_KERNEL, "CSR Kernel", ocdTempTimer)
 		END_TIMER(ocdTempTimer)
@@ -373,7 +383,7 @@ int main(int argc, char** argv)
 		CHKERR(err, "Failed to read output array!");
 
 		#ifdef ENABLE_TIMER
-		TIMER_FINISH;
+			TIMER_PRINT;
 		#endif
 
 	    if(do_print)
@@ -389,6 +399,10 @@ int main(int argc, char** argv)
 		   float_array_comp(host_out,device_out,csr.num_rows);
 	    }
     }
+
+	#ifdef ENABLE_TIMER
+    	TIMER_FINISH;
+	#endif
 
     /* Shutdown and cleanup */
     free(x_host);
