@@ -296,6 +296,10 @@ void ocd_print_device_info(cl_device_id device)
 	err = clGetDeviceInfo(device,CL_DEVICE_MAX_WORK_GROUP_SIZE,sizeof(size_t),&size_val,&ret_size);
 	check(err == CL_SUCCESS,"Error Querying Device Max Work Group Size");
 	printf("Device %d: Max Work Group Size=%d\n",device,size_val);
+
+	err = clGetDeviceInfo(device,CL_DEVICE_PROFILING_TIMER_RESOLUTION,sizeof(size_t),&size_val,&ret_size);
+	check(err == CL_SUCCESS,"Error Querying Device Profiling Timer Resolution");
+	printf("Device %d: Profiling Timer Resolution=%d\n",device,size_val);
 }
 
 cl_device_id GetDevice(int platform, int device, cl_int dev_type)

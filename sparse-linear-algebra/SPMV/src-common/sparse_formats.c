@@ -42,7 +42,7 @@ void write_csr(const csr_matrix* csr,const char* file_path)
 	fp = fopen(file_path,"w");
 	check(fp != NULL,"sparse_formats.write_csr() - Cannot Open File");
 
-	fprintf(fp,"%u\n%u\n%u\n%u\n%f\n%f\n%f\n",csr->num_rows,csr->num_cols,csr->num_nonzeros,csr->density_ppm,csr->density_perc,csr->nz_per_row,csr->stddev);
+	fprintf(fp,"%u\n%u\n%u\n%u\n%lf\n%lf\n%lf\n",csr->num_rows,csr->num_cols,csr->num_nonzeros,csr->density_ppm,csr->density_perc,csr->nz_per_row,csr->stddev);
 
 	for(i=0; i<=csr->num_rows; i++)
 	  fprintf(fp,"%u ",csr->Ap[i]);
@@ -67,7 +67,7 @@ void read_csr(csr_matrix* csr,const char* file_path)
 	fp = fopen(file_path,"r");
 	check(fp != NULL,"sparse_formats.read_csr() - Cannot Open Input File");
 
-	read_count = fscanf(fp,"%u\n%u\n%u\n%u\n%f\n%f\n%f\n",&(csr->num_rows),&(csr->num_cols),&(csr->num_nonzeros),&(csr->density_ppm),&(csr->density_perc),&(csr->nz_per_row),&(csr->stddev));
+	read_count = fscanf(fp,"%u\n%u\n%u\n%u\n%lf\n%lf\n%lf\n",&(csr->num_rows),&(csr->num_cols),&(csr->num_nonzeros),&(csr->density_ppm),&(csr->density_perc),&(csr->nz_per_row),&(csr->stddev));
 	check(read_count == 7,"sparse_formats.read_csr() - Input File Corrupted! Read count for header info differs from 9");
 
 	read_count = 0;

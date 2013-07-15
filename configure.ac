@@ -93,6 +93,8 @@ then
 		PAC_APPEND_FLAG([-I${AOCL_ROOT}/host/include],[INCLUDEFLAGS])
 		PAC_APPEND_FLAG([-L${AOCL_ROOT}/linux64/lib],[SEARCHFLAGS])	
 		PAC_APPEND_FLAG([-L${AOCL_ROOT}/host/linux64/lib],[SEARCHFLAGS])
+		PAC_APPEND_FLAG([-Wl,-rpath=${AOCL_ROOT}/linux64/lib],[RPATHFLAGS])
+		PAC_APPEND_FLAG([-Wl,-rpath=${AOCL_ROOT}/host/linux64/lib],[RPATHFLAGS])
 		PAC_APPEND_FLAG([-lalterahalmmd],[LIBFLAGS])
 		PAC_APPEND_FLAG([-lalterammdpcie],[LIBFLAGS])
 		PAC_APPEND_FLAG([-lpkg_editor],[LIBFLAGS])
@@ -101,7 +103,6 @@ then
 		PAC_APPEND_FLAG([-lrt],[LIBFLAGS])
 		PAC_APPEND_FLAG([-lstdc++],[LIBFLAGS])
 		AC_DEFINE(USE_AFPGA,1,[Use Altera FPGA])
-		AC_SUBST(INCLUDEFLAGS)
 	else	### default (CPU or GPU)
    		AC_CHECK_LIB(OpenCL,clGetPlatformIDs,[PAC_PREPEND_FLAG([-lOpenCL],[LIBFLAGS])],AC_MSG_ERROR([OpenCL library not found]))  ### Check for the libraries that we need
    		AC_DEFINE(USEGPU,1,[Use GPU as target device])

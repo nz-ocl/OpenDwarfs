@@ -5,3 +5,4 @@ test/*
 autom4te.cache/*
 opt/LICENSES/*
 deploy-csr.sh*
+amd-build/*

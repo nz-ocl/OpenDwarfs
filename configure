@@ -18156,6 +18156,28 @@ fi
 
 
 
+	if echo "$RPATHFLAGS" | $FGREP -e '-Wl,-rpath=${AOCL_ROOT}/linux64/lib' >/dev/null 2>&1; then
+  echo "RPATHFLAGS(='$RPATHFLAGS') contains '-Wl,-rpath=${AOCL_ROOT}/linux64/lib', not appending" >&5
+else
+  echo "RPATHFLAGS(='$RPATHFLAGS') does not contain '-Wl,-rpath=${AOCL_ROOT}/linux64/lib', appending" >&5
+		RPATHFLAGS="$RPATHFLAGS -Wl,-rpath=${AOCL_ROOT}/linux64/lib"
+
+fi
+
+
+
+
+	if echo "$RPATHFLAGS" | $FGREP -e '-Wl,-rpath=${AOCL_ROOT}/host/linux64/lib' >/dev/null 2>&1; then
+  echo "RPATHFLAGS(='$RPATHFLAGS') contains '-Wl,-rpath=${AOCL_ROOT}/host/linux64/lib', not appending" >&5
+else
+  echo "RPATHFLAGS(='$RPATHFLAGS') does not contain '-Wl,-rpath=${AOCL_ROOT}/host/linux64/lib', appending" >&5
+		RPATHFLAGS="$RPATHFLAGS -Wl,-rpath=${AOCL_ROOT}/host/linux64/lib"
+
+fi
+
+
+
+
 	if echo "$LIBFLAGS" | $FGREP -e '-lalterahalmmd' >/dev/null 2>&1; then
   echo "LIBFLAGS(='$LIBFLAGS') contains '-lalterahalmmd', not appending" >&5
 else
@@ -18235,7 +18257,6 @@ fi
 cat >>confdefs.h <<\_ACEOF
 #define USE_AFPGA 1
 _ACEOF
-
 
 	else	### default (CPU or GPU)
    		{ $as_echo "$as_me:$LINENO: checking for clGetPlatformIDs in -lOpenCL" >&5

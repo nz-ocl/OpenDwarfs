@@ -11,6 +11,14 @@
 #include "../inc/common.h"
 #include "../inc/sparse_formats.h"
 
+#define START_GTOD_TIMER { \
+		gettimeofday(tv,NULL); \
+    	start_time = 1000 * (tv->tv_sec*1000000L + tv->tv_usec); }
+
+#define END_GTOD_TIMER { \
+		gettimeofday(tv,NULL); \
+		end_time = 1000 * (tv->tv_sec*1000000L + tv->tv_usec); }
+
 static struct option long_options[] = {
       /* name, has_arg, flag, val */
       {"cpu", 0, NULL, 'c'},
@@ -72,7 +80,7 @@ int main(int argc, char** argv)
 
     const char* usage = "Usage: %s -i <file_path> -k <kernel_file> [-v] [-c] [-p] [-a] [-r <num_execs>] [-w <wg_size>]\n\n \
     		-i: Read CSR Matrix from file <file_path>\n \
-    		-k: Read Kernel from file <kernel_file>\n \
+    		-k: Read Kernel from file <kernel_file> - Default is ./spmv_csr_kernel.xxx where xxx is 'aocx' if USE_AFPGA is defined, 'cl' otherwise.\n \
     		-v: Be Verbose \n \
     		-c: use CPU\n \
     		-p: Print matrices to stdout in standard (2-D Array) format - Warning: lots of output\n \
@@ -246,7 +254,11 @@ int main(int argc, char** argv)
     free(kernelSource); /* Free kernel source */
 
     /* Build the program executable */
-    err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+	#ifdef USE_AFPGA //use Altera FPGA
+    	err = clBuildProgram(program,1,&device_id,NULL,NULL,NULL);
+	#else
+		err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+	#endif
     if (err == CL_BUILD_PROGRAM_FAILURE)                                                                                                                                       
     {
         char *buildLog;
@@ -328,12 +340,18 @@ int main(int argc, char** argv)
 	}
 	if(be_verbose) printf("globalsize: %d - num_wg: %d - wg_size: %d\n",global_size,num_wg,wg_size);
    
+	unsigned long start_time, end_time;
+	struct timeval *tv;
+	tv = malloc(sizeof(struct timeval));
+	check(tv != NULL,"csr.main() - Heap Overflow! Cannot allocate space for tv");
+
     for(i=0; i<num_execs; i++) //repeat Host-Device transfer, kernel execution, and device-host transfer num_execs times
     {						//to gather multiple samples of data
     	if(be_verbose) printf("Beginning execution #%d of %d\n",i+1,num_execs);
 
 		#ifdef ENABLE_TIMER
     		TIMER_INIT
+    		START_GTOD_TIMER
 		#endif
 
 		/* Write our data set into the input array in device memory */
@@ -343,24 +361,28 @@ int main(int argc, char** argv)
 		START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
 		END_TIMER(ocdTempTimer)
 		CHKERR(err, "Failed to write to source array!");
+
 		err = clEnqueueWriteBuffer(commands, csr_aj, CL_TRUE, 0, sizeof(unsigned int)*csr.num_nonzeros, csr.Aj, 0, NULL, &ocdTempEvent);
 		clFinish(commands);
 		if(be_verbose) printf("Aj Buffer Written\n");
 		START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
 		END_TIMER(ocdTempTimer)
 		CHKERR(err, "Failed to write to source array!");
+
 		err = clEnqueueWriteBuffer(commands, csr_ax, CL_TRUE, 0, sizeof(float)*csr.num_nonzeros, csr.Ax, 0, NULL, &ocdTempEvent);
 		clFinish(commands);
 		if(be_verbose) printf("Ax Buffer Written\n");
 		START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
 		END_TIMER(ocdTempTimer)
 		CHKERR(err, "Failed to write to source array!");
+
 		err = clEnqueueWriteBuffer(commands, x_loc, CL_TRUE, 0, sizeof(float)*csr.num_cols, x_host, 0, NULL, &ocdTempEvent);
 		clFinish(commands);
 		if(be_verbose) printf("X_host Buffer Written\n");
 		START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
 		END_TIMER(ocdTempTimer)
 		CHKERR(err, "Failed to write to source array!");
+
 		err = clEnqueueWriteBuffer(commands, y_loc, CL_TRUE, 0, sizeof(float)*csr.num_rows, y_host, 0, NULL, &ocdTempEvent);
 		clFinish(commands);
 		if(be_verbose) printf("Y_host Buffer Written\n");
@@ -368,12 +390,23 @@ int main(int argc, char** argv)
 		CHKERR(err, "Failed to write to source array!");
 		END_TIMER(ocdTempTimer)
 
+		#ifdef ENABLE_TIMER
+			END_GTOD_TIMER
+			if(be_verbose) printf("H2D GTOD:\t%llu\n",end_time - start_time);
+			START_GTOD_TIMER
+		#endif
+
 		err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global_size, &wg_size, 0, NULL, &ocdTempEvent);
 		clFinish(commands);
 		START_TIMER(ocdTempEvent, OCD_TIMER_KERNEL, "CSR Kernel", ocdTempTimer)
 		END_TIMER(ocdTempTimer)
 		CHKERR(err, "Failed to execute kernel!");
-		if(be_verbose) printf("kernel executed\n");
+
+		#ifdef ENABLE_TIMER
+			END_GTOD_TIMER
+			if(be_verbose) printf("Kernel GTOD:\t%llu\n",end_time - start_time);
+			START_GTOD_TIMER
+		#endif
 
 		/* Read back the results from the device to verify the output */
 		err = clEnqueueReadBuffer(commands, y_loc, CL_TRUE, 0, sizeof(float)*csr.num_rows, device_out, 0, NULL, &ocdTempEvent);
@@ -383,6 +416,9 @@ int main(int argc, char** argv)
 		CHKERR(err, "Failed to read output array!");
 
 		#ifdef ENABLE_TIMER
+			END_GTOD_TIMER
+			if(be_verbose) printf("D2H GTOD:\t%llu\n",end_time - start_time);
+
 			TIMER_PRINT;
 		#endif
 
