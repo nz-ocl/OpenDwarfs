@@ -22,9 +22,8 @@ combinational-logic/crc/crc_algo.o: ../combinational-logic/crc/crc_algo.c \
  /usr/include/bits/inf.h /usr/include/bits/nan.h \
  /usr/include/bits/mathdef.h /usr/include/bits/mathcalls.h \
  ../combinational-logic/crc/../../include/rdtsc.h /usr/include/sys/time.h \
- config.h \
- /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h \
- /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h \
+ config.h /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_platform.h \
  /usr/include/stdint.h /usr/include/bits/wchar.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/xmmintrin.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mmintrin.h \
@@ -130,9 +129,9 @@ combinational-logic/crc/crc_algo.o: ../combinational-logic/crc/crc_algo.c \
 
 config.h:
 
-/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h:
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl.h:
 
-/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h:
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_platform.h:
 
 /usr/include/stdint.h:
 

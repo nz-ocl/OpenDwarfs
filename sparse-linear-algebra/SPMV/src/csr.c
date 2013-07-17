@@ -41,10 +41,16 @@ int platform_id=PLATFORM_ID, n_device=DEVICE_ID;
 void float_array_comp(const float* a, const float* b, const unsigned int N)
 {
 	unsigned int j;
+	double diff,perc,avg;
 	for (j = 0; j < N; j++)
 	{
-		if((fabsf(a[j] - b[j])) > .001)
-			 fprintf(stderr,"Possible error, difference greater then .001 at row %d \n", j);
+		diff = fabsf(a[j] - b[j]);
+		if(diff > .001)
+		{
+			avg = (a[j] + b[j])/2.0;
+			perc = diff/fabsf(avg) * 100;
+			fprintf(stderr,"Possible error, difference of %.3f (%.1f%% error) [a=%.3f, b=%.3f, avg=%.3f] at row %d \n", diff,perc,a[j],b[j],avg,j);
+		}
 	}
 }
 
@@ -162,7 +168,6 @@ int main(int argc, char** argv)
 					wg_size = atoi(optarg);
 				else
 					wg_size = atoi(argv[optind]);
-				printf("Kernel File = '%s'\n",kernel_file_name);
 				break;
 			default:
 				fprintf(stderr, usage,argv[0]);

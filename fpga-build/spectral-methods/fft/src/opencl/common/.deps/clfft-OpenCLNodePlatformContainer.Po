@@ -1,9 +1,9 @@
 spectral-methods/fft/src/opencl/common/clfft-OpenCLNodePlatformContainer.o: \
  ../spectral-methods/fft/src/opencl/common/OpenCLNodePlatformContainer.cpp \
  ../spectral-methods/fft/src/opencl/common/cl.hpp \
- /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/opencl.h \
- /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h \
- /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_platform.h \
  /usr/include/stdint.h /usr/include/features.h /usr/include/sys/cdefs.h \
  /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
  /usr/include/gnu/stubs-64.h /usr/include/bits/wchar.h \
@@ -21,9 +21,9 @@ spectral-methods/fft/src/opencl/common/clfft-OpenCLNodePlatformContainer.o: \
  /usr/include/sys/sysmacros.h /usr/include/bits/pthreadtypes.h \
  /usr/include/alloca.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/emmintrin.h \
- /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_gl.h \
- /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_gl_ext.h \
- /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_ext.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/../../../../include/c++/4.4.6/utility \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/../../../../include/c++/4.4.6/x86_64-redhat-linux/bits/c++config.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/../../../../include/c++/4.4.6/x86_64-redhat-linux/bits/os_defines.h \
@@ -129,11 +129,11 @@ spectral-methods/fft/src/opencl/common/clfft-OpenCLNodePlatformContainer.o: \
 
 ../spectral-methods/fft/src/opencl/common/cl.hpp:
 
-/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/opencl.h:
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h:
 
-/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h:
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl.h:
 
-/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h:
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_platform.h:
 
 /usr/include/stdint.h:
 
@@ -195,11 +195,11 @@ spectral-methods/fft/src/opencl/common/clfft-OpenCLNodePlatformContainer.o: \
 
 /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/emmintrin.h:
 
-/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_gl.h:
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h:
 
-/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_gl_ext.h:
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h:
 
-/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_ext.h:
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h:
 
 /usr/lib/gcc/x86_64-redhat-linux/4.4.6/../../../../include/c++/4.4.6/utility:
 

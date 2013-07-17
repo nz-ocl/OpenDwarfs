@@ -1,7 +1,7 @@
 include/common_ocl.o: ../include/common_ocl.c ../include/common_ocl.h \
  ../opts/opts.h config.h \
- /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h \
- /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_platform.h \
  /usr/include/stdint.h /usr/include/features.h /usr/include/sys/cdefs.h \
  /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
  /usr/include/gnu/stubs-64.h /usr/include/bits/wchar.h \
@@ -31,9 +31,9 @@ include/common_ocl.o: ../include/common_ocl.c ../include/common_ocl.h \
 
 config.h:
 
-/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h:
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl.h:
 
-/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h:
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_platform.h:
 
 /usr/include/stdint.h:
 

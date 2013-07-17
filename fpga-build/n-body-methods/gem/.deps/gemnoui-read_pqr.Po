@@ -18,8 +18,8 @@ n-body-methods/gem/gemnoui-read_pqr.o: ../n-body-methods/gem/read_pqr.c \
  ../n-body-methods/gem/include/structures.h \
  ../n-body-methods/gem/include/calculations.h \
  ../n-body-methods/gem/include/structures.h \
- /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h \
- /home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_platform.h \
  /usr/include/stdint.h /usr/include/bits/wchar.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/xmmintrin.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mmintrin.h \
@@ -102,9 +102,9 @@ n-body-methods/gem/gemnoui-read_pqr.o: ../n-body-methods/gem/read_pqr.c \
 
 ../n-body-methods/gem/include/structures.h:
 
-/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl.h:
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl.h:
 
-/home/fpga_tools/altera/13.0_0156_050713/AOCL/host/include/CL/cl_platform.h:
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_platform.h:
 
 /usr/include/stdint.h:
 
