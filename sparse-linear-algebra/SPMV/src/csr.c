@@ -76,15 +76,38 @@ void spmv_csr_cpu(const csr_matrix* csr,const float* x,const float* y,float* out
 	}
 }
 
+void check_wg_sizes(int* wg_sizes,unsigned int* num_wg_sizes,const size_t max_wg_size,const size_t global_size)
+{
+	unsigned int ii,num_wg;
+	if(wg_sizes) //if wg_size was specified on command line
+	{
+		for(ii=0; ii<*num_wg_sizes; ii++)
+			check(wg_sizes[ii] > 0 && wg_sizes[ii] <= max_wg_size,"Illegal wg_size!");
+	}
+	else
+	{
+		*num_wg_sizes=1;
+		wg_sizes = malloc(sizeof(int)*(*num_wg_sizes));
+		check(wg_sizes != NULL,"csr.main() - Heap Overflow! Cannot allocate space for wg_sizes");
+		wg_sizes[0] = max_wg_size;
+		num_wg = global_size / wg_sizes[0];
+		if(global_size % wg_sizes[0] != 0) //if wg_size is not a factor of global_size
+		{							//use min num_wg such that wg_size < global_size
+			num_wg++;
+			wg_sizes[0] = global_size / (num_wg);
+		}
+	}
+}
+
 int main(int argc, char** argv)
 {
 	cl_int err;
 	int num_wg,be_verbose = 0,do_print=0,do_affirm=0,do_mem_align=0,opt, option_index=0;
     unsigned long density_ppm = 500000;
-    unsigned int N = 512,num_execs=1,i,ii,j;
-    char* file_path = NULL;
+    unsigned int N = 512,num_execs=1,i,ii,j,num_wg_sizes=0;
+    char* file_path = NULL, *wg_string = NULL,*token=NULL,*search_str,*optptr;
 
-    const char* usage = "Usage: %s -i <file_path> -k <kernel_file> [-v] [-c] [-p] [-a] [-r <num_execs>] [-w <wg_size>]\n\n \
+    const char* usage = "Usage: %s -i <file_path> -k <kernel_file> [-v] [-c] [-p] [-a] [-r <num_execs>] [-w '<wg_size-1 wg_size-2 ... wg_size-n>']\n\n \
     		-i: Read CSR Matrix from file <file_path>\n \
     		-k: Read Kernel from file <kernel_file> - Default is ./spmv_csr_kernel.xxx where xxx is 'aocx' if USE_AFPGA is defined, 'cl' otherwise.\n \
     		-v: Be Verbose \n \
@@ -92,10 +115,10 @@ int main(int argc, char** argv)
     		-p: Print matrices to stdout in standard (2-D Array) format - Warning: lots of output\n \
     		-a: Affirm results with serial C code on CPU\n \
     		-r: Execute program with same data exactly <num_execs> times to increase sample size - Default is 1\n \
-    		-w: Use <wg_size> as the work-group size - Default is the maximum possible (limited either by the device or the size of the input)\n\n";
+    		-w: Loop through each kernel execution 'n' times, once with each wg_size-'1..n' - Default is 1 iteration with wg_size set to the maximum possible (limited either by the device or the size of the input)\n\n";
 
     size_t global_size;
-    size_t wg_size=0;
+    int *wg_sizes = NULL;
     size_t max_wg_size,kernelLength,items_read;
 
     cl_device_id device_id;
@@ -165,9 +188,13 @@ int main(int argc, char** argv)
 				break;
 			case 'w':
 				if(optarg != NULL)
-					wg_size = atoi(optarg);
+					optptr = optarg;
 				else
-					wg_size = atoi(argv[optind]);
+					optptr = argv[optind];
+				num_wg_sizes++;
+				wg_sizes = realloc(wg_sizes,sizeof(int)*num_wg_sizes);
+				check(wg_sizes != NULL,"csr.main() - Heap Overflow! Cannot allocate space for wg_sizes");
+				wg_sizes[num_wg_sizes-1] = atoi(optptr);
 				break;
 			default:
 				fprintf(stderr, usage,argv[0]);
@@ -325,121 +352,110 @@ int main(int argc, char** argv)
 	if(be_verbose) printf("Kernel Max Work Group Size: %d\n",max_wg_size);
 	CHKERR(err, "Failed to retrieve kernel work group info!");
 
-	/* Execute the kernel over the entire range of our 1d input data set */
-	/* using the maximum number of work group items for this device */
 	global_size = csr.num_rows;
-	if(wg_size) //if wg_size was specified on command line
+	check_wg_sizes(wg_sizes,&num_wg_sizes,max_wg_size,global_size);
+
+	for(ii=0; ii<num_wg_sizes; ii++) //loop through all wg_sizes that need to be tested
 	{
-		check(wg_size <= max_wg_size,"Illegal wg_size!");
-		num_wg = global_size / wg_size;
-	}
-	else
-	{
-		wg_size = max_wg_size;
-		num_wg = global_size / wg_size;
-		if(global_size % wg_size != 0) //if wg_size is not a factor of global_size
-		{							//use min num_wg such that wg_size < global_size
-			num_wg++;
-			wg_size = global_size / (num_wg);
+		num_wg = global_size / wg_sizes[ii];
+		if(be_verbose) printf("WG Size #%d -- globalsize: %d - num_wg: %d - wg_size: %d\n",ii,global_size,num_wg,wg_sizes[ii]);
+
+		unsigned long start_time, end_time;
+		struct timeval *tv;
+		tv = malloc(sizeof(struct timeval));
+		check(tv != NULL,"csr.main() - Heap Overflow! Cannot allocate space for tv");
+
+		for(i=0; i<num_execs; i++) //repeat Host-Device transfer, kernel execution, and device-host transfer num_execs times
+		{						//to gather multiple samples of data
+			if(be_verbose) printf("Beginning execution #%d of %d\n",i+1,num_execs);
+
+			#ifdef ENABLE_TIMER
+				TIMER_INIT
+				START_GTOD_TIMER
+			#endif
+
+			/* Write our data set into the input array in device memory */
+			err = clEnqueueWriteBuffer(commands, csr_ap, CL_TRUE, 0, sizeof(unsigned int)*csr.num_rows+4, csr.Ap, 0, NULL, &ocdTempEvent);
+			clFinish(commands);
+			if(be_verbose) printf("Ap Buffer Written\n");
+			START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
+			END_TIMER(ocdTempTimer)
+			CHKERR(err, "Failed to write to source array!");
+
+			err = clEnqueueWriteBuffer(commands, csr_aj, CL_TRUE, 0, sizeof(unsigned int)*csr.num_nonzeros, csr.Aj, 0, NULL, &ocdTempEvent);
+			clFinish(commands);
+			if(be_verbose) printf("Aj Buffer Written\n");
+			START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
+			END_TIMER(ocdTempTimer)
+			CHKERR(err, "Failed to write to source array!");
+
+			err = clEnqueueWriteBuffer(commands, csr_ax, CL_TRUE, 0, sizeof(float)*csr.num_nonzeros, csr.Ax, 0, NULL, &ocdTempEvent);
+			clFinish(commands);
+			if(be_verbose) printf("Ax Buffer Written\n");
+			START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
+			END_TIMER(ocdTempTimer)
+			CHKERR(err, "Failed to write to source array!");
+
+			err = clEnqueueWriteBuffer(commands, x_loc, CL_TRUE, 0, sizeof(float)*csr.num_cols, x_host, 0, NULL, &ocdTempEvent);
+			clFinish(commands);
+			if(be_verbose) printf("X_host Buffer Written\n");
+			START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
+			END_TIMER(ocdTempTimer)
+			CHKERR(err, "Failed to write to source array!");
+
+			err = clEnqueueWriteBuffer(commands, y_loc, CL_TRUE, 0, sizeof(float)*csr.num_rows, y_host, 0, NULL, &ocdTempEvent);
+			clFinish(commands);
+			if(be_verbose) printf("Y_host Buffer Written\n");
+			START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
+			CHKERR(err, "Failed to write to source array!");
+			END_TIMER(ocdTempTimer)
+
+			#ifdef ENABLE_TIMER
+				END_GTOD_TIMER
+				if(be_verbose) printf("H2D GTOD:\t%llu\n",end_time - start_time);
+				START_GTOD_TIMER
+			#endif
+
+			err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global_size, (size_t*)&wg_sizes[ii], 0, NULL, &ocdTempEvent);
+			clFinish(commands);
+			START_TIMER(ocdTempEvent, OCD_TIMER_KERNEL, "CSR Kernel", ocdTempTimer)
+			END_TIMER(ocdTempTimer)
+			CHKERR(err, "Failed to execute kernel!");
+
+			#ifdef ENABLE_TIMER
+				END_GTOD_TIMER
+				if(be_verbose) printf("Kernel GTOD:\t%llu\n",end_time - start_time);
+				START_GTOD_TIMER
+			#endif
+
+			/* Read back the results from the device to verify the output */
+			err = clEnqueueReadBuffer(commands, y_loc, CL_TRUE, 0, sizeof(float)*csr.num_rows, device_out, 0, NULL, &ocdTempEvent);
+			clFinish(commands);
+			START_TIMER(ocdTempEvent, OCD_TIMER_D2H, "CSR Data Copy", ocdTempTimer)
+			END_TIMER(ocdTempTimer)
+			CHKERR(err, "Failed to read output array!");
+
+			#ifdef ENABLE_TIMER
+				END_GTOD_TIMER
+				if(be_verbose) printf("D2H GTOD:\t%llu\n",end_time - start_time);
+
+				TIMER_PRINT;
+			#endif
+
+			if(do_print)
+			{
+			   for (j = 0; j < csr.num_rows; j++)
+				   printf("row: %d	output: %6.2f \n", j, device_out[j]);
+			}
+
+			if(do_affirm)
+			{
+			   if(be_verbose) printf("Validating results with serial C code on CPU...\n");
+			   spmv_csr_cpu(&csr,x_host,y_host,host_out);
+			   float_array_comp(host_out,device_out,csr.num_rows);
+			}
 		}
 	}
-	if(be_verbose) printf("globalsize: %d - num_wg: %d - wg_size: %d\n",global_size,num_wg,wg_size);
-   
-	unsigned long start_time, end_time;
-	struct timeval *tv;
-	tv = malloc(sizeof(struct timeval));
-	check(tv != NULL,"csr.main() - Heap Overflow! Cannot allocate space for tv");
-
-    for(i=0; i<num_execs; i++) //repeat Host-Device transfer, kernel execution, and device-host transfer num_execs times
-    {						//to gather multiple samples of data
-    	if(be_verbose) printf("Beginning execution #%d of %d\n",i+1,num_execs);
-
-		#ifdef ENABLE_TIMER
-    		TIMER_INIT
-    		START_GTOD_TIMER
-		#endif
-
-		/* Write our data set into the input array in device memory */
-		err = clEnqueueWriteBuffer(commands, csr_ap, CL_TRUE, 0, sizeof(unsigned int)*csr.num_rows+4, csr.Ap, 0, NULL, &ocdTempEvent);
-		clFinish(commands);
-		if(be_verbose) printf("Ap Buffer Written\n");
-		START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
-		END_TIMER(ocdTempTimer)
-		CHKERR(err, "Failed to write to source array!");
-
-		err = clEnqueueWriteBuffer(commands, csr_aj, CL_TRUE, 0, sizeof(unsigned int)*csr.num_nonzeros, csr.Aj, 0, NULL, &ocdTempEvent);
-		clFinish(commands);
-		if(be_verbose) printf("Aj Buffer Written\n");
-		START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
-		END_TIMER(ocdTempTimer)
-		CHKERR(err, "Failed to write to source array!");
-
-		err = clEnqueueWriteBuffer(commands, csr_ax, CL_TRUE, 0, sizeof(float)*csr.num_nonzeros, csr.Ax, 0, NULL, &ocdTempEvent);
-		clFinish(commands);
-		if(be_verbose) printf("Ax Buffer Written\n");
-		START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
-		END_TIMER(ocdTempTimer)
-		CHKERR(err, "Failed to write to source array!");
-
-		err = clEnqueueWriteBuffer(commands, x_loc, CL_TRUE, 0, sizeof(float)*csr.num_cols, x_host, 0, NULL, &ocdTempEvent);
-		clFinish(commands);
-		if(be_verbose) printf("X_host Buffer Written\n");
-		START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
-		END_TIMER(ocdTempTimer)
-		CHKERR(err, "Failed to write to source array!");
-
-		err = clEnqueueWriteBuffer(commands, y_loc, CL_TRUE, 0, sizeof(float)*csr.num_rows, y_host, 0, NULL, &ocdTempEvent);
-		clFinish(commands);
-		if(be_verbose) printf("Y_host Buffer Written\n");
-		START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
-		CHKERR(err, "Failed to write to source array!");
-		END_TIMER(ocdTempTimer)
-
-		#ifdef ENABLE_TIMER
-			END_GTOD_TIMER
-			if(be_verbose) printf("H2D GTOD:\t%llu\n",end_time - start_time);
-			START_GTOD_TIMER
-		#endif
-
-		err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global_size, &wg_size, 0, NULL, &ocdTempEvent);
-		clFinish(commands);
-		START_TIMER(ocdTempEvent, OCD_TIMER_KERNEL, "CSR Kernel", ocdTempTimer)
-		END_TIMER(ocdTempTimer)
-		CHKERR(err, "Failed to execute kernel!");
-
-		#ifdef ENABLE_TIMER
-			END_GTOD_TIMER
-			if(be_verbose) printf("Kernel GTOD:\t%llu\n",end_time - start_time);
-			START_GTOD_TIMER
-		#endif
-
-		/* Read back the results from the device to verify the output */
-		err = clEnqueueReadBuffer(commands, y_loc, CL_TRUE, 0, sizeof(float)*csr.num_rows, device_out, 0, NULL, &ocdTempEvent);
-		clFinish(commands);
-		START_TIMER(ocdTempEvent, OCD_TIMER_D2H, "CSR Data Copy", ocdTempTimer)
-		END_TIMER(ocdTempTimer)
-		CHKERR(err, "Failed to read output array!");
-
-		#ifdef ENABLE_TIMER
-			END_GTOD_TIMER
-			if(be_verbose) printf("D2H GTOD:\t%llu\n",end_time - start_time);
-
-			TIMER_PRINT;
-		#endif
-
-	    if(do_print)
-	    {
-		   for (j = 0; j < csr.num_rows; j++)
-			   printf("row: %d	output: %6.2f \n", j, device_out[j]);
-	    }
-
-	    if(do_affirm)
-	    {
-		   if(be_verbose) printf("Validating results with serial C code on CPU...\n");
-		   spmv_csr_cpu(&csr,x_host,y_host,host_out);
-		   float_array_comp(host_out,device_out,csr.num_rows);
-	    }
-    }
 
 	#ifdef ENABLE_TIMER
     	TIMER_FINISH;
