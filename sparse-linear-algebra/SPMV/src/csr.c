@@ -104,12 +104,22 @@ size_t* check_wg_sizes(size_t* wg_sizes,unsigned int* num_wg_sizes,const size_t 
 	return wg_sizes;
 }
 
+void csrCreateBuffer(const cl_context* p_context, cl_mem* ptr, const size_t num_bytes, const cl_mem_flags flags, const char* buff_name, int be_verbose)
+{
+	cl_int err;
+	char err_msg[128];
+	if(be_verbose) printf("Allocating %zu bytes for %s...\n",num_bytes,buff_name);
+	*ptr = clCreateBuffer(*p_context, flags,num_bytes, NULL, &err);
+	snprintf(err_msg,88,"Failed to allocate device memory for %s!",buff_name);
+	CHKERR(err, err_msg);
+}
+
 int main(int argc, char** argv)
 {
 	cl_int err;
 	int num_wg,be_verbose = 0,do_print=0,do_affirm=0,do_mem_align=0,opt, option_index=0;
     unsigned long density_ppm = 500000;
-    unsigned int N = 512,num_execs=1,i,ii,iii,j,num_wg_sizes=0,num_kernels=0;
+    unsigned int num_execs=1,i,ii,iii,j,num_wg_sizes=0,num_kernels=0;
     unsigned long start_time, end_time;
 	struct timeval *tv;
     char* file_path = NULL,*optptr;
@@ -264,43 +274,9 @@ int main(int argc, char** argv)
 
     if(be_verbose) ocd_print_device_info(device_id);
 
-    /* Create a compute context */
-    context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
-    CHKERR(err, "Failed to create a compute context!");
 
-    size_t csr_ap_bytes,csr_aj_bytes,csr_ax_bytes,x_loc_bytes,y_loc_bytes;
-    csr_ap_bytes = sizeof(unsigned int)*csr.num_rows+4;
-    if(be_verbose) printf("Allocating %zu bytes for csr_ap...\n",csr_ap_bytes);
-    csr_ap = clCreateBuffer(context, CL_MEM_READ_ONLY,csr_ap_bytes, NULL, &err);
-    CHKERR(err, "Failed to allocate device memory for csr_ap!");
 
-    csr_aj_bytes = sizeof(unsigned int)*csr.num_nonzeros;
-    if(be_verbose) printf("Allocating %zu bytes for csr_aj...\n",csr_aj_bytes);
-    csr_aj = clCreateBuffer(context, CL_MEM_READ_ONLY, csr_aj_bytes, NULL, &err);
-    CHKERR(err, "Failed to allocate device memory for csr_aj!");
-
-    csr_ax_bytes = sizeof(float)*csr.num_nonzeros;
-    if(be_verbose) printf("Allocating %zu bytes for csr_ax...\n",csr_ax_bytes);
-    csr_ax = clCreateBuffer(context, CL_MEM_READ_ONLY, csr_ax_bytes, NULL, &err);
-    CHKERR(err, "Failed to allocate device memory for csr_ax!");
-
-    x_loc_bytes = sizeof(float)*csr.num_cols;
-    if(be_verbose) printf("Allocating %zu bytes for x_loc...\n",x_loc_bytes);
-    x_loc = clCreateBuffer(context, CL_MEM_READ_ONLY, x_loc_bytes, NULL, &err);
-    CHKERR(err, "Failed to allocate device memory for x_loc!");
-
-    y_loc_bytes = sizeof(float)*csr.num_rows;
-    if(be_verbose) printf("Allocating %zu bytes for y_loc...\n",y_loc_bytes);
-    y_loc = clCreateBuffer(context, CL_MEM_READ_ONLY, y_loc_bytes, NULL, &err);
-    CHKERR(err, "Failed to allocate device memory for x_loc!");
-    if(be_verbose) printf("buffers created\n");
-
-    /* Create a command queue */
-    commands = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
-    CHKERR(err, "Failed to create a command queue!");
-
-    /* Load kernel source */
-    if(!kernel_files)
+    if(!kernel_files) //use default if no kernel files were given on commandline
     {
 		num_kernels = 1;
 		kernel_files = malloc(sizeof(char*)*num_kernels);
@@ -319,6 +295,21 @@ int main(int argc, char** argv)
 
 	for(iii=0; iii<num_kernels; iii++)
 	{
+	 /* Create a compute context */
+		context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
+		CHKERR(err, "Failed to create a compute context!");
+
+		/* Create a command queue */
+		commands = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
+		CHKERR(err, "Failed to create a command queue!");
+
+		csrCreateBuffer(&context,&csr_ap,sizeof(int)*(csr.num_rows+1),CL_MEM_READ_ONLY,"csr_ap",be_verbose);
+		csrCreateBuffer(&context,&x_loc,sizeof(float)*csr.num_cols,CL_MEM_READ_ONLY,"x_loc",be_verbose);
+		csrCreateBuffer(&context,&y_loc,sizeof(float)*csr.num_rows,CL_MEM_READ_WRITE,"y_loc",be_verbose);
+		csrCreateBuffer(&context,&csr_aj,sizeof(int)*csr.num_nonzeros,CL_MEM_READ_ONLY,"csr_aj",be_verbose);
+		csrCreateBuffer(&context,&csr_ax,sizeof(float)*csr.num_nonzeros,CL_MEM_READ_ONLY,"csr_ax",be_verbose);
+
+		/* Load kernel source */
 		printf("Kernel #%d: '%s'\n\n",iii+1,kernel_files[iii]);
 		kernel_fp = fopen(kernel_files[iii], kernel_file_mode);
 		check(kernel_fp != NULL,"Cannot open kernel file");
@@ -480,6 +471,37 @@ int main(int argc, char** argv)
 				}
 			}
 		}
+		err = clReleaseMemObject(csr_ap);
+		CHKERR(err,"Failed to release csr_ap!");
+		if(be_verbose) printf("Released csr_ap\n");
+		err = clReleaseMemObject(csr_aj);
+		CHKERR(err,"Failed to release csr_aj!");
+		if(be_verbose) printf("Released csr_aj\n");
+		err = clReleaseMemObject(csr_ax);
+		CHKERR(err,"Failed to release csr_ax!");
+		if(be_verbose) printf("Released csr_ax\n");
+		err = clReleaseMemObject(x_loc);
+		CHKERR(err,"Failed to release x_loc!");
+		if(be_verbose) printf("Released x_loc\n");
+		err = clReleaseMemObject(y_loc);
+		CHKERR(err,"Failed to release y_loc!");
+		if(be_verbose) printf("Released y_loc\n");
+		err = clReleaseProgram(program);
+		CHKERR(err,"Failed to release program!");
+		if(be_verbose) printf("Released program\n");
+		err = clReleaseKernel(kernel);
+		CHKERR(err,"Failed to release kernel!");
+		if(be_verbose) printf("Released kernel\n");
+
+
+	    clReleaseCommandQueue(commands);
+	    CHKERR(err,"Failed to release commands!");
+		if(be_verbose) printf("Released commands\n");
+
+	    clReleaseContext(context);
+	    CHKERR(err,"Failed to release context!");
+		if(be_verbose) printf("Released context\n");
+
 	}
 	#ifdef ENABLE_TIMER
     	TIMER_FINISH;
@@ -494,24 +516,7 @@ int main(int argc, char** argv)
     if(do_affirm) free(host_out);
     free_csr(&csr);
     free(device_out);
-    clReleaseMemObject(csr_ap);
-    if(be_verbose) printf("Released csr_ap\n");
-    clReleaseMemObject(csr_aj);
-    if(be_verbose) printf("Released csr_aj\n");
-    clReleaseMemObject(csr_ax);
-    if(be_verbose) printf("released csr_az\n");
-    clReleaseMemObject(x_loc);
-    if(be_verbose) printf("released x_loc\n");
-    clReleaseMemObject(y_loc);
-    if(be_verbose) printf("released y_loc\n");
-    clReleaseProgram(program);
-    if(be_verbose) printf("released program\n");
-    clReleaseKernel(kernel);
-    if(be_verbose) printf("released kernel\n");
-    clReleaseCommandQueue(commands);
-    if(be_verbose) printf("released commands\n");
-    clReleaseContext(context);
-    if(be_verbose) printf("released context\n");
+
     return 0;
 }
 
