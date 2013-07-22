@@ -30,6 +30,7 @@ static struct option long_options[] = {
       {"repeat",1,NULL,'r'},
       {"kernel_file",1,NULL,'k'},
       {"wg_size",1,NULL,'w'},
+      {"pipeling",1,NULL,'l'},
       {0,0,0,0}
 };
 
@@ -119,13 +120,13 @@ int main(int argc, char** argv)
 	cl_int err;
 	int num_wg,be_verbose = 0,do_print=0,do_affirm=0,do_mem_align=0,opt, option_index=0;
     unsigned long density_ppm = 500000;
-    unsigned int num_execs=1,i,ii,iii,j,num_wg_sizes=0,num_kernels=0;
+    unsigned int N = 512,num_execs=1,num_piped=1,i,ii,iii,j,k,num_wg_sizes=0,num_kernels=0;
     unsigned long start_time, end_time;
 	struct timeval *tv;
     char* file_path = NULL,*optptr;
     void* tmp;
 
-    const char* usage = "Usage: %s -i <file_path> [-v] [-c] [-p] [-a] [-r <num_execs>] [-k <kernel_file-1>][-k <kernel_file-2>]...[-k <kernel_file-n>] [-w <wg_size-1>][-w <wg_size-2>]...[-w <wg_size-m>]\n\n \
+    const char* usage = "Usage: %s -i <file_path> [-v] [-c] [-p] [-a] [-r <num_execs>] [-l <num_piped>] [-k <kernel_file-1>][-k <kernel_file-2>]...[-k <kernel_file-n>] [-w <wg_size-1>][-w <wg_size-2>]...[-w <wg_size-m>]\n\n \
     		-i: Read CSR Matrix from file <file_path>\n \
     		-k: Test SPMV 'n' times, once with each kernel_file-'1..n' - Default is 1 kernel named './spmv_csr_kernel.xxx' where xxx is 'aocx' if USE_AFPGA is defined, 'cl' otherwise.\n \
     		-v: Be Verbose \n \
@@ -133,7 +134,8 @@ int main(int argc, char** argv)
     		-p: Print matrices to stdout in standard (2-D Array) format - Warning: lots of output\n \
     		-a: Affirm results with serial C code on CPU\n \
     		-r: Execute program with same data exactly <num_execs> times to increase sample size - Default is 1\n \
-    		-w: Loop through each kernel execution 'm' times, once with each wg_size-'1..m' - Default is 1 iteration with wg_size set to the maximum possible (limited either by the device or the size of the input)\n\n";
+    		-w: Loop through each kernel execution 'm' times, once with each wg_size-'1..m' - Default is 1 iteration with wg_size set to the maximum possible (limited either by the device or the size of the input)\n \
+    		-l: Pipeline the input file <num_piped> times through the write,execute, and read stages for each execution - default is 1\n\n";
 
     size_t global_size;
     size_t* wg_sizes = NULL;
@@ -144,9 +146,7 @@ int main(int argc, char** argv)
     cl_context context;
     cl_command_queue commands;
     cl_program program;
-    cl_kernel kernel;
-
-    cl_mem csr_ap,csr_aj,csr_ax,x_loc,y_loc;
+    cl_kernel tmp_kernel;
 
     FILE *kernel_fp;
     char *kernelSource,**kernel_files=NULL,*kernel_file_mode;
@@ -165,7 +165,7 @@ int main(int argc, char** argv)
     	dev_type = CL_DEVICE_TYPE_CPU;
 	#endif
 
-    while ((opt = getopt_long(argc, argv, "::vcmw:k:i:par:::", long_options, &option_index)) != -1 )
+    while ((opt = getopt_long(argc, argv, "::vcml:w:k:i:par:::", long_options, &option_index)) != -1 )
     {
     	switch(opt)
 		{
@@ -220,6 +220,13 @@ int main(int argc, char** argv)
 				wg_sizes = tmp;
 				wg_sizes[num_wg_sizes-1] = atoi(optptr);
 				break;
+			case 'l':
+				if(optarg != NULL)
+					num_piped = atoi(optarg);
+				else
+					num_piped = atoi(argv[optind]);
+				printf("Pipelining %d times\n",num_piped);
+				break;
 			default:
 				fprintf(stderr, usage,argv[0]);
 				exit(EXIT_FAILURE);
@@ -233,6 +240,11 @@ int main(int argc, char** argv)
 		exit(EXIT_FAILURE);
 	}
 
+    cl_mem csr_ap[num_piped],csr_aj[num_piped],csr_ax[num_piped],x_loc[num_piped],y_loc[num_piped];
+    cl_event write_ap[num_piped],write_aj[num_piped],write_ax[num_piped],write_x_loc[num_piped],write_y_loc[num_piped],kernel_exec[num_piped],read_y_loc[num_piped];
+    cl_event kernel_wait_list[num_piped][5];
+    cl_kernel kernel[num_piped];
+
     csr_matrix csr;
     read_csr(&csr,file_path);
 
@@ -240,10 +252,11 @@ int main(int argc, char** argv)
     else if(be_verbose) print_csr_metadata(&csr,stdout);
 
     //The other arrays
-    float *x_host, *y_host, *device_out, *host_out;
+    float *x_host, *y_host, *device_out[num_piped], *host_out;
 	x_host = float_new_array(csr.num_cols,"csr.main() - Heap Overflow! Cannot Allocate Space for x_host");
 	y_host = float_new_array(csr.num_rows,"csr.main() - Heap Overflow! Cannot Allocate Space for y_host");
-	device_out = float_new_array(csr.num_rows,"csr.main() - Heap Overflow! Cannot Allocate Space for device_out");
+	for(ii=0; ii<num_piped; ii++)
+		device_out[ii] = float_new_array(csr.num_rows,"csr.main() - Heap Overflow! Cannot Allocate Space for device_out");
 
 	if(do_affirm)
 	{
@@ -274,7 +287,22 @@ int main(int argc, char** argv)
 
     if(be_verbose) ocd_print_device_info(device_id);
 
+    /* Create a compute context */
+	context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
+	CHKERR(err, "Failed to create a compute context!");
 
+	/* Create a command queue */
+	commands = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, &err);
+	CHKERR(err, "Failed to create a command queue!");
+
+	for(k=0; k<num_piped; k++)
+	{
+		csrCreateBuffer(&context,&csr_ap[k],sizeof(int)*(csr.num_rows+1),CL_MEM_READ_ONLY,"csr_ap",be_verbose);
+		csrCreateBuffer(&context,&x_loc[k],sizeof(float)*csr.num_cols,CL_MEM_READ_ONLY,"x_loc",be_verbose);
+		csrCreateBuffer(&context,&y_loc[k],sizeof(float)*csr.num_rows,CL_MEM_READ_WRITE,"y_loc",be_verbose);
+		csrCreateBuffer(&context,&csr_aj[k],sizeof(int)*csr.num_nonzeros,CL_MEM_READ_ONLY,"csr_aj",be_verbose);
+		csrCreateBuffer(&context,&csr_ax[k],sizeof(float)*csr.num_nonzeros,CL_MEM_READ_ONLY,"csr_ax",be_verbose);
+	}
 
     if(!kernel_files) //use default if no kernel files were given on commandline
     {
@@ -295,20 +323,6 @@ int main(int argc, char** argv)
 
 	for(iii=0; iii<num_kernels; iii++)
 	{
-	 /* Create a compute context */
-		context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
-		CHKERR(err, "Failed to create a compute context!");
-
-		/* Create a command queue */
-		commands = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
-		CHKERR(err, "Failed to create a command queue!");
-
-		csrCreateBuffer(&context,&csr_ap,sizeof(int)*(csr.num_rows+1),CL_MEM_READ_ONLY,"csr_ap",be_verbose);
-		csrCreateBuffer(&context,&x_loc,sizeof(float)*csr.num_cols,CL_MEM_READ_ONLY,"x_loc",be_verbose);
-		csrCreateBuffer(&context,&y_loc,sizeof(float)*csr.num_rows,CL_MEM_READ_WRITE,"y_loc",be_verbose);
-		csrCreateBuffer(&context,&csr_aj,sizeof(int)*csr.num_nonzeros,CL_MEM_READ_ONLY,"csr_aj",be_verbose);
-		csrCreateBuffer(&context,&csr_ax,sizeof(float)*csr.num_nonzeros,CL_MEM_READ_ONLY,"csr_ax",be_verbose);
-
 		/* Load kernel source */
 		printf("Kernel #%d: '%s'\n\n",iii+1,kernel_files[iii]);
 		kernel_fp = fopen(kernel_files[iii], kernel_file_mode);
@@ -353,25 +367,13 @@ int main(int argc, char** argv)
 		}
 		CHKERR(err, "Failed to build program!");
 
-		/* Create the compute kernel in the program we wish to run */
-		kernel = clCreateKernel(program, "csr", &err);
-		CHKERR(err, "Failed to create a compute kernel!");
-		if(be_verbose) printf("kernel created\n");
-
-		/* Set the arguments to our compute kernel */
-		err = clSetKernelArg(kernel, 0, sizeof(unsigned int), &csr.num_rows);
-		err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &csr_ap);
-		err |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &csr_aj);
-		err |= clSetKernelArg(kernel, 3, sizeof(cl_mem), &csr_ax);
-		err |= clSetKernelArg(kernel, 4, sizeof(cl_mem), &x_loc);
-		err |= clSetKernelArg(kernel, 5, sizeof(cl_mem), &y_loc);
-		CHKERR(err, "Failed to set kernel arguments!");
-		if(be_verbose) printf("set kernel arguments\n");
-
 		/* Get the maximum work group size for executing the kernel on the device */
-		err = clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &max_wg_size, NULL);
+		tmp_kernel = clCreateKernel(program, "csr", &err);
+		CHKERR(err, "Failed to create a compute kernel!");
+		err = clGetKernelWorkGroupInfo(tmp_kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &max_wg_size, NULL);
 		if(be_verbose) printf("Kernel Max Work Group Size: %d\n",max_wg_size);
 		CHKERR(err, "Failed to retrieve kernel work group info!");
+		clReleaseKernel(tmp_kernel);
 
 		global_size = csr.num_rows;
 		wg_sizes = check_wg_sizes(wg_sizes,&num_wg_sizes,max_wg_size,global_size);
@@ -384,130 +386,131 @@ int main(int argc, char** argv)
 			for(i=0; i<num_execs; i++) //repeat Host-Device transfer, kernel execution, and device-host transfer num_execs times
 			{						//to gather multiple samples of data
 				if(be_verbose) printf("Beginning execution #%d of %d\n",i+1,num_execs);
-
 				#ifdef ENABLE_TIMER
 					TIMER_INIT
-					START_GTOD_TIMER
 				#endif
-
-				/* Write our data set into the input array in device memory */
-				err = clEnqueueWriteBuffer(commands, csr_ap, CL_TRUE, 0, sizeof(unsigned int)*csr.num_rows+4, csr.Ap, 0, NULL, &ocdTempEvent);
-				clFinish(commands);
-				if(be_verbose) printf("Ap Buffer Written\n");
-				START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
-				END_TIMER(ocdTempTimer)
-				CHKERR(err, "Failed to write to source array!");
-
-				err = clEnqueueWriteBuffer(commands, csr_aj, CL_TRUE, 0, sizeof(unsigned int)*csr.num_nonzeros, csr.Aj, 0, NULL, &ocdTempEvent);
-				clFinish(commands);
-				if(be_verbose) printf("Aj Buffer Written\n");
-				START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
-				END_TIMER(ocdTempTimer)
-				CHKERR(err, "Failed to write to source array!");
-
-				err = clEnqueueWriteBuffer(commands, csr_ax, CL_TRUE, 0, sizeof(float)*csr.num_nonzeros, csr.Ax, 0, NULL, &ocdTempEvent);
-				clFinish(commands);
-				if(be_verbose) printf("Ax Buffer Written\n");
-				START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
-				END_TIMER(ocdTempTimer)
-				CHKERR(err, "Failed to write to source array!");
-
-				err = clEnqueueWriteBuffer(commands, x_loc, CL_TRUE, 0, sizeof(float)*csr.num_cols, x_host, 0, NULL, &ocdTempEvent);
-				clFinish(commands);
-				if(be_verbose) printf("X_host Buffer Written\n");
-				START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
-				END_TIMER(ocdTempTimer)
-				CHKERR(err, "Failed to write to source array!");
-
-				err = clEnqueueWriteBuffer(commands, y_loc, CL_TRUE, 0, sizeof(float)*csr.num_rows, y_host, 0, NULL, &ocdTempEvent);
-				clFinish(commands);
-				if(be_verbose) printf("Y_host Buffer Written\n");
-				START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
-				CHKERR(err, "Failed to write to source array!");
-				END_TIMER(ocdTempTimer)
-
-				#ifdef ENABLE_TIMER
-					END_GTOD_TIMER
-					if(be_verbose) printf("H2D GTOD:\t%llu\n",end_time - start_time);
-					START_GTOD_TIMER
-				#endif
-
-				err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global_size, &wg_sizes[ii], 0, NULL, &ocdTempEvent);
-				clFinish(commands);
-				START_TIMER(ocdTempEvent, OCD_TIMER_KERNEL, "CSR Kernel", ocdTempTimer)
-				END_TIMER(ocdTempTimer)
-				CHKERR(err, "Failed to execute kernel!");
-
-				#ifdef ENABLE_TIMER
-					END_GTOD_TIMER
-					if(be_verbose) printf("Kernel GTOD:\t%llu\n",end_time - start_time);
-					START_GTOD_TIMER
-				#endif
-
-				/* Read back the results from the device to verify the output */
-				err = clEnqueueReadBuffer(commands, y_loc, CL_TRUE, 0, sizeof(float)*csr.num_rows, device_out, 0, NULL, &ocdTempEvent);
-				clFinish(commands);
-				START_TIMER(ocdTempEvent, OCD_TIMER_D2H, "CSR Data Copy", ocdTempTimer)
-				END_TIMER(ocdTempTimer)
-				CHKERR(err, "Failed to read output array!");
-
-				#ifdef ENABLE_TIMER
-					END_GTOD_TIMER
-					if(be_verbose) printf("D2H GTOD:\t%llu\n",end_time - start_time);
-					TIMER_PRINT;
-				#endif
-
-				if(do_print)
+				for(k=0; k<num_piped; k++)
 				{
-				   for (j = 0; j < csr.num_rows; j++)
-					   printf("row: %d	output: %6.2f \n", j, device_out[j]);
-				}
+					kernel[k] = clCreateKernel(program, "csr", &err);
+					CHKERR(err, "Failed to create a compute kernel!");
 
-				if(do_affirm)
-				{
-				   if(be_verbose) printf("Validating results with serial C code on CPU...\n");
-				   spmv_csr_cpu(&csr,x_host,y_host,host_out);
-				   float_array_comp(host_out,device_out,csr.num_rows);
+					/* Set the arguments to our compute kernel */
+					err = clSetKernelArg(kernel[k], 0, sizeof(unsigned int), &csr.num_rows);
+					err |= clSetKernelArg(kernel[k], 1, sizeof(cl_mem), &csr_ap[k]);
+					err |= clSetKernelArg(kernel[k], 2, sizeof(cl_mem), &csr_aj[k]);
+					err |= clSetKernelArg(kernel[k], 3, sizeof(cl_mem), &csr_ax[k]);
+					err |= clSetKernelArg(kernel[k], 4, sizeof(cl_mem), &x_loc[k]);
+					err |= clSetKernelArg(kernel[k], 5, sizeof(cl_mem), &y_loc[k]);
+					CHKERR(err, "Failed to set kernel arguments!");
+					if(be_verbose) printf("set kernel arguments\n");
+
+					/* Write our data set into the input array in device memory */
+					err = clEnqueueWriteBuffer(commands, csr_ap[k], CL_TRUE, 0, sizeof(unsigned int)*csr.num_rows+4, csr.Ap, 0, NULL, &write_ap[k]);
+
+					if(be_verbose) printf("Ap Buffer Written\n");
+					CHKERR(err, "Failed to write to source array!");
+
+					err = clEnqueueWriteBuffer(commands, csr_aj[k], CL_TRUE, 0, sizeof(unsigned int)*csr.num_nonzeros, csr.Aj, 0, NULL, &write_aj[k]);
+
+					if(be_verbose) printf("Aj Buffer Written\n");
+					CHKERR(err, "Failed to write to source array!");
+
+					err = clEnqueueWriteBuffer(commands, csr_ax[k], CL_TRUE, 0, sizeof(float)*csr.num_nonzeros, csr.Ax, 0, NULL, &write_ax[k]);
+
+					if(be_verbose) printf("Ax Buffer Written\n");
+					CHKERR(err, "Failed to write to source array!");
+
+					err = clEnqueueWriteBuffer(commands, x_loc[k], CL_TRUE, 0, sizeof(float)*csr.num_cols, x_host, 0, NULL, &write_x_loc[k]);
+
+					if(be_verbose) printf("X_host Buffer Written\n");
+					CHKERR(err, "Failed to write to source array!");
+
+					err = clEnqueueWriteBuffer(commands, y_loc[k], CL_TRUE, 0, sizeof(float)*csr.num_rows, y_host, 0, NULL, &write_y_loc[k]);
+
+					if(be_verbose) printf("Y_host Buffer Written\n");
+					CHKERR(err, "Failed to write to source array!");
+
+					cl_event kernel_wait_list[5] = {write_ap[k],write_aj[k],write_ax[k],write_x_loc[k],write_y_loc[k]};
+					err = clEnqueueNDRangeKernel(commands, kernel[k], 1, NULL, &global_size, &wg_sizes[ii], 5, kernel_wait_list, &kernel_exec[k]);
+
+					CHKERR(err, "Failed to execute kernel!");
+
+					/* Read back the results from the device to verify the output */
+					err = clEnqueueReadBuffer(commands, y_loc[k], CL_TRUE, 0, sizeof(float)*csr.num_rows, device_out[k], 1, &kernel_exec[k], &read_y_loc[k]);
+
+					CHKERR(err, "Failed to read output array!");
 				}
+				clFinish(commands);
+
+				for(k=0; k<num_piped; k++)
+				{
+					START_TIMER(write_ap[k], OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
+					END_TIMER(ocdTempTimer)
+
+					START_TIMER(write_aj[k], OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
+					END_TIMER(ocdTempTimer)
+
+					START_TIMER(write_ax[k], OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
+					END_TIMER(ocdTempTimer)
+
+					START_TIMER(write_x_loc[k], OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
+					END_TIMER(ocdTempTimer)
+
+					START_TIMER(write_y_loc[k], OCD_TIMER_H2D, "CSR Data Copy", ocdTempTimer)
+					END_TIMER(ocdTempTimer)
+
+					START_TIMER(kernel_exec[k], OCD_TIMER_KERNEL, "CSR Kernel", ocdTempTimer)
+					END_TIMER(ocdTempTimer)
+
+					START_TIMER(read_y_loc[k], OCD_TIMER_D2H, "CSR Data Copy", ocdTempTimer)
+					END_TIMER(ocdTempTimer)
+
+					if(do_print)
+					{
+						printf("\nTask #%d of %d:\n",k+1,num_piped);
+						for(j = 0; j < csr.num_rows; j++)
+						   printf("\trow: %d	output: %6.2f \n", j, device_out[k][j]);
+					}
+
+					if(do_affirm)
+					{
+					   if(be_verbose) printf("Validating results with serial C code on CPU...\n");
+					   spmv_csr_cpu(&csr,x_host,y_host,host_out);
+					   float_array_comp(host_out,device_out[k],csr.num_rows);
+					}
+				}
+				#ifdef ENABLE_TIMER
+					TIMER_PRINT
+				#endif
 			}
 		}
-		err = clReleaseMemObject(csr_ap);
-		CHKERR(err,"Failed to release csr_ap!");
-		if(be_verbose) printf("Released csr_ap\n");
-		err = clReleaseMemObject(csr_aj);
-		CHKERR(err,"Failed to release csr_aj!");
-		if(be_verbose) printf("Released csr_aj\n");
-		err = clReleaseMemObject(csr_ax);
-		CHKERR(err,"Failed to release csr_ax!");
-		if(be_verbose) printf("Released csr_ax\n");
-		err = clReleaseMemObject(x_loc);
-		CHKERR(err,"Failed to release x_loc!");
-		if(be_verbose) printf("Released x_loc\n");
-		err = clReleaseMemObject(y_loc);
-		CHKERR(err,"Failed to release y_loc!");
-		if(be_verbose) printf("Released y_loc\n");
-		err = clReleaseProgram(program);
-		CHKERR(err,"Failed to release program!");
-		if(be_verbose) printf("Released program\n");
-		err = clReleaseKernel(kernel);
-		CHKERR(err,"Failed to release kernel!");
-		if(be_verbose) printf("Released kernel\n");
-
-
-	    clReleaseCommandQueue(commands);
-	    CHKERR(err,"Failed to release commands!");
-		if(be_verbose) printf("Released commands\n");
-
-	    clReleaseContext(context);
-	    CHKERR(err,"Failed to release context!");
-		if(be_verbose) printf("Released context\n");
-
 	}
 	#ifdef ENABLE_TIMER
     	TIMER_FINISH;
 	#endif
 
     /* Shutdown and cleanup */
+	for(k=0; k<num_piped; k++)
+	{
+		err = clReleaseMemObject(csr_ap[k]);
+		CHKERR(err,"Failed to release csr_ap!");
+		err = clReleaseMemObject(csr_aj[k]);
+		CHKERR(err,"Failed to release csr_aj!");
+		err = clReleaseMemObject(csr_ax[k]);
+		CHKERR(err,"Failed to release csr_ax!");
+		err = clReleaseMemObject(x_loc[k]);
+		CHKERR(err,"Failed to release x_loc!");
+		err = clReleaseMemObject(y_loc[k]);
+		CHKERR(err,"Failed to release y_loc!");
+		err = clReleaseKernel(kernel[k]);
+		CHKERR(err,"Failed to release kernel!");
+	}
+	clReleaseCommandQueue(commands);
+	CHKERR(err,"Failed to release commands!");
+	if(be_verbose) printf("Released commands\n");
+	clReleaseContext(context);
+	CHKERR(err,"Failed to release context!");
+	if(be_verbose) printf("Released context\n");
     free(kernel_files);
     free(wg_sizes);
 	free(tv);
@@ -515,8 +518,7 @@ int main(int argc, char** argv)
     free(y_host);
     if(do_affirm) free(host_out);
     free_csr(&csr);
-    free(device_out);
-
+    for(k=0; k<num_piped; k++) free(device_out[k]);
     return 0;
 }
 
