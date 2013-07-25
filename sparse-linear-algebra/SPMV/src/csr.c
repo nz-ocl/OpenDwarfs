@@ -508,14 +508,20 @@ int main(int argc, char** argv)
 		CHKERR(err,"Failed to release x_loc!");
 		err = clReleaseMemObject(y_loc[k]);
 		CHKERR(err,"Failed to release y_loc!");
+		err = clReleaseEvent(ap_write[k]);
+		CHKERR(err,"Failed to release ap_loc_write!");
+		err = clReleaseEvent(aj_write[k]);
+		CHKERR(err,"Failed to release aj_loc_write!");
+		err = clReleaseEvent(ax_write[k]);
+		CHKERR(err,"Failed to release ax_loc_write!");
+		err = clReleaseEvent(x_loc_write[k]);
+		CHKERR(err,"Failed to release x_loc_write!");
 		err = clReleaseEvent(y_loc_write[k]);
-		CHKERR(err,"Failed to release data_write!");
+		CHKERR(err,"Failed to release y_loc_write!");
 		err = clReleaseEvent(kernel_exec[k]);
 		CHKERR(err,"Failed to release kernel_exec!");
 		free(device_out[k]);
 	}
-	err = clReleaseKernel(kernel);
-	CHKERR(err,"Failed to release kernel!");
 
 	clReleaseContext(context);
 	CHKERR(err,"Failed to release context!");
