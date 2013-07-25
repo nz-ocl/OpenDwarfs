@@ -277,14 +277,6 @@ int main(int argc, char** argv)
 	context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
 	CHKERR(err, "Failed to create a compute context!");
 
-	/* Create command queues, one for each stage in the write-execute-read pipeline */
-	write_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
-	CHKERR(err, "Failed to create a command queue!");
-	kernel_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
-	CHKERR(err, "Failed to create a command queue!");
-	read_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
-	CHKERR(err, "Failed to create a command queue!");
-
 	for(k=0; k<num_matrices; k++)
 	{
 		if(verbosity >= 2) printf("Creating Data Buffers for Matrix #%d of %d...\n",k+1,num_matrices);
@@ -293,6 +285,20 @@ int main(int argc, char** argv)
 		csrCreateBuffer(&context,&y_loc[k],sizeof(float)*csr[k].num_rows,CL_MEM_READ_WRITE,"y_loc",verbosity);
 		csrCreateBuffer(&context,&csr_aj[k],sizeof(int)*csr[k].num_nonzeros,CL_MEM_READ_ONLY,"csr_aj",verbosity);
 		csrCreateBuffer(&context,&csr_ax[k],sizeof(float)*csr[k].num_nonzeros,CL_MEM_READ_ONLY,"csr_ax",verbosity);
+	}
+
+	if(!wg_sizes)
+	{
+		/* Get the maximum work group size for executing the kernel on the device */
+		kernel = clCreateKernel(program, "csr", &err);
+		CHKERR(err, "Failed to create a compute kernel!");
+		err = clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &max_wg_size, NULL);
+		if(verbosity) printf("Kernel Max Work Group Size: %d\n",max_wg_size);
+		CHKERR(err, "Failed to retrieve kernel work group info!");
+		global_size = csr[0].num_rows; //Preconditions: all matrices in input file are same size
+									   //				all kernels have same max workgroup size
+		wg_sizes = default_wg_sizes(&num_wg_sizes,max_wg_size,global_size);
+		clReleaseKernel(kernel);
 	}
 
     if(!kernel_files) //use default if no kernel files were given on commandline
@@ -358,20 +364,6 @@ int main(int argc, char** argv)
 		}
 		CHKERR(err, "Failed to build program!");
 
-		/* Get the maximum work group size for executing the kernel on the device */
-		kernel = clCreateKernel(program, "csr", &err);
-		CHKERR(err, "Failed to create a compute kernel!");
-		err = clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &max_wg_size, NULL);
-		if(verbosity) printf("Kernel Max Work Group Size: %d\n",max_wg_size);
-		CHKERR(err, "Failed to retrieve kernel work group info!");
-
-		if(!wg_sizes)
-		{
-			global_size = csr[0].num_rows; //Preconditions: all matrices in input file are same size
-										   //				all kernels have same max workgroup size
-			wg_sizes = default_wg_sizes(&num_wg_sizes,max_wg_size,global_size);
-		}
-
 		for(ii=0; ii<num_wg_sizes; ii++) //loop through all wg_sizes that need to be tested
 		{
 			num_wg = global_size / wg_sizes[ii];
@@ -380,6 +372,19 @@ int main(int argc, char** argv)
 			for(i=0; i<num_execs; i++) //repeat Host-Device transfer, kernel execution, and device-host transfer num_execs times
 			{						//to gather multiple samples of data
 				if(verbosity) printf("Beginning execution #%d of %d\n",i+1,num_execs);
+
+				/* Create command queues, one for each stage in the write-execute-read pipeline */
+				write_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
+				CHKERR(err, "Failed to create a command queue!");
+				kernel_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
+				CHKERR(err, "Failed to create a command queue!");
+				read_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
+				CHKERR(err, "Failed to create a command queue!");
+
+				/* Get the maximum work group size for executing the kernel on the device */
+				kernel = clCreateKernel(program, "csr", &err);
+				CHKERR(err, "Failed to create a compute kernel!");
+
 				#ifdef ENABLE_TIMER
 					TIMER_INIT
 				#endif
@@ -461,6 +466,15 @@ int main(int argc, char** argv)
 					}
 				}
 
+				clReleaseCommandQueue(write_queue);
+				CHKERR(err,"Failed to release write_queue!");
+				clReleaseCommandQueue(kernel_queue);
+				CHKERR(err,"Failed to release kernel_queue!");
+				clReleaseCommandQueue(read_queue);
+				CHKERR(err,"Failed to release read_queue!");
+				clReleaseKernel(kernel);
+				CHKERR(err,"Failed to release kernel!");
+
 				#ifdef ENABLE_TIMER
 					TIMER_PRINT
 				#endif
@@ -502,12 +516,7 @@ int main(int argc, char** argv)
 	}
 	err = clReleaseKernel(kernel);
 	CHKERR(err,"Failed to release kernel!");
-	clReleaseCommandQueue(write_queue);
-	CHKERR(err,"Failed to release write_queue!");
-	clReleaseCommandQueue(kernel_queue);
-	CHKERR(err,"Failed to release kernel_queue!");
-	clReleaseCommandQueue(write_queue);
-	CHKERR(err,"Failed to release read_queue!");
+
 	clReleaseContext(context);
 	CHKERR(err,"Failed to release context!");
 	if(verbosity) printf("Released context\n");
