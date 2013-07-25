@@ -15,16 +15,6 @@
 int platform_id = PLATFORM_ID, n_device = DEVICE_ID;
 // includes, project
 
-
-#define CHKERR(err, str) \
-    if (err != CL_SUCCESS) \
-    { \
-        fprintf(stderr, "CL Error %d: %s\n", err, str); \
-        exit(1); \
-    }
-
-//#define USEGPU 1
-
 #define min(x,y) (x < y ? x : y)
 
 // includes, kernels

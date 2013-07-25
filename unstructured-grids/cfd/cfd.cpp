@@ -7,15 +7,6 @@
 #include "../../include/rdtsc.h"
 #include "../../include/common_ocl.h"
 
-#define CHKERR(err, str) \
-    if (err != CL_SUCCESS) \
-    { \
-        fprintf(stderr, "CL Error %d: %s\n", err, str); \
-        exit(1); \
-    }
-
-//#define USEGPU 1
-
 typedef struct{
     float x;
     float y;

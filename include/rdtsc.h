@@ -263,13 +263,16 @@ TOTAL_HOST = 0; \
 TOTAL_DUAL = 0; \
 }
 
+#define TIMER_STOP {\
+	gettimeofday(&fullExecTimer.timer, NULL);\
+	fullExecTimer.endtime = 1000 * (fullExecTimer.timer.tv_sec*1000000L + fullExecTimer.timer.tv_usec);\
+}
+
 //and absolutely everything needed to finalize them
 // performs timer aggregation and printing
 // deconstructs timer list and name tree/list
     //TODO-free all our data structures
 #define TIMER_PRINT {\
-gettimeofday(&fullExecTimer.timer, NULL);\
-fullExecTimer.endtime = 1000 * (fullExecTimer.timer.tv_sec*1000000L + fullExecTimer.timer.tv_usec);\
     simpleNameTally();\
     OCD_PRINT_TIMERS\
     simpleNamePrint();\
@@ -277,7 +280,7 @@ fullExecTimer.endtime = 1000 * (fullExecTimer.timer.tv_sec*1000000L + fullExecTi
     destTimerList();\
     }
 
-#define TIMER_FINISH {\
+#define TIMER_DEST {\
 	    destNameList();\
 }
 //starts the dual timer specified by events a and b, assumes a is the "first" event

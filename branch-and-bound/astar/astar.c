@@ -5,16 +5,6 @@
 #include "../../include/rdtsc.h"
 #include "../../include/common_ocl.h"
 
-#define CHKERR(err, str) \
-    if (err != CL_SUCCESS) \
-    { \
-        fprintf(stderr, "CL Error %d: %s\n", err, str); \
-        exit(1); \
-    }
-
-
-
-//#define USEGPU 1
 #define CITIES 14
 
 int platform_id = PLATFORM_ID, n_device = DEVICE_ID;

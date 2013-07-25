@@ -15,3 +15,4 @@ extern void check();
 extern void* int_new_array(const size_t N,const char* error_msg);
 extern void* long_new_array(const size_t N,const char* error_msg);
 extern void* float_new_array(const size_t N,const char* error_msg);
+extern void* float_array_realloc(void* ptr,const size_t N,const char* error_msg);

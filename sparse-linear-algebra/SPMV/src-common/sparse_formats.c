@@ -35,60 +35,75 @@ int unsigned_int_comparator(const void* v1, const void* v2)
 		return 0;
 }
 
-void write_csr(const csr_matrix* csr,const char* file_path)
+void write_csr(const csr_matrix* csr,const unsigned int num_csr,const char* file_path)
 {
 	FILE* fp;
-	int i;
+	int i,j;
 	fp = fopen(file_path,"w");
 	check(fp != NULL,"sparse_formats.write_csr() - Cannot Open File");
+	fprintf(fp,"%u\n\n",num_csr);
 
-	fprintf(fp,"%u\n%u\n%u\n%u\n%lf\n%lf\n%lf\n",csr->num_rows,csr->num_cols,csr->num_nonzeros,csr->density_ppm,csr->density_perc,csr->nz_per_row,csr->stddev);
+	for(j=0; j<num_csr; j++)
+	{
+		fprintf(fp,"%u\n%u\n%u\n%u\n%lf\n%lf\n%lf\n",csr[j].num_rows,csr[j].num_cols,csr[j].num_nonzeros,csr[j].density_ppm,csr[j].density_perc,csr[j].nz_per_row,csr[j].stddev);
 
-	for(i=0; i<=csr->num_rows; i++)
-	  fprintf(fp,"%u ",csr->Ap[i]);
-	fprintf(fp,"\n");
+		for(i=0; i<=csr[j].num_rows; i++)
+		  fprintf(fp,"%u ",csr[j].Ap[i]);
+		fprintf(fp,"\n");
 
-	for(i=0; i<csr->num_nonzeros; i++)
-	  fprintf(fp,"%u ",csr->Aj[i]);
-	fprintf(fp,"\n");
+		for(i=0; i<csr[j].num_nonzeros; i++)
+		  fprintf(fp,"%u ",csr[j].Aj[i]);
+		fprintf(fp,"\n");
 
-	for(i=0; i<csr->num_nonzeros; i++)
-	  fprintf(fp,"%f ",csr->Ax[i]);
-	fprintf(fp,"\n");
+		for(i=0; i<csr[j].num_nonzeros; i++)
+		  fprintf(fp,"%f ",csr[j].Ax[i]);
+		fprintf(fp,"\n\n");
+	}
 
 	fclose(fp);
 }
 
-void read_csr(csr_matrix* csr,const char* file_path)
+csr_matrix* read_csr(unsigned int* num_csr,const char* file_path)
 {
 	FILE* fp;
-	int i,read_count;
+	int i,j,read_count;
+	csr_matrix* csr;
+
+	check(num_csr != NULL,"sparse_formats.read_csr() - ptr to num_csr is NULL!");
 
 	fp = fopen(file_path,"r");
 	check(fp != NULL,"sparse_formats.read_csr() - Cannot Open Input File");
 
-	read_count = fscanf(fp,"%u\n%u\n%u\n%u\n%lf\n%lf\n%lf\n",&(csr->num_rows),&(csr->num_cols),&(csr->num_nonzeros),&(csr->density_ppm),&(csr->density_perc),&(csr->nz_per_row),&(csr->stddev));
-	check(read_count == 7,"sparse_formats.read_csr() - Input File Corrupted! Read count for header info differs from 9");
+	read_count = fscanf(fp,"%u\n\n",num_csr);
+	check(read_count == 1,"sparse_formats.read_csr() - Input File Corrupted! Read count for num_csr differs from 1");
+	csr = malloc(sizeof(struct csr_matrix)*(*num_csr));
 
-	read_count = 0;
-	csr->Ap = int_new_array(csr->num_rows+1,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Ap");
-	for(i=0; i<=csr->num_rows; i++)
-	  read_count += fscanf(fp,"%u ",csr->Ap+i);
-	check(read_count == (csr->num_rows+1),"sparse_formats.read_csr() - Input File Corrupted! Read count for Ap differs from csr->num_rows+1");
+	for(j=0; j<*num_csr; j++)
+	{
+		read_count = fscanf(fp,"%u\n%u\n%u\n%u\n%lf\n%lf\n%lf\n",&(csr[j].num_rows),&(csr[j].num_cols),&(csr[j].num_nonzeros),&(csr[j].density_ppm),&(csr[j].density_perc),&(csr[j].nz_per_row),&(csr[j].stddev));
+		check(read_count == 7,"sparse_formats.read_csr() - Input File Corrupted! Read count for header info differs from 7");
 
-	read_count = 0;
-	csr->Aj = int_new_array(csr->num_nonzeros,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Aj");
-	for(i=0; i<csr->num_nonzeros; i++)
-	  read_count += fscanf(fp,"%u ",csr->Aj+i);
-	check(read_count == (csr->num_nonzeros),"sparse_formats.read_csr() - Input File Corrupted! Read count for Aj differs from csr->num_nonzeros");
+		read_count = 0;
+		csr[j].Ap = int_new_array(csr[j].num_rows+1,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Ap");
+		for(i=0; i<=csr[j].num_rows; i++)
+		  read_count += fscanf(fp,"%u ",csr[j].Ap+i);
+		check(read_count == (csr[j].num_rows+1),"sparse_formats.read_csr() - Input File Corrupted! Read count for Ap differs from csr[j].num_rows+1");
 
-	read_count = 0;
-	csr->Ax = float_new_array(csr->num_nonzeros,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Ax");
-	for(i=0; i<csr->num_nonzeros; i++)
-	  read_count += fscanf(fp,"%f ",csr->Ax+i);
-	check(read_count == (csr->num_nonzeros),"sparse_formats.read_csr() - Input File Corrupted! Read count for Ax differs from csr->num_nonzeros");
+		read_count = 0;
+		csr[j].Aj = int_new_array(csr[j].num_nonzeros,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Aj");
+		for(i=0; i<csr[j].num_nonzeros; i++)
+		  read_count += fscanf(fp,"%u ",csr[j].Aj+i);
+		check(read_count == (csr[j].num_nonzeros),"sparse_formats.read_csr() - Input File Corrupted! Read count for Aj differs from csr[j].num_nonzeros");
+
+		read_count = 0;
+		csr[j].Ax = float_new_array(csr[j].num_nonzeros,"sparse_formats.read_csr() - Heap Overflow! Cannot allocate space for csr.Ax");
+		for(i=0; i<csr[j].num_nonzeros; i++)
+		  read_count += fscanf(fp,"%f ",csr[j].Ax+i);
+		check(read_count == (csr[j].num_nonzeros),"sparse_formats.read_csr() - Input File Corrupted! Read count for Ax differs from csr[j].num_nonzeros");
+	}
 
 	fclose(fp);
+	return csr;
 }
 
 void print_timestamp(FILE* stream)
@@ -283,6 +298,13 @@ void print_coo_std(const coo_matrix* coo,FILE* stream)
 	}
 }
 
+void print_csr_arr_std(const csr_matrix* csr, const unsigned int num_csr, FILE* stream)
+{
+	unsigned int k;
+	for(k=0; k<num_csr; k++)
+		print_csr_std(&csr[k],stream);
+}
+
 void print_csr_std(const csr_matrix* csr,FILE* stream)
 {
 	int ind,ind2,nz_count=0,row_count=0,next_nz_row;
@@ -361,7 +383,7 @@ csr_matrix coo_to_csr(const coo_matrix* coo,FILE* log)
 	return csr;
 }
 
-csr_matrix rand_csr(const unsigned int N,const unsigned int density, const double normal_stddev,unsigned long seed,FILE* log)
+csr_matrix rand_csr(const unsigned int N,const unsigned int density, const double normal_stddev,unsigned long* seed,FILE* log)
 {
 	unsigned int i,j,nnz_ith_row,nnz,update_interval,rand_col;
 	double nnz_ith_row_double,nz_error,nz_per_row_doubled,high_bound;
@@ -393,6 +415,7 @@ csr_matrix rand_csr(const unsigned int N,const unsigned int density, const doubl
 	check(used_cols != NULL,"rand_csr() - Heap Overflow! Cannot allocate space for used_cols");
 
 	r4_nor_setup(kn,fn,wn);
+	srand(*seed);
 
 	update_interval = round(csr.num_rows / 10.0);
 	if(!update_interval) update_interval = csr.num_rows;
@@ -401,7 +424,7 @@ csr_matrix rand_csr(const unsigned int N,const unsigned int density, const doubl
 	{
 		if(i % update_interval == 0) fprintf(log,"\t%d of %d (%5.1f%%) Rows Generated. Continuing...\n",i,csr.num_rows,((double)(i))/csr.num_rows*100);
 
-		nnz_ith_row_double = r4_nor(&seed,kn,fn,wn); //random, normally-distributed value for # of nz elements in ith row, NORMALIZED
+		nnz_ith_row_double = r4_nor(seed,kn,fn,wn); //random, normally-distributed value for # of nz elements in ith row, NORMALIZED
 		nnz_ith_row_double *= csr.stddev; //scale by standard deviation
 		nnz_ith_row_double += csr.nz_per_row; //add average nz/row
 		if(nnz_ith_row_double < 0)
@@ -455,9 +478,14 @@ csr_matrix rand_csr(const unsigned int N,const unsigned int density, const doubl
 	return csr;
 }
 
-void free_csr(csr_matrix* csr)
+void free_csr(csr_matrix* csr,const unsigned int num_csr)
 {
-	free(csr->Ap);
-	free(csr->Aj);
-	free(csr->Ax);
+	int k;
+	for(k=0; k<num_csr; k++)
+	{
+		free(csr[k].Ap);
+		free(csr[k].Aj);
+		free(csr[k].Ax);
+	}
+	free(csr);
 }

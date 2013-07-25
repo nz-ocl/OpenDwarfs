@@ -73,9 +73,9 @@ int triplet_comparator(const void *v1, const void *v2);
 
 int unsigned_int_comparator(const void* v1, const void* v2);
 
-void write_csr(const csr_matrix* csr,const char* file_path);
+void write_csr(const csr_matrix* csr,const unsigned int num_csr,const char* file_path);
 
-void read_csr(csr_matrix* csr,const char* file_path);
+csr_matrix* read_csr(unsigned int* num_csr,const char* file_path);
 
 void print_timestamp(FILE* stream);
 
@@ -122,6 +122,8 @@ void print_coo(const coo_matrix* coo, FILE* stream);
 
 void print_coo_std(const coo_matrix* coo, FILE* stream);
 
+void print_csr_arr_std(const csr_matrix* csr,const unsigned int num_csr, FILE* stream);
+
 void print_csr_std(const csr_matrix* csr, FILE* stream);
 
 csr_matrix coo_to_csr(const coo_matrix* coo, FILE* log);
@@ -139,9 +141,9 @@ csr_matrix coo_to_csr(const coo_matrix* coo, FILE* log);
  * NNZ / N and a standard deviation equal to this mean scaled by normal_stddev. A corresponding number of column
  * indices is then randomly generated from a normal distribution.
  */
-csr_matrix rand_csr(const unsigned int N,const unsigned int density,const double normal_stddev,unsigned long seed,FILE* log);
+csr_matrix rand_csr(const unsigned int N,const unsigned int density,const double normal_stddev,unsigned long* seed,FILE* log);
 
-void free_csr(csr_matrix* csr);
+void free_csr(csr_matrix* csr,const unsigned int num_csr);
 
 #endif
 

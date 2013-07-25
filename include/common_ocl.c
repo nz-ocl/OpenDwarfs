@@ -222,7 +222,9 @@ void ocd_init(int* argc, char*** argv, ocd_requirements* reqs)
 void ocd_finalize()
 {
 	#ifdef ENABLE_TIMER
-	TIMER_FINISH;
+	TIMER_STOP
+	TIMER_PRINT
+	TIMER_DEST
 	#endif
 }
 
