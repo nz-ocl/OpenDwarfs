@@ -4,5 +4,5 @@ xpu-build/*
 test/*
 autom4te.cache/*
 opt/LICENSES/*
-deploy-csr.sh*
+ocldev-install/*
 amd-build/*
