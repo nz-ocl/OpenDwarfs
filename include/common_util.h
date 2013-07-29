@@ -12,6 +12,7 @@
 
 extern void check();
 
+extern void* char_new_array(const size_t N,const char* error_msg);
 extern void* int_new_array(const size_t N,const char* error_msg);
 extern void* long_new_array(const size_t N,const char* error_msg);
 extern void* float_new_array(const size_t N,const char* error_msg);

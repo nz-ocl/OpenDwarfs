@@ -19,12 +19,13 @@ a file, the file will be clipped to 32768 bytes.
 Running
 -------
 
-Usage: crc [hsivp]
+Usage: crc [hvsiap]
 
 h         - print this help message
+v		  - Be verbose
 s {seed}  - set the seed for the vertex
 i {file}  - take input from file instead of randomly generating code
-v         - verify parallel code with serial implementation of crc
+a         - verify parallel code with serial implementation of crc
 p {num}   - change the last 8 bits of the crc polynomial
 
 Example Usage

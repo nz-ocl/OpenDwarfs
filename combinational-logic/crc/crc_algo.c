@@ -7,12 +7,17 @@
 #include "../../include/rdtsc.h"
 #include "../../include/common_ocl.h"
 
-
-//#define USEGPU 1
 #define DATA_SIZE 100000000
 #define MIN(a,b) a < b ? a : b
+unsigned char verbosity=0;
 int platform_id=PLATFORM_ID, n_device=DEVICE_ID;
-const char *KernelSourceFile = "crc_algo_kernel.cl";
+
+#ifdef USE_AFPGA
+	const char *KernelSourceFile = "crc_kernel.aocx";
+#else //CPU or GPU
+	const char *KernelSourceFile = "crc_kernel.cl";
+#endif
+
 cl_device_id device_id;
 cl_context context;
 cl_command_queue commands;
@@ -33,9 +38,10 @@ void usage()
 	ocd_usage();
 	printf("Program-specific arguments:\n");
 	printf("\t-h | 'Print this help message'\n");
+	printf("\t-v | 'Be Verbose'\n");
 	printf("\t-s | 'Set random seed' [integer]\n");
 	printf("\t-i | 'Input file name' [string]\n");
-	printf("\t-v | 'Verify results on CPU'\n");
+	printf("\t-a | 'Verify results on CPU'\n");
 	printf("\t-p | 'CRC Polynomial' [integer]\n");
 	printf("\t-n | 'Data size' [integer]\n");
 	printf("\t-q | 'Kernel iterations' [integer]\n");
@@ -155,16 +161,18 @@ void computeTables(unsigned char* tables, int numTables, unsigned char crc)
 
 unsigned char computeCRCGPU(unsigned char* h_num, unsigned long N, unsigned char crc, unsigned char* tables, unsigned long numTables)
 {
-	printf("Running Kernel\n");
+	if(verbosity) printf("Running Kernel\n");
 	struct timeval start_time, end_time;
+	size_t global_size,local_size;
+	unsigned char* h_answer;
+
 	gettimeofday(&start_time, NULL);
 	// Write our data set into the input array in device memory
 	int err = clEnqueueWriteBuffer(commands, dev_input, CL_TRUE, 0, sizeof(char)*N, h_num, 0, NULL, &ocdTempEvent);
-        clFinish(commands);
+	clFinish(commands);
 	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CRC Data Copy", ocdTempTimer)
 	END_TIMER(ocdTempTimer)
 	CHKERR(err, "Failed to write to source array!");
-	clFinish(commands);
 	gettimeofday(&end_time, NULL);
 	dataTransferTime += computeTimeDiff(start_time, end_time);
 
@@ -177,37 +185,31 @@ unsigned char computeCRCGPU(unsigned char* h_num, unsigned long N, unsigned char
 	err |= clSetKernelArg(kernel_compute, 4, sizeof(unsigned int), &N);
 	CHKERR(err, "Failed to set compute kernel arguments!");
 
-	size_t local_size;
-	size_t global_size;
 	// Get the maximum work group size for executing the kernel on the device
 	err = clGetKernelWorkGroupInfo(kernel_compute, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &local_size, NULL);
 	CHKERR(err, "Failed to retrieve kernel_compute work group info!");
-
-	// Wait for the command commands to get serviced before reading back results
-	clFinish(commands);
 	
 	// Execute the kernel over the entire range of our 1d input data set
 	// using the maximum number of work group items for this device
 	global_size = N + local_size - N%local_size;
-	gettimeofday(&start_time, NULL);\
+	gettimeofday(&start_time, NULL);
 	err = clEnqueueNDRangeKernel(commands, kernel_compute, 1, NULL, &global_size, &local_size, 0, NULL, &ocdTempEvent);
-        clFinish(commands);
+	clFinish(commands);
 	START_TIMER(ocdTempEvent, OCD_TIMER_KERNEL, "CRC Kernel", ocdTempTimer)
 	CHKERR(err, "Failed to execute compute kernel!");
 	END_TIMER(ocdTempTimer)
 	gettimeofday(&end_time, NULL);
 	kernelExecutionTime += computeTimeDiff(start_time, end_time);
 
-	unsigned char* h_answer = malloc(sizeof(*h_answer)*N);
+	h_answer = char_new_array(N,"crc_algo.computeCRCGPU() - Heap Overflow! Cannot allocate space for h_answer");
 	
 	gettimeofday(&start_time, NULL);
 	// Read back the results from the device to verify the output
 	err = clEnqueueReadBuffer(commands, dev_output, CL_TRUE, 0, sizeof(char)*N, h_answer, 0, NULL, &ocdTempEvent);
-        clFinish(commands);
+	clFinish(commands);
 	START_TIMER(ocdTempEvent, OCD_TIMER_D2H, "CRC Data Copy", ocdTempTimer)
 	END_TIMER(ocdTempTimer)
 	CHKERR(err, "Failed to read output array!");
-	clFinish(commands);
 	gettimeofday(&end_time, NULL);
 	dataTransferTime += computeTimeDiff(start_time, end_time);
 
@@ -245,8 +247,10 @@ unsigned char computeCRC(unsigned char* h_num, unsigned long N, unsigned char cr
 void setupGPU()
 {
 	cl_int err,dev_type;
-	// Retrieve an OpenCL platform
-	printf("Getting Device %d %d \n", platform_id, n_device);
+	struct timeval compilation_st, compilation_et;
+	char *kernelSource;
+	size_t kernelLength;
+
 	#ifdef USEGPU
 		 dev_type = CL_DEVICE_TYPE_GPU;
 	#elif defined(USE_AFPGA)
@@ -255,54 +259,18 @@ void setupGPU()
 		dev_type = CL_DEVICE_TYPE_CPU;
 	#endif
 
-
+	if(verbosity) printf("Getting Device\n");
 	device_id = GetDevice(platform_id, n_device,dev_type);
 
-	printf("Getting Device\n");
 	context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
 	CHKERR(err, "Failed to create a compute context!");
 
 	// Create a command queue
 	commands = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
 	CHKERR(err, "Failed to create a command queue!");
-	printf("Getting Device\n");
-
-	struct timeval compilation_st, compilation_et;
 	
 	gettimeofday(&compilation_st, NULL);
-	FILE* kernelFile = NULL;
-	kernelFile = fopen(KernelSourceFile, "r");
-	if(!kernelFile)
-		printf("Error reading file.\n"), exit(0);
-	fseek(kernelFile, 0, SEEK_END);
-	size_t kernelLength = (size_t) ftell(kernelFile);
-	char* kernelSource = (char *) malloc(sizeof(char)*kernelLength+1);
-	rewind(kernelFile);
-	fread((void *) kernelSource, kernelLength, 1, kernelFile);
-	kernelSource[kernelLength] = 0;
-	fclose(kernelFile);
-	printf("Getting Device\n");
-	
-	// Create the compute program from the source buffer
-	program = clCreateProgramWithSource(context, 1, (const char **) &kernelSource, NULL, &err);
-	CHKERR(err, "Failed to create a compute program!");
-
-	free(kernelSource);
-
-	// Build the program executable
-	err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
-	if (err == CL_BUILD_PROGRAM_FAILURE)
-	{
-		char *log;
-		size_t logLen;
-		err = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &logLen);
-		log = (char *) malloc(sizeof(char)*logLen);
-		err = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, logLen, (void *) log, NULL);
-		fprintf(stderr, "CL Error %d: Failed to build program! Log:\n%s", err, log);
-		free(log);
-		exit(1);
-	}
-	CHKERR(err, "Failed to build program!");
+	program = ocdBuildProgramFromFile(context,device_id,KernelSourceFile);
 
 	// Create the compute kernel in the program we wish to run
 	kernel_compute = clCreateKernel(program, "compute", &err);
@@ -316,39 +284,19 @@ void setupGPU()
 int main(int argc, char** argv)
 {
 	cl_int err;
-
-	unsigned char* h_num;
-	unsigned char* h_answer;
-	unsigned char* data = NULL;
-	unsigned char crc = 0x9B;
-	unsigned char finalCRC;
-	unsigned char* h_tables;
-	unsigned int run_serial = 0;
-	char* file = NULL;
-	size_t maxSize = DATA_SIZE;
+	size_t maxSize=DATA_SIZE,read=0;
+	FILE* fp=NULL;
+	unsigned char *h_num, *h_answer, *data=NULL, crc=0x9B,finalCRC, *h_tables;
+	unsigned int run_serial=0,seed=time(NULL);
 	unsigned long N = maxSize;
-	size_t read = 0;
-	FILE* fp = NULL;
-	unsigned int seed = time(NULL);
-
+	char* file=NULL;
+	int c;
 	struct timeval tables_st, tables_et, par_st, par_et, ser_st, ser_et;		
-	
-
-	//ocd_register_arg(OTYPE_INT, 'n', "size", "Problem Size", &N, NULL, NULL);
-	//ocd_register_arg(OTYPE_INT, 'w', "chunk-size", "Maximum Chunk Size", &maxSize, NULL, NULL);
-	//ocd_register_arg(OTYPE_INT, '\0', "polynomial", "CRC Polynomial", &crc, NULL, NULL);
-	//ocd_register_arg(OTYPE_NUL, 'h', "help", "Prints help message.", NULL, NULL, usage);
-	//ocd_register_arg(OTYPE_BOL, 'v', "verify", "Verify GPU Computation", &run_serial, NULL, NULL);
-	//ocd_register_arg(OTYPE_INT, 's', "seed", "Random Seed", &seed, NULL, NULL);
-	//ocd_register_arg(OTYPE_STR, 'i', "input-file", "CRC Input File", &file, NULL, NULL);
 
 	ocd_requirements req;
 	ocd_init(&argc, &argv, &req);
-	//if(!ocd_check_requirements(&req))
-	//	exit(0);
 	
-	int c;
-	while((c = getopt (argc, argv, "vn:s:i:p:w:h")) != -1)
+	while((c = getopt (argc, argv, "avn:s:i:p:w:h")) != -1)
 	{
 		switch(c)
 		{
@@ -360,6 +308,9 @@ int main(int argc, char** argv)
 				crc = atoi(optarg);				
 				break;
 			case 'v':
+				verbosity=1;
+				break;
+			case 'a':
 				run_serial = 1;
 				break;
 			case 'i':
@@ -372,6 +323,7 @@ int main(int argc, char** argv)
 				break;
 			case 'n':
 				N = atoi(optarg);
+				check(N != 0,"N must be greater than 0!");
 				break;
 			case 'w':
 				maxSize = atoi(optarg);
@@ -380,33 +332,25 @@ int main(int argc, char** argv)
 				abort();
 		}	
 	}
-	if(N == 0)	
-		N = maxSize;
-
-	
-
 
 	ocd_options opts = ocd_get_options();
 	platform_id = opts.platform_id;
 	n_device = opts.device_id;
 
-	printf("Common Arguments: p=%d d=%d\n", platform_id, n_device);
-	printf("Program Arguments: p=%d v=%d i=%s s=%d n=%lu w=%d\n", crc, run_serial, file, seed, N, (int)maxSize);
+	if(verbosity) printf("Common Arguments: p=%d d=%d\n", platform_id, n_device);
+	if(verbosity) printf("Program Arguments: p=%d v=%d i=%s s=%d n=%lu w=%d\n", crc, run_serial, file, seed, N, (int)maxSize);
 
 	srand(seed);
-
-	size_t global_size;
-	size_t local_size;
 	
 	gettimeofday(&par_st, NULL);	
-	h_num = malloc(sizeof(*h_num) * N);
+	h_num = char_new_array(N,"crc_algo.main() - Heap Overflow! Cannot allocate space for h_num");
 
-	printf("Setting GPU up\n");
+	if(verbosity) printf("Setting GPU up\n");
 	setupGPU();
 	//Generate Tables for the given size of N
 	int numTables = floor(log(N)/log(2)) + 1;
 	printf("num tables = %d\n", numTables);
-	h_tables = malloc(256 * sizeof(char) * numTables);	
+	h_tables = char_new_array(256*numTables,"crc_algo.main() - Heap Overflow! Cannot allocate space for h_tables");
 	
 	// Create the input and output arrays in device memory for our calculation
 	dev_input = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(char)*N, NULL, &err);
@@ -425,11 +369,10 @@ int main(int argc, char** argv)
 	gettimeofday(&tables_st, NULL);
 	// Write our data set into the input array in device memory
 	err = clEnqueueWriteBuffer(commands, dev_table, CL_TRUE, 0, sizeof(char)*256*numTables, h_tables, 0, NULL, &ocdTempEvent);
-        clFinish(commands);
+	clFinish(commands);
 	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CRC Data Copy", ocdTempTimer)
 	END_TIMER(ocdTempTimer)
 	CHKERR(err, "Failed to write to source array!");
-	clFinish(commands);
 	gettimeofday(&tables_et, NULL);
 	dataTransferTime += computeTimeDiff(tables_st, tables_et);
 	
@@ -464,8 +407,8 @@ int main(int argc, char** argv)
 	printf("Parallel Algorithm Time: ");
 	printTimeDiff(par_st, par_et);
 	
-	// Calculate the result if done in serial to verify that we have the correct answer.
-	if(run_serial)
+
+	if(run_serial) // verify that we have the correct answer with regular C
 	{
 		gettimeofday(&ser_st, NULL);
 		printf("Computing Serial CRC\n");		
