@@ -287,19 +287,7 @@ int main(int argc, char** argv)
 		csrCreateBuffer(&context,&csr_ax[k],sizeof(float)*csr[k].num_nonzeros,CL_MEM_READ_ONLY,"csr_ax",verbosity);
 	}
 
-	if(!wg_sizes)
-	{
-		/* Get the maximum work group size for executing the kernel on the device */
-		kernel = clCreateKernel(program, "csr", &err);
-		CHKERR(err, "Failed to create a compute kernel!");
-		err = clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &max_wg_size, NULL);
-		if(verbosity) printf("Kernel Max Work Group Size: %d\n",max_wg_size);
-		CHKERR(err, "Failed to retrieve kernel work group info!");
-		global_size = csr[0].num_rows; //Preconditions: all matrices in input file are same size
-									   //				all kernels have same max workgroup size
-		wg_sizes = default_wg_sizes(&num_wg_sizes,max_wg_size,global_size);
-		clReleaseKernel(kernel);
-	}
+
 
     if(!kernel_files) //use default if no kernel files were given on commandline
     {
@@ -363,6 +351,20 @@ int main(int argc, char** argv)
 			exit(1);
 		}
 		CHKERR(err, "Failed to build program!");
+
+		if(!wg_sizes)
+		{
+			/* Get the maximum work group size for executing the kernel on the device */
+			kernel = clCreateKernel(program, "csr", &err);
+			CHKERR(err, "Failed to create a compute kernel!");
+			err = clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &max_wg_size, NULL);
+			if(verbosity) printf("Kernel Max Work Group Size: %d\n",max_wg_size);
+			CHKERR(err, "Failed to retrieve kernel work group info!");
+			global_size = csr[0].num_rows; //Preconditions: all matrices in input file are same size
+										   //				all kernels have same max workgroup size
+			wg_sizes = default_wg_sizes(&num_wg_sizes,max_wg_size,global_size);
+			clReleaseKernel(kernel);
+		}
 
 		for(ii=0; ii<num_wg_sizes; ii++) //loop through all wg_sizes that need to be tested
 		{
@@ -508,18 +510,21 @@ int main(int argc, char** argv)
 		CHKERR(err,"Failed to release x_loc!");
 		err = clReleaseMemObject(y_loc[k]);
 		CHKERR(err,"Failed to release y_loc!");
-		err = clReleaseEvent(ap_write[k]);
-		CHKERR(err,"Failed to release ap_loc_write!");
-		err = clReleaseEvent(aj_write[k]);
-		CHKERR(err,"Failed to release aj_loc_write!");
-		err = clReleaseEvent(ax_write[k]);
-		CHKERR(err,"Failed to release ax_loc_write!");
-		err = clReleaseEvent(x_loc_write[k]);
-		CHKERR(err,"Failed to release x_loc_write!");
-		err = clReleaseEvent(y_loc_write[k]);
-		CHKERR(err,"Failed to release y_loc_write!");
-		err = clReleaseEvent(kernel_exec[k]);
-		CHKERR(err,"Failed to release kernel_exec!");
+//		err = clReleaseEvent(aj_write[k]);	//releasing of any of these events is throwing an error with the altera sdk.
+//		if(verbosity) printf("k: %d\terr: %d\n",k,err); //Perhaps because the command-queue was alread released?
+//		CHKERR(err,"Failed to release aj_write!");
+//		err = clReleaseEvent(ap_write[k]);
+//		if(verbosity) printf("k: %d\terr: %d\n",k,err);
+//		CHKERR(err,"Failed to release ap_write!");
+//		err = clReleaseEvent(ax_write[k]);
+//		CHKERR(err,"Failed to release ax_write!");
+//		err = clReleaseEvent(x_loc_write[k]);
+//		CHKERR(err,"Failed to release x_loc_write!");
+//		err = clReleaseEvent(y_loc_write[k]);
+//		if(verbosity) printf("k: %d\terr: %d\n",k,err);
+//		CHKERR(err,"Failed to release y_loc_write!");
+//		err = clReleaseEvent(kernel_exec[k]);
+//		CHKERR(err,"Failed to release kernel_exec!");
 		free(device_out[k]);
 	}
 
