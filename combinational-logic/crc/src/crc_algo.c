@@ -139,7 +139,6 @@ int prepare_tables()
 unsigned char computeCRCDevice(unsigned char* h_num, int numTables, cl_mem d_input, cl_mem d_output,cl_event* write_page,cl_event* kernel_exec,cl_event* read_page)
 {
 	if(verbosity) printf("Running Kernel\n");
-	struct timeval start_time, end_time;
 	size_t global_size,local_size;
 	unsigned char* h_answer;
 
@@ -163,14 +162,13 @@ unsigned char computeCRCDevice(unsigned char* h_num, int numTables, cl_mem d_inp
 	// using the maximum number of work group items for this device
 	global_size = page_size + local_size - page_size%local_size;
 
-	err = clEnqueueNDRangeKernel(kernel_queue, kernel_compute, 1, NULL, &global_size, &local_size, 0, NULL, kernel_exec);
+	err = clEnqueueNDRangeKernel(kernel_queue, kernel_compute, 1, NULL, &global_size, &local_size, 1, write_page, kernel_exec);
 	CHKERR(err, "Failed to execute compute kernel!");
 
 	h_answer = char_new_array(page_size,"crc_algo.computeCRCGPU() - Heap Overflow! Cannot allocate space for h_answer");
 	
-	gettimeofday(&start_time, NULL);
 	// Read back the results from the device to verify the output
-	err = clEnqueueReadBuffer(read_queue, d_output, CL_FALSE, 0, sizeof(char)*page_size, h_answer, 0, NULL, read_page);
+	err = clEnqueueReadBuffer(read_queue, d_output, CL_FALSE, 0, sizeof(char)*page_size, h_answer, 1, kernel_exec, read_page);
 	CHKERR(err, "Failed to read output array!");
 
 	unsigned char answer = 0;
