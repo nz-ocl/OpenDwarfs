@@ -6,14 +6,22 @@
 #
 
 bin_PROGRAMS += crc 
+bin_PROGRAMS += createcrc
+
 crc_LDFLAGS = -lm @SEARCHFLAGS@ @LIBFLAGS@ @RPATHFLAGS@
-crc_SOURCES = combinational-logic/crc/crc_algo.c
+crc_SOURCES = combinational-logic/crc/src/crc_algo.c combinational-logic/crc/src-common/crc_formats.c
+
+createcrc_SOURCES = combinational-logic/crc/src-test/createcrc.c combinational-logic/crc/src-common/crc_formats.c
+
+##createcrc does not need to be linked with any of the opencl common files
+createcrc_LDADD = include/common_util.o
+createcrc_LINK = $(CCLD) -lm -o $@
 
 all_local += dwarf-crc-all-local
 exec_local += dwarf-crc-exec-local
 
 dwarf-crc-all-local:
-	cp $(top_srcdir)/combinational-logic/crc/crc_algo_kernel.cl .
+	cp $(top_srcdir)/combinational-logic/crc/src/crc_algo_kernel.cl .
 
 dwarf-crc-exec-local:
-	cp $(top_srcdir)/combinational-logic/crc/crc_algo_kernel_2.cl ${DESTDIR}${bindir}
+	cp $(top_srcdir)/combinational-logic/crc/src/crc_algo_kernel_2.cl ${DESTDIR}${bindir}
