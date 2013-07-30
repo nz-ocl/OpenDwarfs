@@ -39,7 +39,7 @@ int platform_id=PLATFORM_ID, n_device=DEVICE_ID;
 /**
  * Compares N float values and prints error msg if any corresponding entries differ by greater than .001
  */
-void float_array_comp(const float* control, const float* experimental, const unsigned int N)
+void float_array_comp(const float* control, const float* experimental, const unsigned int N, const unsigned int exec_num)
 {
 	unsigned int j;
 	float diff,perc;
@@ -49,7 +49,7 @@ void float_array_comp(const float* control, const float* experimental, const uns
 		if(fabsf(diff) > .001)
 		{
 			perc = fabsf(diff/control[j]) * 100;
-			fprintf(stderr,"Possible error, difference of %.3f (%.1f%% error) [control=%.3f, experimental=%.3f] at row %d \n", diff,perc,control[j],experimental[j],j);
+			fprintf(stderr,"Possible error on exec #%u, difference of %.3f (%.1f%% error) [control=%.3f, experimental=%.3f] at row %d \n",exec_num,diff,perc,control[j],experimental[j],j);
 		}
 	}
 }
@@ -487,7 +487,7 @@ int main(int argc, char** argv)
 				   for(k=0; k<num_matrices; k++)
 				   {
 					   spmv_csr_cpu(&csr[k],x_host,y_host,host_out);
-					   float_array_comp(host_out,device_out[k],csr[k].num_rows);
+					   float_array_comp(host_out,device_out[k],csr[k].num_rows,i+1);
 				   }
 				}
 			}
