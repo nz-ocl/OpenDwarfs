@@ -3,7 +3,7 @@
 unsigned char** read_crc(unsigned int* num_pages,unsigned int* page_size,const char* file_path)
 {
 	FILE* fp;
-	unsigned int i,j,read_count=0;
+	unsigned int i,j,read_count;
 	unsigned char** page;
 
 	fp = fopen(file_path,"r");
@@ -17,6 +17,7 @@ unsigned char** read_crc(unsigned int* num_pages,unsigned int* page_size,const c
 	for(j=0; j<*num_pages; j++)
 	{
 		page[j] = char_new_array(*page_size,"crc_formats.main() - Heap Overflow! Cannot allocate space for pages");
+		read_count = 0;
 		for(i=0; i<*page_size; i++)
 		  read_count += fscanf(fp,"%hhu ",&page[j][i]);
 		check(read_count == *page_size,"crc_formats.read_crc() - Input file corrupted! Read count differs from page size");

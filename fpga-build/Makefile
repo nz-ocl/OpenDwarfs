@@ -191,7 +191,7 @@ am__append_24 = clfft-exec-local
 am__append_25 = csr createcsr
 am__append_26 = csr-all-local
 am__append_27 = csr-exec-local
-am__append_28 = crc 
+am__append_28 = crc createcrc
 am__append_29 = dwarf-crc-all-local
 am__append_30 = dwarf-crc-exec-local
 am__append_31 = cfd 
@@ -244,7 +244,7 @@ am__EXEEXT_6 = kmeans$(EXEEXT)
 am__EXEEXT_7 = scl$(EXEEXT)
 am__EXEEXT_8 = clfft$(EXEEXT)
 am__EXEEXT_9 = csr$(EXEEXT) createcsr$(EXEEXT)
-am__EXEEXT_10 = crc$(EXEEXT)
+am__EXEEXT_10 = crc$(EXEEXT) createcrc$(EXEEXT)
 am__EXEEXT_11 = cfd$(EXEEXT)
 am__EXEEXT_12 = bfs$(EXEEXT)
 am__EXEEXT_13 = tdm$(EXEEXT)
@@ -301,9 +301,10 @@ clfft_OBJECTS = $(am_clfft_OBJECTS)
 clfft_LDADD = $(LDADD)
 clfft_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
 	include/common_util.o
-am__crc_SOURCES_DIST = combinational-logic/crc/crc_algo.c
-am_crc_OBJECTS =  \
-	combinational-logic/crc/crc_algo.$(OBJEXT)
+am__crc_SOURCES_DIST = combinational-logic/crc/src/crc_algo.c \
+	combinational-logic/crc/src-common/crc_formats.c
+am_crc_OBJECTS = combinational-logic/crc/src/crc_algo.$(OBJEXT) \
+	combinational-logic/crc/src-common/crc_formats.$(OBJEXT)
 crc_OBJECTS = $(am_crc_OBJECTS)
 crc_LDADD = $(LDADD)
 crc_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
@@ -311,6 +312,13 @@ crc_DEPENDENCIES = include/common_ocl.o include/rdtsc.o libopts.a \
 crc_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(crc_LDFLAGS) $(LDFLAGS) -o $@
+am__createcrc_SOURCES_DIST =  \
+	combinational-logic/crc/src-test/createcrc.c \
+	combinational-logic/crc/src-common/crc_formats.c
+am_createcrc_OBJECTS = combinational-logic/crc/src-test/createcrc.$(OBJEXT) \
+	combinational-logic/crc/src-common/crc_formats.$(OBJEXT)
+createcrc_OBJECTS = $(am_createcrc_OBJECTS)
+createcrc_DEPENDENCIES = include/common_util.o
 am__createcsr_SOURCES_DIST =  \
 	sparse-linear-algebra/SPMV/src-test/createcsr.c \
 	sparse-linear-algebra/SPMV/src-common/sparse_formats.c \
@@ -488,19 +496,19 @@ am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
 am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(libopts_a_SOURCES) $(astar_SOURCES) $(bfs_SOURCES) \
 	$(cfd_SOURCES) $(clfft_SOURCES) $(crc_SOURCES) \
-	$(createcsr_SOURCES) $(csr_SOURCES) $(gemnoui_SOURCES) \
-	$(kmeans_SOURCES) $(lud_SOURCES) $(needle_SOURCES) \
-	$(ocd_SOURCES) $(scl_SOURCES) $(srad_SOURCES) $(swat_SOURCES) \
-	$(tdm_SOURCES)
+	$(createcrc_SOURCES) $(createcsr_SOURCES) $(csr_SOURCES) \
+	$(gemnoui_SOURCES) $(kmeans_SOURCES) $(lud_SOURCES) \
+	$(needle_SOURCES) $(ocd_SOURCES) $(scl_SOURCES) \
+	$(srad_SOURCES) $(swat_SOURCES) $(tdm_SOURCES)
 DIST_SOURCES = $(libopts_a_SOURCES) $(am__astar_SOURCES_DIST) \
 	$(am__bfs_SOURCES_DIST) $(am__cfd_SOURCES_DIST) \
 	$(am__clfft_SOURCES_DIST) $(am__crc_SOURCES_DIST) \
-	$(am__createcsr_SOURCES_DIST) $(am__csr_SOURCES_DIST) \
-	$(am__gemnoui_SOURCES_DIST) $(am__kmeans_SOURCES_DIST) \
-	$(am__lud_SOURCES_DIST) $(am__needle_SOURCES_DIST) \
-	$(ocd_SOURCES) $(am__scl_SOURCES_DIST) \
-	$(am__srad_SOURCES_DIST) $(am__swat_SOURCES_DIST) \
-	$(am__tdm_SOURCES_DIST)
+	$(am__createcrc_SOURCES_DIST) $(am__createcsr_SOURCES_DIST) \
+	$(am__csr_SOURCES_DIST) $(am__gemnoui_SOURCES_DIST) \
+	$(am__kmeans_SOURCES_DIST) $(am__lud_SOURCES_DIST) \
+	$(am__needle_SOURCES_DIST) $(ocd_SOURCES) \
+	$(am__scl_SOURCES_DIST) $(am__srad_SOURCES_DIST) \
+	$(am__swat_SOURCES_DIST) $(am__tdm_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -690,7 +698,10 @@ createcsr_SOURCES = sparse-linear-algebra/SPMV/src-test/createcsr.c sparse-linea
 createcsr_LDADD = include/common_util.o
 createcsr_LINK = $(CCLD) -lm -o $@
 crc_LDFLAGS = -lm  -L/home/fpga_tools/altera/13.0sp1/aocl/linux64/lib -L/home/fpga_tools/altera/13.0sp1/aocl/host/linux64/lib  -lalterahalmmd -lalterammdpcie -lpkg_editor -lalteracl -lelf -lrt -lstdc++  -Wl,-rpath=/home/fpga_tools/altera/13.0sp1/aocl/linux64/lib -Wl,-rpath=/home/fpga_tools/altera/13.0sp1/aocl/host/linux64/lib
-crc_SOURCES = combinational-logic/crc/crc_algo.c
+crc_SOURCES = combinational-logic/crc/src/crc_algo.c combinational-logic/crc/src-common/crc_formats.c
+createcrc_SOURCES = combinational-logic/crc/src-test/createcrc.c combinational-logic/crc/src-common/crc_formats.c
+createcrc_LDADD = include/common_util.o
+createcrc_LINK = $(CCLD) -lm -o $@
 cfd_SOURCES = unstructured-grids/cfd/cfd.cpp
 bfs_SOURCES = graph-traversal/bfs/bfs.cpp
 tdm_SOURCES = finite-state-machine/tdm/GpuTemporalDataMining.cpp
@@ -902,18 +913,39 @@ spectral-methods/fft/src/common/clfft-InvalidArgValue.$(OBJEXT):  \
 clfft$(EXEEXT): $(clfft_OBJECTS) $(clfft_DEPENDENCIES) 
 	@rm -f clfft$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(clfft_OBJECTS) $(clfft_LDADD) $(LIBS)
-combinational-logic/crc/$(am__dirstamp):
-	@$(MKDIR_P) combinational-logic/crc
-	@: > combinational-logic/crc/$(am__dirstamp)
-combinational-logic/crc/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) combinational-logic/crc/$(DEPDIR)
-	@: > combinational-logic/crc/$(DEPDIR)/$(am__dirstamp)
-combinational-logic/crc/crc_algo.$(OBJEXT):  \
-	combinational-logic/crc/$(am__dirstamp) \
-	combinational-logic/crc/$(DEPDIR)/$(am__dirstamp)
+combinational-logic/crc/src/$(am__dirstamp):
+	@$(MKDIR_P) combinational-logic/crc/src
+	@: > combinational-logic/crc/src/$(am__dirstamp)
+combinational-logic/crc/src/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) combinational-logic/crc/src/$(DEPDIR)
+	@: > combinational-logic/crc/src/$(DEPDIR)/$(am__dirstamp)
+combinational-logic/crc/src/crc_algo.$(OBJEXT):  \
+	combinational-logic/crc/src/$(am__dirstamp) \
+	combinational-logic/crc/src/$(DEPDIR)/$(am__dirstamp)
+combinational-logic/crc/src-common/$(am__dirstamp):
+	@$(MKDIR_P) combinational-logic/crc/src-common
+	@: > combinational-logic/crc/src-common/$(am__dirstamp)
+combinational-logic/crc/src-common/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) combinational-logic/crc/src-common/$(DEPDIR)
+	@: > combinational-logic/crc/src-common/$(DEPDIR)/$(am__dirstamp)
+combinational-logic/crc/src-common/crc_formats.$(OBJEXT):  \
+	combinational-logic/crc/src-common/$(am__dirstamp) \
+	combinational-logic/crc/src-common/$(DEPDIR)/$(am__dirstamp)
 crc$(EXEEXT): $(crc_OBJECTS) $(crc_DEPENDENCIES) 
 	@rm -f crc$(EXEEXT)
 	$(AM_V_CCLD)$(crc_LINK) $(crc_OBJECTS) $(crc_LDADD) $(LIBS)
+combinational-logic/crc/src-test/$(am__dirstamp):
+	@$(MKDIR_P) combinational-logic/crc/src-test
+	@: > combinational-logic/crc/src-test/$(am__dirstamp)
+combinational-logic/crc/src-test/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) combinational-logic/crc/src-test/$(DEPDIR)
+	@: > combinational-logic/crc/src-test/$(DEPDIR)/$(am__dirstamp)
+combinational-logic/crc/src-test/createcrc.$(OBJEXT):  \
+	combinational-logic/crc/src-test/$(am__dirstamp) \
+	combinational-logic/crc/src-test/$(DEPDIR)/$(am__dirstamp)
+createcrc$(EXEEXT): $(createcrc_OBJECTS) $(createcrc_DEPENDENCIES) 
+	@rm -f createcrc$(EXEEXT)
+	$(AM_V_GEN)$(createcrc_LINK) $(createcrc_OBJECTS) $(createcrc_LDADD) $(LIBS)
 sparse-linear-algebra/SPMV/src-test/$(am__dirstamp):
 	@$(MKDIR_P) sparse-linear-algebra/SPMV/src-test
 	@: > sparse-linear-algebra/SPMV/src-test/$(am__dirstamp)
@@ -1148,7 +1180,9 @@ tdm$(EXEEXT): $(tdm_OBJECTS) $(tdm_DEPENDENCIES)
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f branch-and-bound/astar/astar.$(OBJEXT)
-	-rm -f combinational-logic/crc/crc_algo.$(OBJEXT)
+	-rm -f combinational-logic/crc/src-common/crc_formats.$(OBJEXT)
+	-rm -f combinational-logic/crc/src-test/createcrc.$(OBJEXT)
+	-rm -f combinational-logic/crc/src/crc_algo.$(OBJEXT)
 	-rm -f dense-linear-algebra/kmeans/cluster.$(OBJEXT)
 	-rm -f dense-linear-algebra/kmeans/getopt.$(OBJEXT)
 	-rm -f dense-linear-algebra/kmeans/kmeans.$(OBJEXT)
@@ -1212,7 +1246,9 @@ distclean-compile:
 	-rm -f *.tab.c
 
 include branch-and-bound/astar/$(DEPDIR)/astar.Po
-include combinational-logic/crc/$(DEPDIR)/crc_algo.Po
+include combinational-logic/crc/src-common/$(DEPDIR)/crc_formats.Po
+include combinational-logic/crc/src-test/$(DEPDIR)/createcrc.Po
+include combinational-logic/crc/src/$(DEPDIR)/crc_algo.Po
 include dense-linear-algebra/kmeans/$(DEPDIR)/cluster.Po
 include dense-linear-algebra/kmeans/$(DEPDIR)/getopt.Po
 include dense-linear-algebra/kmeans/$(DEPDIR)/kmeans.Po
@@ -2028,8 +2064,12 @@ distclean-generic:
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f branch-and-bound/astar/$(DEPDIR)/$(am__dirstamp)
 	-rm -f branch-and-bound/astar/$(am__dirstamp)
-	-rm -f combinational-logic/crc/$(DEPDIR)/$(am__dirstamp)
-	-rm -f combinational-logic/crc/$(am__dirstamp)
+	-rm -f combinational-logic/crc/src-common/$(DEPDIR)/$(am__dirstamp)
+	-rm -f combinational-logic/crc/src-common/$(am__dirstamp)
+	-rm -f combinational-logic/crc/src-test/$(DEPDIR)/$(am__dirstamp)
+	-rm -f combinational-logic/crc/src-test/$(am__dirstamp)
+	-rm -f combinational-logic/crc/src/$(DEPDIR)/$(am__dirstamp)
+	-rm -f combinational-logic/crc/src/$(am__dirstamp)
 	-rm -f dense-linear-algebra/kmeans/$(DEPDIR)/$(am__dirstamp)
 	-rm -f dense-linear-algebra/kmeans/$(am__dirstamp)
 	-rm -f dense-linear-algebra/lud/$(DEPDIR)/$(am__dirstamp)
@@ -2077,7 +2117,7 @@ clean-am: clean-binPROGRAMS clean-generic clean-libtool clean-local \
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf branch-and-bound/astar/$(DEPDIR) combinational-logic/crc/$(DEPDIR) dense-linear-algebra/kmeans/$(DEPDIR) dense-linear-algebra/lud/$(DEPDIR) dynamic-programming/nw/$(DEPDIR) dynamic-programming/swat/$(DEPDIR) finite-state-machine/tdm/$(DEPDIR) graph-traversal/bfs/$(DEPDIR) include/$(DEPDIR) n-body-methods/gem/$(DEPDIR) opts/$(DEPDIR) samplecl/$(DEPDIR) sparse-linear-algebra/SPMV/src-common/$(DEPDIR) sparse-linear-algebra/SPMV/src-test/$(DEPDIR) sparse-linear-algebra/SPMV/src/$(DEPDIR) spectral-methods/fft/src/common/$(DEPDIR) spectral-methods/fft/src/opencl/common/$(DEPDIR) spectral-methods/fft/src/opencl/fft/$(DEPDIR) structured-grids/srad/$(DEPDIR) unstructured-grids/cfd/$(DEPDIR)
+	-rm -rf branch-and-bound/astar/$(DEPDIR) combinational-logic/crc/src-common/$(DEPDIR) combinational-logic/crc/src-test/$(DEPDIR) combinational-logic/crc/src/$(DEPDIR) dense-linear-algebra/kmeans/$(DEPDIR) dense-linear-algebra/lud/$(DEPDIR) dynamic-programming/nw/$(DEPDIR) dynamic-programming/swat/$(DEPDIR) finite-state-machine/tdm/$(DEPDIR) graph-traversal/bfs/$(DEPDIR) include/$(DEPDIR) n-body-methods/gem/$(DEPDIR) opts/$(DEPDIR) samplecl/$(DEPDIR) sparse-linear-algebra/SPMV/src-common/$(DEPDIR) sparse-linear-algebra/SPMV/src-test/$(DEPDIR) sparse-linear-algebra/SPMV/src/$(DEPDIR) spectral-methods/fft/src/common/$(DEPDIR) spectral-methods/fft/src/opencl/common/$(DEPDIR) spectral-methods/fft/src/opencl/fft/$(DEPDIR) structured-grids/srad/$(DEPDIR) unstructured-grids/cfd/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -2125,7 +2165,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf branch-and-bound/astar/$(DEPDIR) combinational-logic/crc/$(DEPDIR) dense-linear-algebra/kmeans/$(DEPDIR) dense-linear-algebra/lud/$(DEPDIR) dynamic-programming/nw/$(DEPDIR) dynamic-programming/swat/$(DEPDIR) finite-state-machine/tdm/$(DEPDIR) graph-traversal/bfs/$(DEPDIR) include/$(DEPDIR) n-body-methods/gem/$(DEPDIR) opts/$(DEPDIR) samplecl/$(DEPDIR) sparse-linear-algebra/SPMV/src-common/$(DEPDIR) sparse-linear-algebra/SPMV/src-test/$(DEPDIR) sparse-linear-algebra/SPMV/src/$(DEPDIR) spectral-methods/fft/src/common/$(DEPDIR) spectral-methods/fft/src/opencl/common/$(DEPDIR) spectral-methods/fft/src/opencl/fft/$(DEPDIR) structured-grids/srad/$(DEPDIR) unstructured-grids/cfd/$(DEPDIR)
+	-rm -rf branch-and-bound/astar/$(DEPDIR) combinational-logic/crc/src-common/$(DEPDIR) combinational-logic/crc/src-test/$(DEPDIR) combinational-logic/crc/src/$(DEPDIR) dense-linear-algebra/kmeans/$(DEPDIR) dense-linear-algebra/lud/$(DEPDIR) dynamic-programming/nw/$(DEPDIR) dynamic-programming/swat/$(DEPDIR) finite-state-machine/tdm/$(DEPDIR) graph-traversal/bfs/$(DEPDIR) include/$(DEPDIR) n-body-methods/gem/$(DEPDIR) opts/$(DEPDIR) samplecl/$(DEPDIR) sparse-linear-algebra/SPMV/src-common/$(DEPDIR) sparse-linear-algebra/SPMV/src-test/$(DEPDIR) sparse-linear-algebra/SPMV/src/$(DEPDIR) spectral-methods/fft/src/common/$(DEPDIR) spectral-methods/fft/src/opencl/common/$(DEPDIR) spectral-methods/fft/src/opencl/fft/$(DEPDIR) structured-grids/srad/$(DEPDIR) unstructured-grids/cfd/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -2220,10 +2260,10 @@ csr-exec-local:
 	cp $(top_srcdir)/sparse-linear-algebra/SPMV/src/spmv_csr_kernel.cl ${DESTDIR}${bindir}
 
 dwarf-crc-all-local:
-	cp $(top_srcdir)/combinational-logic/crc/crc_algo_kernel.cl .
+	cp $(top_srcdir)/combinational-logic/crc/src/crc_algo_kernel.cl .
 
 dwarf-crc-exec-local:
-	cp $(top_srcdir)/combinational-logic/crc/crc_algo_kernel_2.cl ${DESTDIR}${bindir}
+	cp $(top_srcdir)/combinational-logic/crc/src/crc_algo_kernel_2.cl ${DESTDIR}${bindir}
 
 dwarf-cfd-all-local:
 	cp $(top_srcdir)/unstructured-grids/cfd/cfd_kernel.cl .
