@@ -14,12 +14,6 @@
 unsigned char verbosity=0;
 int platform_id=PLATFORM_ID, n_device=DEVICE_ID;
 
-#ifdef USE_AFPGA
-	const char *KernelSourceFile = "crc_kernel.aocx";
-#else //CPU or GPU
-	const char *KernelSourceFile = "crc_algo_kernel.cl";
-#endif
-
 cl_device_id device_id;
 cl_context context;
 cl_command_queue write_queue,kernel_queue,read_queue;
@@ -31,7 +25,7 @@ cl_mem dev_table;
 int64_t dataTransferTime = 0;
 int64_t kernelExecutionTime = 0;
 
-unsigned int page_size=DATA_SIZE,num_wg_sizes,numTables;
+unsigned int page_size=DATA_SIZE,num_wg_sizes=0,numTables;
 unsigned char* h_tables;
 unsigned char crc_polynomial=0x9B;
 size_t global_size;
@@ -146,37 +140,15 @@ unsigned char* computeCRCDevice(unsigned char* h_num, size_t local_size, cl_mem 
 	return h_answer;
 }
 
-void setup_device()
+void setup_device(const char* kernel_file)
 {
-	cl_int err,dev_type;
+	cl_int err;
 	struct timeval compilation_st, compilation_et;
 	char *kernelSource;
-	size_t kernelLength;
-
-	#ifdef USEGPU
-		 dev_type = CL_DEVICE_TYPE_GPU;
-	#elif defined(USE_AFPGA)
-		 dev_type = CL_DEVICE_TYPE_ACCELERATOR;
-	#else
-		dev_type = CL_DEVICE_TYPE_CPU;
-	#endif
-
-	if(verbosity) printf("Getting Device\n");
-	device_id = GetDevice(platform_id, n_device,dev_type);
-
-	context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
-	CHKERR(err, "Failed to create a compute context!");
-
-	/* Create command queues, one for each stage in the write-execute-read pipeline */
-	write_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
-	CHKERR(err, "Failed to create a command queue!");
-	kernel_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
-	CHKERR(err, "Failed to create a command queue!");
-	read_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
-	CHKERR(err, "Failed to create a command queue!");
+	size_t kernelLength,max_local_size;
 	
 	gettimeofday(&compilation_st, NULL);
-	program = ocdBuildProgramFromFile(context,device_id,KernelSourceFile);
+	program = ocdBuildProgramFromFile(context,device_id,kernel_file);
 
 	// Create the compute kernel in the program we wish to run
 	kernel_compute = clCreateKernel(program, "compute", &err);
@@ -189,16 +161,16 @@ void setup_device()
 	if(!wg_sizes)
 	{
 		// Get the maximum work group size for executing the kernel on the device
-		err = clGetKernelWorkGroupInfo(kernel_compute, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &local_size, NULL);
+		err = clGetKernelWorkGroupInfo(kernel_compute, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &max_local_size, NULL);
 		CHKERR(err, "Failed to retrieve kernel_compute work group info!");
 
 		// Execute the kernel over the entire range of our 1d input data set
 		// using the maximum number of work group items for this device
-		global_size = page_size + local_size - page_size%local_size;
+		global_size = page_size + max_local_size - page_size%max_local_size;
 
 		num_wg_sizes = 1;
 		wg_sizes = malloc(sizeof(size_t)*num_wg_sizes);
-		wg_sizes[0] = local_size;
+		wg_sizes[0] = max_local_size;
 	}
 	else
 	{
@@ -208,7 +180,7 @@ void setup_device()
 
 void usage()
 {
-	printf("crc [pd] -- [hsivpw] [-r <num_execs>]\n");
+	printf("crc [pd] -- [hsivpw] [-r <num_execs>] [-w <wg_size-1>][-w <wg_size-2>]...[-w <wg_size-m>]\n");
 	printf("Common arguments:\n");
 	ocd_usage();
 	printf("Program-specific arguments:\n");
@@ -220,7 +192,8 @@ void usage()
 	printf("\t-p | 'CRC Polynomial' [integer]\n");
 	printf("\t-n | 'Data size' [integer]\n");
 	printf("\t-r | 'Execute program with same data exactly <num_execs> times to increase sample size - Default is 1\n");
-	printf("\t-w | 'Data block size' [integer]\n");
+	printf("\t-w | 'Loop through each kernel execution 'm' times, once with each wg_size-'1..m' - Default is 1 iteration with wg_size set to the maximum possible (limited either by the device or the size of the input)\n");
+	printf("\t-k | 'Test CRC 'n' times, once with each kernel_file-'1..n' - Default is 1 kernel named './crc_kernel.xxx' where xxx is 'aocx' if USE_AFPGA is defined, 'cl' otherwise.\n");
 
 	printf("\nNOTE: Seperate common arguments and program specific arguments with the '--' delimeter\n");
 	exit(0);
@@ -228,19 +201,21 @@ void usage()
 
 int main(int argc, char** argv)
 {
-	cl_int err;
+	cl_int err,dev_type;
 	size_t maxSize=DATA_SIZE;
 	FILE* fp=NULL;
+	void* tmp;
 	unsigned char **h_num,serial_remainder;
-	unsigned int run_serial=0,seed=time(NULL),ii,i,j,k,num_pages=1,num_execs=1;
-	char* file=NULL;
+	unsigned int run_serial=0,seed=time(NULL),ii,i,j,k,l,num_pages=1,num_execs=1,num_kernels=0;
+	char* file=NULL,*optptr;
+	char** kernel_files=NULL;
 	int c;
 
 	ocd_requirements req;
 	ocd_parse(&argc, &argv);
 	ocd_check_requirements(NULL);
 	
-	while((c = getopt (argc, argv, "avn:s:i:p:w:hr:")) != -1)
+	while((c = getopt (argc, argv, "avn:s:i:p:w:k:hr:")) != -1)
 	{
 		switch(c)
 		{
@@ -279,7 +254,27 @@ int main(int argc, char** argv)
 				check(page_size != 0,"page_size must be greater than 0!");
 				break;
 			case 'w':
-				maxSize = atoi(optarg);
+				if(optarg != NULL)
+					optptr = optarg;
+				else
+					optptr = argv[optind];
+				num_wg_sizes++;
+				tmp = realloc(wg_sizes,sizeof(size_t)*num_wg_sizes);
+				check(tmp != NULL,"csr.main() - Heap Overflow! Cannot allocate space for wg_sizes");
+				wg_sizes = tmp;
+				wg_sizes[num_wg_sizes-1] = atoi(optptr);
+				break;
+			case 'k':
+				if(optarg != NULL)
+					optptr = optarg;
+				else
+					optptr = argv[optind];
+				num_kernels++;
+				tmp = realloc(kernel_files,sizeof(char*)*num_kernels);
+				check(tmp != NULL,"csr.main() - Heap Overflow! Cannot allocate space for kernel_files");
+				kernel_files = tmp;
+				kernel_files[num_kernels-1] = optptr;
+				printf("Testing with Kernel File: '%s'\n",kernel_files[num_kernels-1]);
 				break;
 			default:
 				fprintf(stderr, "Invalid argument: '%s'\n\n",optarg);
@@ -308,8 +303,39 @@ int main(int argc, char** argv)
 	if(verbosity) printf("Common Arguments: p=%d d=%d\n", platform_id, n_device);
 	if(verbosity) printf("Program Arguments: p=%d v=%d i=%s s=%d n=%lu w=%d\n", crc_polynomial, run_serial, file, seed, page_size, (int)maxSize);
 
-	if(verbosity) printf("Setting up device...\n");
-	setup_device();
+	#ifdef USEGPU
+		 dev_type = CL_DEVICE_TYPE_GPU;
+	#elif defined(USE_AFPGA)
+		 dev_type = CL_DEVICE_TYPE_ACCELERATOR;
+	#else
+		dev_type = CL_DEVICE_TYPE_CPU;
+	#endif
+
+	if(verbosity) printf("Getting Device\n");
+	device_id = GetDevice(platform_id, n_device,dev_type);
+
+	context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
+	CHKERR(err, "Failed to create a compute context!");
+
+	/* Create command queues, one for each stage in the write-execute-read pipeline */
+	write_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
+	CHKERR(err, "Failed to create a command queue!");
+	kernel_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
+	CHKERR(err, "Failed to create a command queue!");
+	read_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
+	CHKERR(err, "Failed to create a command queue!");
+
+	if(!kernel_files) //use default if no kernel files were given on commandline
+	{
+		num_kernels = 1;
+		kernel_files = malloc(sizeof(char*)*num_kernels);
+		#ifdef USE_AFPGA
+			const char *KernelSourceFile = "crc_kernel.aocx";
+		#else //CPU or GPU
+			const char *KernelSourceFile = "crc_algo_kernel.cl";
+		#endif
+	}
+
 	numTables = prepare_tables();
 
 	for(i=0; i<num_pages; i++)
@@ -320,58 +346,64 @@ int main(int argc, char** argv)
 		CHKERR(err, "Failed to allocate device memory!");
 	}
 
-	for(k=0; k<num_wg_sizes; k++)
+	for(l=0; l<num_kernels; l++)
 	{
-		if(verbosity) printf("Executing with Workgroup size #%u of %u: %z",k+1,num_wg_sizes,wg_sizes[k]);
-		for(ii=0; ii<num_execs; ii++)
+		if(verbosity) printf("Executing with kernel #%u of %u: %s\n",l+1,num_kernels,kernel_files[l]);
+		setup_device(kernel_files[l]);
+
+		for(k=0; k<num_wg_sizes; k++)
 		{
-			if(verbosity) printf("Beginning execution #%u of %u...\n",ii+1,num_execs);
-			#ifdef ENABLE_TIMER
-				TIMER_INIT
-			#endif
-			for(i=0; i<num_pages; i++)
+			if(verbosity) printf("Executing with Workgroup size #%u of %u: %zu\n",k+1,num_wg_sizes,wg_sizes[k]);
+			for(ii=0; ii<num_execs; ii++)
 			{
-				h_answers[i] = computeCRCDevice(h_num[i],wg_sizes[k],dev_input[i],dev_output[i],&write_page[i],&kernel_exec[i],&read_page[i]);
-			}
-			clFinish(write_queue);
-			clFinish(kernel_queue);
-			clFinish(read_queue);
-
-			#ifdef ENABLE_TIMER
-				TIMER_STOP
-			#endif
-
-			for(i=0; i<num_pages; i++)
-			{
-				ocl_remainders[i] = 0;
-				for(j = 0; j < page_size; j++)
-					ocl_remainders[i] ^= h_answers[i][j];
-
-				if(verbosity >= 2) printf("Parallel Computation: '%X'\n", ocl_remainders[i]);
-
-				START_TIMER(write_page[i], OCD_TIMER_H2D, "CRC Data Copy", ocdTempTimer)
-				END_TIMER(ocdTempTimer)
-
-				START_TIMER(kernel_exec[i], OCD_TIMER_KERNEL, "CRC Kernel", ocdTempTimer)
-				END_TIMER(ocdTempTimer)
-
-				START_TIMER(read_page[i], OCD_TIMER_D2H, "CRC Data Copy", ocdTempTimer)
-				END_TIMER(ocdTempTimer)
-			}
-
-			#ifdef ENABLE_TIMER
-				TIMER_PRINT
-			#endif
-
-			if(run_serial) // verify that we have the correct answer with regular C
-			{
-				printf("Validating results with serial CRC...\n");
+				if(verbosity) printf("Beginning execution #%u of %u...\n",ii+1,num_execs);
+				#ifdef ENABLE_TIMER
+					TIMER_INIT
+				#endif
 				for(i=0; i<num_pages; i++)
 				{
-					serial_remainder = serialCRC(h_num[i], page_size, crc_polynomial);
-					if(verbosity >= 2) printf("Serial Computation: '%X'\n", serial_remainder);
-					if(serial_remainder != ocl_remainders[i])
-						fprintf(stderr,"ERROR: Calculated remainders for page %u differ [OCL: '%X', Serial: '%X']\n",i+1,ocl_remainders[i],serial_remainder);
+					h_answers[i] = computeCRCDevice(h_num[i],wg_sizes[k],dev_input[i],dev_output[i],&write_page[i],&kernel_exec[i],&read_page[i]);
+				}
+				clFinish(write_queue);
+				clFinish(kernel_queue);
+				clFinish(read_queue);
+
+				#ifdef ENABLE_TIMER
+					TIMER_STOP
+				#endif
+
+				for(i=0; i<num_pages; i++)
+				{
+					ocl_remainders[i] = 0;
+					for(j = 0; j < page_size; j++)
+						ocl_remainders[i] ^= h_answers[i][j];
+
+					if(verbosity >= 2) printf("Parallel Computation: '%X'\n", ocl_remainders[i]);
+
+					START_TIMER(write_page[i], OCD_TIMER_H2D, "CRC Data Copy", ocdTempTimer)
+					END_TIMER(ocdTempTimer)
+
+					START_TIMER(kernel_exec[i], OCD_TIMER_KERNEL, "CRC Kernel", ocdTempTimer)
+					END_TIMER(ocdTempTimer)
+
+					START_TIMER(read_page[i], OCD_TIMER_D2H, "CRC Data Copy", ocdTempTimer)
+					END_TIMER(ocdTempTimer)
+				}
+
+				#ifdef ENABLE_TIMER
+					TIMER_PRINT
+				#endif
+
+				if(run_serial) // verify that we have the correct answer with regular C
+				{
+					printf("Validating results with serial CRC...\n");
+					for(i=0; i<num_pages; i++)
+					{
+						serial_remainder = serialCRC(h_num[i], page_size, crc_polynomial);
+						if(verbosity >= 2) printf("Serial Computation: '%X'\n", serial_remainder);
+						if(serial_remainder != ocl_remainders[i])
+							fprintf(stderr,"ERROR: Calculated remainders for page %u differ [OCL: '%X', Serial: '%X']\n",i+1,ocl_remainders[i],serial_remainder);
+					}
 				}
 			}
 		}
