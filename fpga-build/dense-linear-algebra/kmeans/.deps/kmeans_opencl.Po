@@ -31,6 +31,10 @@ dense-linear-algebra/kmeans/kmeans_opencl.o: \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mm_malloc.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/emmintrin.h \
  ../dense-linear-algebra/kmeans/../../include/common_ocl.h ../opts/opts.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h \
  ../dense-linear-algebra/kmeans/../../include/rdtsc.h \
  ../dense-linear-algebra/kmeans/../../include/common_util.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/omp.h
@@ -142,6 +146,14 @@ config.h:
 ../dense-linear-algebra/kmeans/../../include/common_ocl.h:
 
 ../opts/opts.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h:
 
 ../dense-linear-algebra/kmeans/../../include/rdtsc.h:
 

@@ -280,11 +280,19 @@ int main(int argc, char** argv)
 	for(k=0; k<num_matrices; k++)
 	{
 		if(verbosity >= 2) printf("Creating Data Buffers for Matrix #%d of %d...\n",k+1,num_matrices);
-		csrCreateBuffer(&context,&csr_ap[k],sizeof(int)*(csr[k].num_rows+1),CL_MEM_READ_ONLY,"csr_ap",verbosity);
-		csrCreateBuffer(&context,&x_loc[k],sizeof(float)*csr[k].num_cols,CL_MEM_READ_ONLY,"x_loc",verbosity);
-		csrCreateBuffer(&context,&y_loc[k],sizeof(float)*csr[k].num_rows,CL_MEM_READ_WRITE,"y_loc",verbosity);
-		csrCreateBuffer(&context,&csr_aj[k],sizeof(int)*csr[k].num_nonzeros,CL_MEM_READ_ONLY,"csr_aj",verbosity);
-		csrCreateBuffer(&context,&csr_ax[k],sizeof(float)*csr[k].num_nonzeros,CL_MEM_READ_ONLY,"csr_ax",verbosity);
+		#ifdef USE_AFPGA
+				csrCreateBuffer(&context,&csr_ap[k],sizeof(int)*(csr[k].num_rows+1),CL_MEM_BANK_1_ALTERA | CL_MEM_READ_ONLY,"csr_ap",verbosity);
+				csrCreateBuffer(&context,&x_loc[k],sizeof(float)*csr[k].num_cols,CL_MEM_BANK_1_ALTERA | CL_MEM_READ_ONLY,"x_loc",verbosity);
+				csrCreateBuffer(&context,&y_loc[k],sizeof(float)*csr[k].num_rows,CL_MEM_BANK_2_ALTERA | CL_MEM_READ_WRITE,"y_loc",verbosity);
+				csrCreateBuffer(&context,&csr_aj[k],sizeof(int)*csr[k].num_nonzeros,CL_MEM_BANK_1_ALTERA | CL_MEM_READ_ONLY,"csr_aj",verbosity);
+				csrCreateBuffer(&context,&csr_ax[k],sizeof(float)*csr[k].num_nonzeros,CL_MEM_BANK_2_ALTERA | CL_MEM_READ_ONLY,"csr_ax",verbosity);
+		#else
+				csrCreateBuffer(&context,&csr_ap[k],sizeof(int)*(csr[k].num_rows+1), CL_MEM_READ_ONLY,"csr_ap",verbosity);
+				csrCreateBuffer(&context,&x_loc[k],sizeof(float)*csr[k].num_cols, CL_MEM_READ_ONLY,"x_loc",verbosity);
+				csrCreateBuffer(&context,&y_loc[k],sizeof(float)*csr[k].num_rows, CL_MEM_READ_WRITE,"y_loc",verbosity);
+				csrCreateBuffer(&context,&csr_aj[k],sizeof(int)*csr[k].num_nonzeros, CL_MEM_READ_ONLY,"csr_aj",verbosity);
+				csrCreateBuffer(&context,&csr_ax[k],sizeof(float)*csr[k].num_nonzeros, CL_MEM_READ_ONLY,"csr_ax",verbosity);
+		#endif
 	}
 
 
@@ -511,7 +519,7 @@ int main(int argc, char** argv)
 		err = clReleaseMemObject(y_loc[k]);
 		CHKERR(err,"Failed to release y_loc!");
 //		err = clReleaseEvent(aj_write[k]);	//releasing of any of these events is throwing an error with the altera sdk.
-//		if(verbosity) printf("k: %d\terr: %d\n",k,err); //Perhaps because the command-queue was alread released?
+//		if(verbosity) printf("k: %d\terr: %d\n",k,err); //Perhaps because the command-queue was already released?
 //		CHKERR(err,"Failed to release aj_write!");
 //		err = clReleaseEvent(ap_write[k]);
 //		if(verbosity) printf("k: %d\terr: %d\n",k,err);

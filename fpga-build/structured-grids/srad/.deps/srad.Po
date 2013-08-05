@@ -28,6 +28,10 @@ structured-grids/srad/srad.o: ../structured-grids/srad/srad.c \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mm_malloc.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/emmintrin.h \
  ../structured-grids/srad/../../include/common_ocl.h ../opts/opts.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h \
  ../structured-grids/srad/../../include/rdtsc.h \
  ../structured-grids/srad/../../include/common_util.h
 
@@ -138,6 +142,14 @@ config.h:
 ../structured-grids/srad/../../include/common_ocl.h:
 
 ../opts/opts.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h:
 
 ../structured-grids/srad/../../include/rdtsc.h:
 

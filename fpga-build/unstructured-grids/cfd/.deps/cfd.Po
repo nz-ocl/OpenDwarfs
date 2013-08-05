@@ -106,6 +106,10 @@ unstructured-grids/cfd/cfd.o: ../unstructured-grids/cfd/cfd.cpp \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/emmintrin.h \
  /usr/include/string.h \
  ../unstructured-grids/cfd/../../include/common_ocl.h ../opts/opts.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h \
  ../unstructured-grids/cfd/../../include/rdtsc.h \
  ../unstructured-grids/cfd/../../include/common_util.h
 
@@ -378,6 +382,14 @@ config.h:
 ../unstructured-grids/cfd/../../include/common_ocl.h:
 
 ../opts/opts.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h:
 
 ../unstructured-grids/cfd/../../include/rdtsc.h:
 

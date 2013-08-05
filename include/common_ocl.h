@@ -9,7 +9,7 @@ extern "C" {
 #include <opts/opts.h>
 #include <config.h>
 #ifdef OPENCL_HEADER_CL_CL
-#include <CL/cl.h>
+#include <CL/opencl.h>  //this file should include <CL/cl.h>, if not it can be included directly here.
 #endif
 #ifdef OPENCL_HEADER_LONG
 #include <OpenCL/opencl.h>

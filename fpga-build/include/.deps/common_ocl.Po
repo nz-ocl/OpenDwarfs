@@ -1,5 +1,6 @@
 include/common_ocl.o: ../include/common_ocl.c ../include/common_ocl.h \
  ../opts/opts.h config.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h \
  /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl.h \
  /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_platform.h \
  /usr/include/stdint.h /usr/include/features.h /usr/include/sys/cdefs.h \
@@ -19,6 +20,9 @@ include/common_ocl.o: ../include/common_ocl.c ../include/common_ocl.h \
  /usr/include/sys/sysmacros.h /usr/include/bits/pthreadtypes.h \
  /usr/include/alloca.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/emmintrin.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h \
  /usr/include/string.h /usr/include/xlocale.h /usr/include/stdio.h \
  /usr/include/libio.h /usr/include/_G_config.h /usr/include/wchar.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/stdarg.h \
@@ -30,6 +34,8 @@ include/common_ocl.o: ../include/common_ocl.c ../include/common_ocl.h \
 ../opts/opts.h:
 
 config.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h:
 
 /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl.h:
 
@@ -92,6 +98,12 @@ config.h:
 /usr/include/alloca.h:
 
 /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/emmintrin.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h:
 
 /usr/include/string.h:
 

@@ -30,6 +30,10 @@ finite-state-machine/tdm/GpuTemporalDataMining.o: \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mm_malloc.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/emmintrin.h \
  ../finite-state-machine/tdm/../../include/common_ocl.h ../opts/opts.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h \
  ../finite-state-machine/tdm/../../include/rdtsc.h \
  ../finite-state-machine/tdm/../../include/common_util.h \
  ../finite-state-machine/tdm/types.h ../finite-state-machine/tdm/global.h \
@@ -140,6 +144,14 @@ config.h:
 ../finite-state-machine/tdm/../../include/common_ocl.h:
 
 ../opts/opts.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h:
 
 ../finite-state-machine/tdm/../../include/rdtsc.h:
 

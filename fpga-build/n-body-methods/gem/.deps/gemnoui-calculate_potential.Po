@@ -110,8 +110,12 @@ n-body-methods/gem/gemnoui-calculate_potential.o: \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/../../../../include/c++/4.4.6/bits/fstream.tcc \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/../../../../include/c++/4.4.6/cstring \
  /usr/include/string.h /usr/include/sys/time.h ../include/rdtsc.h \
- config.h ../include/common_ocl.h ../opts/opts.h ../include/rdtsc.h \
- ../include/common_util.h
+ config.h ../include/common_ocl.h ../opts/opts.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h \
+ ../include/rdtsc.h ../include/common_util.h
 
 ../n-body-methods/gem/include/calculations.h:
 
@@ -394,6 +398,14 @@ config.h:
 ../include/common_ocl.h:
 
 ../opts/opts.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h:
 
 ../include/rdtsc.h:
 

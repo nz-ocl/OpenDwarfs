@@ -27,6 +27,10 @@ dynamic-programming/swat/swat.o: ../dynamic-programming/swat/swat.cpp \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/emmintrin.h \
  ../dynamic-programming/swat/../../include/rdtsc.h config.h \
  ../dynamic-programming/swat/../../include/common_ocl.h ../opts/opts.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h \
  ../dynamic-programming/swat/../../include/rdtsc.h \
  ../dynamic-programming/swat/../../include/common_util.h
 
@@ -125,6 +129,14 @@ config.h:
 ../dynamic-programming/swat/../../include/common_ocl.h:
 
 ../opts/opts.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h:
 
 ../dynamic-programming/swat/../../include/rdtsc.h:
 

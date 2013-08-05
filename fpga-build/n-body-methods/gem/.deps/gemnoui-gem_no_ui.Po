@@ -104,8 +104,12 @@ n-body-methods/gem/gemnoui-gem_no_ui.o: \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/emmintrin.h \
  ../n-body-methods/gem/include/partitioned_open.h \
  ../n-body-methods/gem/include/gem.h ../include/common_ocl.h \
- ../opts/opts.h config.h ../include/rdtsc.h /usr/include/sys/time.h \
- ../include/common_util.h
+ ../opts/opts.h config.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h \
+ /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h \
+ ../include/rdtsc.h /usr/include/sys/time.h ../include/common_util.h
 
 /usr/lib/gcc/x86_64-redhat-linux/4.4.6/../../../../include/c++/4.4.6/cstdlib:
 
@@ -360,6 +364,14 @@ n-body-methods/gem/gemnoui-gem_no_ui.o: \
 ../opts/opts.h:
 
 config.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/opencl.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_gl_ext.h:
+
+/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_ext.h:
 
 ../include/rdtsc.h:
 
