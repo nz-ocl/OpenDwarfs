@@ -395,9 +395,9 @@ cl_program ocdBuildProgramFromFile(cl_context context,cl_device_id device_id,con
 
 	/* Build the program executable */
 	#ifdef USE_AFPGA //use Altera FPGA
-		err = clBuildProgram(program,1,&device_id,NULL,NULL,NULL);
+		err = clBuildProgram(program,1,&device_id,"-DOPENCL",NULL,NULL);
 	#else
-		err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+		err = clBuildProgram(program, 0, NULL, "-DOPENCL", NULL, NULL);
 	#endif
 	if (err == CL_BUILD_PROGRAM_FAILURE)
 	{

@@ -30,7 +30,7 @@ int main(int argc, char** argv)
   struct tm tm;
   int opt,option_index=0;
 
-  unsigned char** pages;
+  unsigned int** pages;
 
   const char* usage = "Usage: %s [-n <num_pages>] [-s <page_size>] [-p] [-f <file_path>] [-R] [-S]\n\n \
 		    -n: Create <num_pages> pages - Default is 1\n \
@@ -98,7 +98,7 @@ int main(int argc, char** argv)
 		free_file=1;
 	}
 	printf("Saving CRC Messages to File '%s'...\n\n",file_path);
-	write_crc((const unsigned char**)pages,num_pages,page_size,file_path);
+	write_crc((const unsigned int**)pages,num_pages,page_size,file_path);
   }
   if(free_file) free(file_path);
   free_crc(pages,num_pages);

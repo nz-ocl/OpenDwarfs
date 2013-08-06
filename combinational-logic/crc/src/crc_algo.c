@@ -8,9 +8,16 @@
 #include "../../../include/rdtsc.h"
 #include "../../../include/common_ocl.h"
 #include "../inc/crc_formats.h"
+#include "../inc/eth_crc32_lut.h"
 
 #define DATA_SIZE 100000000
-#define MIN(a,b) a < b ? a : b
+
+
+//The CRC algorithms used in this dwarf were copied and/or adapted from
+//versions posted by Stephan Brumme on the website:
+//http://create.stephan-brumme.com/crc32/
+const uint32_t Polynomial = 0xEDB88320;
+
 unsigned char verbosity=0;
 int platform_id=PLATFORM_ID, n_device=DEVICE_ID;
 
@@ -25,9 +32,7 @@ cl_mem dev_table;
 int64_t dataTransferTime = 0;
 int64_t kernelExecutionTime = 0;
 
-unsigned int page_size=DATA_SIZE,num_wg_sizes=0,numTables;
-unsigned char* h_tables;
-unsigned char crc_polynomial=0x9B;
+unsigned int page_size=DATA_SIZE,num_wg_sizes=0;
 size_t global_size;
 size_t* wg_sizes=NULL;
 
@@ -44,100 +49,74 @@ int64_t computeTimeDiff(struct timeval start, struct timeval end)
 	return diff;
 }
 
-unsigned char serialCRC(unsigned char* h_num, size_t size, unsigned char crc)
+// /////Bitwise version of CRC///////////////////////
+////////altered from the fastest version of crc32_bitwise() by Stephan Brumme////////
+// Copyright (c) 2013 Stephan Brumme. All rights reserved.
+// see http://create.stephan-brumme.com/disclaimer.html
+//
+unsigned int serialCRC(unsigned int* h_num, size_t size)
 {
-	unsigned int i;
-	unsigned char num = h_num[0];
-	for(i = 1; i < size + 1; i++)
+	unsigned int j;
+	uint32_t crc = ~0x00;
+	unsigned char* current = (unsigned char*) h_num;
+	while (size--)
 	{
-		unsigned char crcCalc = h_num[i];
-		unsigned int k;
-		if(i == size)
-			crcCalc = 0;
-		for(k = 0; k < 8; k++)
-		{
-			//If the k-th bit is 1
-			if((num >> (7-k)) % 2 == 1)
-			{
-				num ^= crc >> (k + 1);
-				crcCalc ^= crc << (7-k);
-			}
-		}
-		num = crcCalc;
+		crc ^= *current++;
+		for (j = 0; j < 8; j++)
+			crc = (crc >> 1) ^ (-1*((int)(crc & 0x01)) & Polynomial);
 	}
-
-	return num;
+	return ~crc;
 }
 
-void computeTables(unsigned char* tables, int numTables, unsigned char crc)
+uint32_t crc32_8bytes(const void* data, size_t length)
 {
-	int level = 0;
-	int i;
-	for(i = 0; i < 256; i++)
-	{
-		unsigned char val = i;
-		tables[i] = serialCRC(&val, 1, crc);
-	}
-	for(level = 1; level < numTables; level++)
-	{
-		for(i = 0; i < 256; i++)
-		{
-			unsigned char val = tables[(level-1)*256 + i];
-			tables[level * 256 + i] = tables[(level-1)*256 + val];
-		}
-	}
+  uint32_t* current = (uint32_t*) data;
+  uint32_t crc = ~ 0x00000000;
+  // process eight bytes at once
+  while (length >= 8)
+  {
+    uint32_t one = *current++ ^ crc;
+    uint32_t two = *current++;
+    crc = crc32Lookup[7][ one      & 0xFF] ^
+          crc32Lookup[6][(one>> 8) & 0xFF] ^
+          crc32Lookup[5][(one>>16) & 0xFF] ^
+          crc32Lookup[4][ one>>24        ] ^
+          crc32Lookup[3][ two      & 0xFF] ^
+          crc32Lookup[2][(two>> 8) & 0xFF] ^
+          crc32Lookup[1][(two>>16) & 0xFF] ^
+          crc32Lookup[0][ two>>24        ];
+    length -= 8;
+  }
+
+  unsigned char* currentChar = (unsigned char*) current;
+  // remaining 1 to 7 bytes
+  while (length--) {
+    crc = (crc >> 8) ^ crc32Lookup[0][(crc & 0xFF) ^ *currentChar++];
+  }
+  return ~crc;
 }
 
-int prepare_tables()
+void computeCRCDevice(unsigned int* h_num, unsigned int* h_answer, size_t local_size, cl_mem d_input, cl_mem d_output,cl_event* write_page,cl_event* kernel_exec,cl_event* read_page)
 {
-	cl_int err;
-	int numTables;
-
-	numTables = floor(log(page_size)/log(2)) + 1; //Generate Tables for the given size of page_size
-	printf("num tables = %d\n", numTables);
-	h_tables = char_new_array(256*numTables,"crc_algo.main() - Heap Overflow! Cannot allocate space for h_tables");
-
-	dev_table = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(char)*256 * numTables, NULL, &err);
-	CHKERR(err, "Failed to allocate device memory!");
-
-	computeTables(h_tables, numTables, crc_polynomial);
-
-	// Write our data set into the input array in device memory
-	err = clEnqueueWriteBuffer(write_queue, dev_table, CL_TRUE, 0, sizeof(char)*256*numTables, h_tables, 0, NULL, &ocdTempEvent);
-	clFinish(write_queue);
-	CHKERR(err, "Failed to write to source array!");
-	START_TIMER(ocdTempEvent, OCD_TIMER_H2D, "CRC Look-Up Tables Copy", ocdTempTimer)
-	END_TIMER(ocdTempTimer)
-
-	return numTables;
-}
-
-unsigned char* computeCRCDevice(unsigned char* h_num, size_t local_size, cl_mem d_input, cl_mem d_output,cl_event* write_page,cl_event* kernel_exec,cl_event* read_page)
-{
-	unsigned char* h_answer;
 
 	// Write our data set into the input array in device memory
 	int err = clEnqueueWriteBuffer(write_queue, d_input, CL_FALSE, 0, sizeof(char)*page_size, h_num, 0, NULL, write_page);
-	CHKERR(err, "Failed to write to source array!");
+	CHKERR(err, "Failed to enqueue data write!");
 
 	// Set the arguments to our compute kernel
 	err = clSetKernelArg(kernel_compute, 0, sizeof(cl_mem), &d_input);
-	err |= clSetKernelArg(kernel_compute, 1, sizeof(cl_mem), &dev_table);
-	err |= clSetKernelArg(kernel_compute, 2, sizeof(unsigned int), &numTables);
-	err |= clSetKernelArg(kernel_compute, 3, sizeof(cl_mem), &d_output);
-	err |= clSetKernelArg(kernel_compute, 4, sizeof(unsigned int), &page_size);
-	CHKERR(err, "Failed to set compute kernel arguments!");
+	CHKERR(err, "Failed to set kernel argument 0!");
+	err = clSetKernelArg(kernel_compute, 1, sizeof(int), &page_size);
+	CHKERR(err, "Failed to set kernel argument 1!");
+	err = clSetKernelArg(kernel_compute, 2, sizeof(cl_mem), &d_output);
+	CHKERR(err, "Failed to set kernel argument 2!");
 
 	err = clEnqueueNDRangeKernel(kernel_queue, kernel_compute, 1, NULL, &global_size, &local_size, 1, write_page, kernel_exec);
-	CHKERR(err, "Failed to execute compute kernel!");
+	CHKERR(err, "Failed to enqueue compute kernel!");
 
-	h_answer = char_new_array(page_size,"crc_algo.computeCRCGPU() - Heap Overflow! Cannot allocate space for h_answer");
-	
 	// Read back the results from the device to verify the output
-	err = clEnqueueReadBuffer(read_queue, d_output, CL_FALSE, 0, sizeof(char)*page_size, h_answer, 1, kernel_exec, read_page);
-	CHKERR(err, "Failed to read output array!");
-	
-	return h_answer;
+	err = clEnqueueReadBuffer(read_queue, d_output, CL_FALSE, 0, sizeof(int), h_answer, 1, kernel_exec, read_page);
+	CHKERR(err, "Failed to enqueue output read!");
 }
 
 void setup_device(const char* kernel_file)
@@ -151,31 +130,34 @@ void setup_device(const char* kernel_file)
 	program = ocdBuildProgramFromFile(context,device_id,kernel_file);
 
 	// Create the compute kernel in the program we wish to run
-	kernel_compute = clCreateKernel(program, "compute", &err);
+	kernel_compute = clCreateKernel(program, "crc32_slice8", &err);
 	CHKERR(err, "Failed to create a compute kernel!");
 	gettimeofday(&compilation_et, NULL);
 
 	printf("Kernel Compilation Time: ");
 	printTimeDiff(compilation_st, compilation_et);
 
-	if(!wg_sizes)
-	{
-		// Get the maximum work group size for executing the kernel on the device
-		err = clGetKernelWorkGroupInfo(kernel_compute, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &max_local_size, NULL);
-		CHKERR(err, "Failed to retrieve kernel_compute work group info!");
-
-		// Execute the kernel over the entire range of our 1d input data set
-		// using the maximum number of work group items for this device
-		global_size = page_size + max_local_size - page_size%max_local_size;
+//	if(!wg_sizes)
+//	{
+//		// Get the maximum work group size for executing the kernel on the device
+//		err = clGetKernelWorkGroupInfo(kernel_compute, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &max_local_size, NULL);
+//		CHKERR(err, "Failed to retrieve kernel_compute work group info!");
+//
+//		// Execute the kernel over the entire range of our 1d input data set
+//		// using the maximum number of work group items for this device
+//		global_size = page_size + max_local_size - page_size%max_local_size;
 
 		num_wg_sizes = 1;
 		wg_sizes = malloc(sizeof(size_t)*num_wg_sizes);
-		wg_sizes[0] = max_local_size;
-	}
-	else
-	{
-		global_size = page_size;
-	}
+//		wg_sizes[0] = max_local_size;
+
+		wg_sizes[0] = 1;
+		global_size = 1;
+//	}
+//	else
+//	{
+//		global_size = page_size;
+//	}
 }
 
 void usage()
@@ -205,11 +187,12 @@ int main(int argc, char** argv)
 	size_t maxSize=DATA_SIZE;
 	FILE* fp=NULL;
 	void* tmp;
-	unsigned char **h_num,serial_remainder;
-	unsigned int run_serial=0,seed=time(NULL),ii,i,j,k,l,num_pages=1,num_execs=1,num_kernels=0;
+	unsigned int **h_num,cpu_remainder;
+	unsigned int run_serial=0,seed=time(NULL),ii,i,j,k,l,num_pages=1,num_execs=1,num_kernels=0,update_interval;
 	char* file=NULL,*optptr;
 	char** kernel_files=NULL;
 	int c;
+	struct timeval start,end;
 
 	ocd_requirements req;
 	ocd_parse(&argc, &argv);
@@ -222,9 +205,6 @@ int main(int argc, char** argv)
 			case 'h':
 				usage();
 				exit(0);
-				break;
-			case 'p':
-				crc_polynomial = atoi(optarg);
 				break;
 			case 'v':
 				verbosity++;
@@ -293,15 +273,17 @@ int main(int argc, char** argv)
 
 	cl_mem dev_output[num_pages],dev_input[num_pages];
 	cl_event write_page[num_pages],kernel_exec[num_pages],read_page[num_pages];
-	unsigned char* h_answers[num_pages];
-	unsigned char ocl_remainders[num_pages];
+	unsigned int ocl_remainders[num_pages];
+
+	update_interval = round(num_pages / 10.0);
+	if(!update_interval) update_interval = num_pages;
 
 	ocd_options opts = ocd_get_options();
 	platform_id = opts.platform_id;
 	n_device = opts.device_id;
 
 	if(verbosity) printf("Common Arguments: p=%d d=%d\n", platform_id, n_device);
-	if(verbosity) printf("Program Arguments: p=%d v=%d i=%s s=%d n=%lu w=%d\n", crc_polynomial, run_serial, file, seed, page_size, (int)maxSize);
+	if(verbosity) printf("Program Arguments: v=%d i=%s s=%d n=%lu w=%d\n", run_serial, file, seed, page_size, (int)maxSize);
 
 	#ifdef USEGPU
 		 dev_type = CL_DEVICE_TYPE_GPU;
@@ -330,19 +312,17 @@ int main(int argc, char** argv)
 		num_kernels = 1;
 		kernel_files = malloc(sizeof(char*)*num_kernels);
 		#ifdef USE_AFPGA
-			const char *KernelSourceFile = "crc_kernel.aocx";
+			kernel_files[0] = "crc_kernel.aocx";
 		#else //CPU or GPU
-			const char *KernelSourceFile = "crc_algo_kernel.cl";
+			kernel_files[0] = "crc_algo_kernel.cl";
 		#endif
 	}
 
-	numTables = prepare_tables();
-
 	for(i=0; i<num_pages; i++)
 	{
-		dev_input[i] = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(char)*page_size, NULL, &err);
+		dev_input[i] = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(int)*page_size, NULL, &err);
 		CHKERR(err, "Failed to allocate device memory!");
-		dev_output[i] = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(char)*page_size, NULL, &err);
+		dev_output[i] = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(int), NULL, &err);
 		CHKERR(err, "Failed to allocate device memory!");
 	}
 
@@ -357,12 +337,13 @@ int main(int argc, char** argv)
 			for(ii=0; ii<num_execs; ii++)
 			{
 				if(verbosity) printf("Beginning execution #%u of %u...\n",ii+1,num_execs);
+
 				#ifdef ENABLE_TIMER
 					TIMER_INIT
 				#endif
 				for(i=0; i<num_pages; i++)
 				{
-					h_answers[i] = computeCRCDevice(h_num[i],wg_sizes[k],dev_input[i],dev_output[i],&write_page[i],&kernel_exec[i],&read_page[i]);
+					computeCRCDevice(h_num[i],&ocl_remainders[i],wg_sizes[k],dev_input[i],dev_output[i],&write_page[i],&kernel_exec[i],&read_page[i]);
 				}
 				clFinish(write_queue);
 				clFinish(kernel_queue);
@@ -374,10 +355,7 @@ int main(int argc, char** argv)
 
 				for(i=0; i<num_pages; i++)
 				{
-					ocl_remainders[i] = 0;
-					for(j = 0; j < page_size; j++)
-						ocl_remainders[i] ^= h_answers[i][j];
-
+					if(verbosity && (i % update_interval == 0)) printf("\t%d of %d (%5.1f%%) Times Tallied. Continuing...\n",i,num_pages,((double)(i))/num_pages*100);
 					if(verbosity >= 2) printf("Parallel Computation: '%X'\n", ocl_remainders[i]);
 
 					START_TIMER(write_page[i], OCD_TIMER_H2D, "CRC Data Copy", ocdTempTimer)
@@ -397,20 +375,35 @@ int main(int argc, char** argv)
 				if(run_serial) // verify that we have the correct answer with regular C
 				{
 					printf("Validating results with serial CRC...\n");
+					gettimeofday(&start,NULL);
 					for(i=0; i<num_pages; i++)
 					{
-						serial_remainder = serialCRC(h_num[i], page_size, crc_polynomial);
-						if(verbosity >= 2) printf("Serial Computation: '%X'\n", serial_remainder);
-						if(serial_remainder != ocl_remainders[i])
-							fprintf(stderr,"ERROR: Calculated remainders for page %u differ [OCL: '%X', Serial: '%X']\n",i+1,ocl_remainders[i],serial_remainder);
+						cpu_remainder = serialCRC(h_num[i], page_size);
+						if(verbosity >= 2) printf("Bitwise Computation: '%X'\n", cpu_remainder);
+						if(cpu_remainder != ocl_remainders[i])
+							fprintf(stderr,"ERROR: OCL and bitwise remainders for page %u differ [OCL: '%X', Bitwise: '%X']\n",i+1,ocl_remainders[i],cpu_remainder);
 					}
+					gettimeofday(&end,NULL);
+					printf("Bitwise CRC Time: ");
+					printTimeDiff(start,end);
+
+					gettimeofday(&start,NULL);
+					for(i=0; i<num_pages; i++)
+					{
+						cpu_remainder = crc32_8bytes(h_num[i], page_size);
+						if(verbosity >= 2) printf("CPU - Slice-by-8 Computation: '%X'\n", cpu_remainder);
+						if(cpu_remainder != ocl_remainders[i])
+							fprintf(stderr,"ERROR: OCL and CPU Slice-by-8 remainders for page %u differ [OCL: '%X', CPU: '%X']\n",i+1,ocl_remainders[i],cpu_remainder);
+					}
+					gettimeofday(&end,NULL);
+					printf("CPU Slice-by-8 CRC Time: ");
+					printTimeDiff(start,end);
 				}
 			}
 		}
 	}
 
 	free(h_num);
-	free(h_tables);
 	#ifdef ENABLE_TIMER
 		TIMER_DEST
 	#endif
