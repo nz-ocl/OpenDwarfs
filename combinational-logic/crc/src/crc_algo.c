@@ -320,7 +320,7 @@ int main(int argc, char** argv)
 
 	for(i=0; i<num_pages; i++)
 	{
-		dev_input[i] = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(int)*page_size, NULL, &err);
+		dev_input[i] = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(char)*page_size, NULL, &err);
 		CHKERR(err, "Failed to allocate device memory!");
 		dev_output[i] = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(int), NULL, &err);
 		CHKERR(err, "Failed to allocate device memory!");
@@ -343,6 +343,7 @@ int main(int argc, char** argv)
 				#endif
 				for(i=0; i<num_pages; i++)
 				{
+					if(verbosity >= 2) printf("\tEnqueuing commmands for page #%d of %d...\n",i+1,num_pages);
 					computeCRCDevice(h_num[i],&ocl_remainders[i],wg_sizes[k],dev_input[i],dev_output[i],&write_page[i],&kernel_exec[i],&read_page[i]);
 				}
 				clFinish(write_queue);
