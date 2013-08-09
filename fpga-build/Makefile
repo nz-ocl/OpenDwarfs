@@ -534,7 +534,7 @@ CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS =  
 CPP = gcc -E
-CPPFLAGS = 
+CPPFLAGS = -g
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
