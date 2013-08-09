@@ -58,13 +58,13 @@ if test ! -z "$OPENCL_SDK_PREFIX" ; then
    PAC_APPEND_FLAG([-I${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/include],[INCLUDEFLAGS])
 
    PAC_APPEND_FLAG([-L${OPENCL_SDK_PREFIX}/lib/x86_64],[SEARCHFLAGS])
+   PAC_APPEND_FLAG([-L${OPENCL_SDK_PREFIX}/lib64],[SEARCHFLAGS])
    PAC_APPEND_FLAG([-L${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64],[SEARCHFLAGS])
 
    # Use rpath to force the use of these libraries
    PAC_APPEND_FLAG([-Wl,-rpath=${OPENCL_SDK_PREFIX}/lib/x86_64],[RPATHFLAGS])
-   PAC_APPEND_FLAG(
-	[-Wl,-rpath=${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64],
-	[RPATHFLAGS])
+   PAC_APPEND_FLAG([-Wl,-rpath=${OPENCL_SDK_PREFIX}/lib64],[RPATHFLAGS])
+   PAC_APPEND_FLAG([-Wl,-rpath=${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64],[RPATHFLAGS])
 fi
 AC_SUBST(OPENCL_SDK_PREFIX)
 

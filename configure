@@ -17765,6 +17765,17 @@ fi
 
 
 
+	if echo "$SEARCHFLAGS" | $FGREP -e '-L${OPENCL_SDK_PREFIX}/lib64' >/dev/null 2>&1; then
+  echo "SEARCHFLAGS(='$SEARCHFLAGS') contains '-L${OPENCL_SDK_PREFIX}/lib64', not appending" >&5
+else
+  echo "SEARCHFLAGS(='$SEARCHFLAGS') does not contain '-L${OPENCL_SDK_PREFIX}/lib64', appending" >&5
+		SEARCHFLAGS="$SEARCHFLAGS -L${OPENCL_SDK_PREFIX}/lib64"
+
+fi
+
+
+
+
 	if echo "$SEARCHFLAGS" | $FGREP -e '-L${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64' >/dev/null 2>&1; then
   echo "SEARCHFLAGS(='$SEARCHFLAGS') contains '-L${OPENCL_SDK_PREFIX}/samples/opencl/SDKUtil/build/debug/x86_64', not appending" >&5
 else
@@ -17783,6 +17794,17 @@ fi
 else
   echo "RPATHFLAGS(='$RPATHFLAGS') does not contain '-Wl,-rpath=${OPENCL_SDK_PREFIX}/lib/x86_64', appending" >&5
 		RPATHFLAGS="$RPATHFLAGS -Wl,-rpath=${OPENCL_SDK_PREFIX}/lib/x86_64"
+
+fi
+
+
+
+
+	if echo "$RPATHFLAGS" | $FGREP -e '-Wl,-rpath=${OPENCL_SDK_PREFIX}/lib64' >/dev/null 2>&1; then
+  echo "RPATHFLAGS(='$RPATHFLAGS') contains '-Wl,-rpath=${OPENCL_SDK_PREFIX}/lib64', not appending" >&5
+else
+  echo "RPATHFLAGS(='$RPATHFLAGS') does not contain '-Wl,-rpath=${OPENCL_SDK_PREFIX}/lib64', appending" >&5
+		RPATHFLAGS="$RPATHFLAGS -Wl,-rpath=${OPENCL_SDK_PREFIX}/lib64"
 
 fi
 

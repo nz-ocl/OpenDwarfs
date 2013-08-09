@@ -11,6 +11,7 @@ __kernel void crc32_slice8(__global const uint* restrict data, uint length_bytes
   gid = get_global_id(0);
   i = gid * length_ints;
   
+  
   //printf("WI #%zd: first word=%X\n",gid+1,data[i]);
   while (length_bytes >= 8) // process eight bytes at once
   {
@@ -39,6 +40,6 @@ __kernel void crc32_slice8(__global const uint* restrict data, uint length_bytes
 	    j = j + 1;
 	  }
   }
-  //printf("WI #%zd: crc=%X\n",gid+1,~crc);
+
   res[gid] = ~crc;
 }

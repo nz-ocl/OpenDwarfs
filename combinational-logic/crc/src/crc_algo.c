@@ -31,7 +31,8 @@ cl_mem dev_table;
 int64_t dataTransferTime = 0;
 int64_t kernelExecutionTime = 0;
 
-unsigned int num_parallel_crcs=1024,page_size=DATA_SIZE,num_wg_sizes=0,num_words,num_blocks,num_pages_last_block;
+unsigned int* num_parallel_crcs;
+unsigned int page_size=DATA_SIZE,num_wg_sizes=0,num_words,num_blocks,num_pages_last_block,num_block_sizes=0;
 size_t* wg_sizes=NULL;
 
 void printTimeDiff(struct timeval start, struct timeval end)
@@ -73,7 +74,7 @@ uint32_t crc32_8bytes(const void* data, size_t length)
   uint32_t* current = (uint32_t*) data;
   uint32_t crc = ~ 0x00000000;
   // process eight bytes at once
-  if(verbosity >= 2) printf("Page #%d: first word =%X\n",pid,*current);
+  //if(verbosity >= 2) printf("Page #%d: first word =%X\n",pid,*current);
   while (length >= 8)
   {
     uint32_t one = *current++ ^ crc;
@@ -97,15 +98,13 @@ uint32_t crc32_8bytes(const void* data, size_t length)
   return ~crc;
 }
 
-void enqueueCRCDevice(unsigned int block_index,unsigned int block_start,unsigned int** h_num, unsigned int* h_answer, size_t global_size, size_t local_size, cl_mem d_input, cl_mem d_output,cl_event* write_page,cl_event* kernel_exec,cl_event* read_page)
+void enqueueCRCDevice(unsigned int* h_num, unsigned int* h_answer, size_t global_size, size_t local_size, cl_mem d_input, cl_mem d_output,cl_event* write_page,cl_event* kernel_exec,cl_event* read_page)
 {
 	int err,i;
+
 	// Write our data set into the input array in device memory
-	for(i=0; i<num_parallel_crcs && (block_index != num_blocks-1 || i<num_pages_last_block); i++)
-	{
-		err = clEnqueueWriteBuffer(write_queue, d_input, CL_FALSE, i*sizeof(char)*page_size, sizeof(char)*page_size, h_num[block_start+i], 0, NULL, &write_page[i]);
-		CHKERR(err, "Failed to enqueue data write!");
-	}
+	err = clEnqueueWriteBuffer(write_queue, d_input, CL_FALSE, 0, sizeof(char)*page_size*global_size, h_num, 0, NULL, write_page);
+	CHKERR(err, "Failed to enqueue data write!");
 
 	// Set the arguments to our compute kernel
 	err = clSetKernelArg(kernel_compute, 0, sizeof(cl_mem), &d_input);
@@ -117,7 +116,7 @@ void enqueueCRCDevice(unsigned int block_index,unsigned int block_start,unsigned
 	err = clSetKernelArg(kernel_compute, 3, sizeof(cl_mem), &d_output);
 	CHKERR(err, "Failed to set kernel argument 3!");
 
-	err = clEnqueueNDRangeKernel(kernel_queue, kernel_compute, 1, NULL, &global_size, &local_size, 1, &write_page[i-1], kernel_exec);
+	err = clEnqueueNDRangeKernel(kernel_queue, kernel_compute, 1, NULL, &global_size, &local_size, 1, write_page, kernel_exec);
 	CHKERR(err, "Failed to enqueue compute kernel!");
 
 	// Read back the results from the device to verify the output
@@ -155,11 +154,9 @@ void usage()
 	printf("Program-specific arguments:\n");
 	printf("\t-h | 'Print this help message'\n");
 	printf("\t-v | 'Increase verbosity level by 1 - Default is 0 - Max is 2'\n");
-	printf("\t-s | 'Set random seed' [integer]\n");
 	printf("\t-i | 'Input file name' [string]\n");
 	printf("\t-a | 'Verify results on CPU'\n");
 	printf("\t-p | 'Set the number of pages to CRC in parallel (i.e., the global size of each kernel) - Default is 1024\n");
-	printf("\t-n | 'Data size' [integer]\n");
 	printf("\t-r | 'Execute program with same data exactly <num_execs> times to increase sample size - Default is 1\n");
 	printf("\t-w | 'Loop through each kernel execution 'm' times, once with each wg_size-'1..m' - Default is 1 iteration with wg_size set to the maximum possible (limited either by the device or the size of the input)\n");
 	printf("\t-k | 'Test CRC 'n' times, once with each kernel_file-'1..n' - Default is 1 kernel named './crc_kernel.xxx' where xxx is 'aocx' if USE_AFPGA is defined, 'cl' otherwise.\n");
@@ -174,8 +171,8 @@ int main(int argc, char** argv)
 	size_t maxSize=DATA_SIZE,global_size;
 	FILE* fp=NULL;
 	void* tmp;
-	unsigned int **h_num,cpu_remainder;
-	unsigned int run_serial=0,seed=time(NULL),ii,i,j,k,l,num_pages=1,num_execs=1,num_kernels=0,update_interval;
+	unsigned int *h_num,cpu_remainder;
+	unsigned int run_serial=0,seed=time(NULL),h,ii,i,j,k,l,m,num_pages=1,num_execs=1,num_kernels=0,update_interval;
 	char* file=NULL,*optptr;
 	char** kernel_files=NULL;
 	int c;
@@ -215,16 +212,14 @@ int main(int argc, char** argv)
 				break;
 			case 'p':
 				if(optarg != NULL)
-					num_parallel_crcs = atoi(optarg);
+					optptr = optarg;
 				else
-					num_parallel_crcs = atoi(argv[optind]);
-				break;
-			case 's':
-				seed = atoi(optarg);
-				break;
-			case 'n':
-				page_size = atoi(optarg);
-				check(page_size != 0,"page_size must be greater than 0!");
+					optptr = argv[optind];
+				num_block_sizes++;
+				tmp = realloc(num_parallel_crcs,sizeof(size_t)*num_block_sizes);
+				check(tmp != NULL,"csr.main() - Heap Overflow! Cannot allocate space for num_parallel_crcs");
+				num_parallel_crcs = tmp;
+				num_parallel_crcs[num_block_sizes-1] = atoi(optptr);
 				break;
 			case 'w':
 				if(optarg != NULL)
@@ -255,39 +250,15 @@ int main(int argc, char** argv)
 		}	
 	}
 
-	if(!file)
-	{
-		h_num = rand_crc(num_pages,page_size,seed);
-	}
-	else
-	{
-		h_num = read_crc(&num_pages,&page_size,file);
-	}
+	check(file != NULL,"-i option must be supplied!");
+	h_num = read_crc(&num_pages,&page_size,file);
 
 	num_words = page_size / 4;
-	num_blocks = num_pages/num_parallel_crcs;
-	if(num_pages % num_parallel_crcs != 0)
-	{
-		num_blocks++;
-		num_pages_last_block = num_pages % num_parallel_crcs;
-	}
-	else
-	{
-		num_pages_last_block = num_parallel_crcs;
-	}
-
-	cl_mem dev_output[num_blocks],dev_input[num_blocks];
-	cl_event write_page[num_pages],kernel_exec[num_blocks],read_page[num_blocks];
-	unsigned int ocl_remainders[num_pages];
-
-	update_interval = round(num_blocks / 10.0);
-	if(!update_interval) update_interval = num_blocks;
+	if(verbosity) printf("num_words = %u\n",num_words);
 
 	ocd_options opts = ocd_get_options();
 	platform_id = opts.platform_id;
 	n_device = opts.device_id;
-
-	if(verbosity) printf("Num Pages: %u - Num Parallel CRCs: %u - Num blocks = %u\n",num_pages,num_parallel_crcs,num_blocks);
 
 	#ifdef USEGPU
 		 dev_type = CL_DEVICE_TYPE_GPU;
@@ -322,116 +293,140 @@ int main(int argc, char** argv)
 		#endif
 	}
 
-	for(i=0; i<num_blocks; i++)
+	for(h=0; h<num_block_sizes; h++)
 	{
-		dev_input[i] = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(char)*page_size*num_parallel_crcs, NULL, &err);
-		CHKERR(err, "Failed to allocate device memory!");
-		dev_output[i] = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(int)*num_parallel_crcs, NULL, &err);
-		CHKERR(err, "Failed to allocate device memory!");
-	}
+		if(verbosity) printf("Executing with block size #%u of %u: %u\n",h+1,num_block_sizes,num_parallel_crcs[h]);
 
-	for(l=0; l<num_kernels; l++)
-	{
-		if(verbosity) printf("Executing with kernel #%u of %u: %s\n",l+1,num_kernels,kernel_files[l]);
-		setup_device(kernel_files[l]);
-
-		for(k=0; k<num_wg_sizes; k++)
+		num_blocks = num_pages/num_parallel_crcs[h];
+		if(num_pages % num_parallel_crcs[h] != 0)
 		{
-			if(verbosity) printf("Executing with Workgroup size #%u of %u: %zu\n",k+1,num_wg_sizes,wg_sizes[k]);
-			for(ii=0; ii<num_execs; ii++)
+			num_blocks++;
+			num_pages_last_block = num_pages % num_parallel_crcs[h];
+		}
+		else
+		{
+			num_pages_last_block = num_parallel_crcs[h];
+		}
+
+		if(verbosity) printf("Num Pages: %u - Num Parallel CRCs: %u - Num blocks = %u\n",num_pages,num_parallel_crcs[h],num_blocks);
+		cl_mem dev_input[num_blocks],dev_output[num_blocks];
+		cl_event write_page[num_blocks],kernel_exec[num_blocks],read_page[num_blocks];
+		unsigned int* ocl_remainders;
+		ocl_remainders = int_new_array(num_pages,"crc_algo.main() - Heap Overflow! Cannot allocate space for ocl_remainders");
+
+		update_interval = round(num_blocks / 10.0);
+		if(!update_interval) update_interval = num_blocks;
+
+		for(i=0; i<num_blocks; i++)
+		{
+			dev_input[i] = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(char)*page_size*num_parallel_crcs[h], NULL, &err);
+			CHKERR(err, "Failed to allocate device memory!");
+			dev_output[i] = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(int)*num_parallel_crcs[h], NULL, &err);
+			CHKERR(err, "Failed to allocate device memory!");
+		}
+
+		for(l=0; l<num_kernels; l++)
+		{
+			if(verbosity) printf("Executing with kernel #%u of %u: %s\n",l+1,num_kernels,kernel_files[l]);
+			setup_device(kernel_files[l]);
+
+			for(k=0; k<num_wg_sizes; k++)
 			{
-				if(verbosity) printf("Beginning execution #%u of %u...\n",ii+1,num_execs);
+				if(verbosity) printf("Executing with Workgroup size #%u of %u: %zu\n",k+1,num_wg_sizes,wg_sizes[k]);
 
-				#ifdef ENABLE_TIMER
-					TIMER_INIT
-				#endif
-				for(i=0; i<num_blocks; i++)
+				for(ii=0; ii<num_execs; ii++)
 				{
-					if(verbosity >= 2) printf("\tEnqueuing commmands for block #%d of %d...\n",i+1,num_blocks);
-					if(i == num_blocks -1) //last iteration
-						global_size = num_pages_last_block;
-					else
-						global_size = num_parallel_crcs;
-					enqueueCRCDevice(i,i*num_parallel_crcs,h_num,&ocl_remainders[i*num_parallel_crcs],global_size,wg_sizes[k],dev_input[i],dev_output[i],&write_page[i*num_parallel_crcs],&kernel_exec[i],&read_page[i]);
-				}
-				clFinish(write_queue);
-				clFinish(kernel_queue);
-				clFinish(read_queue);
+					if(verbosity) printf("Beginning execution #%u of %u...\n",ii+1,num_execs);
 
-				#ifdef ENABLE_TIMER
-					TIMER_STOP
-				#endif
-
-				for(i=0; i<num_blocks; i++)
-				{
-					if(verbosity && (i % update_interval == 0)) printf("\t%d of %d (%5.1f%%) Times Tallied. Continuing...\n",i,num_blocks,((double)(i))/num_blocks*100);
-					if(verbosity >= 2) printf("Parallel Computation: '%X'\n", ocl_remainders[i]);
-
-					for(j=0; j<num_parallel_crcs && (i != num_blocks-1 || j<num_pages_last_block) ; j++)
+					#ifdef ENABLE_TIMER
+						TIMER_INIT
+					#endif
+					for(i=0; i<num_blocks; i++)
 					{
-						START_TIMER(write_page[i*num_parallel_crcs+j], OCD_TIMER_H2D, "CRC Data Copy", ocdTempTimer)
+						if(verbosity >= 2) printf("\tEnqueuing commmands for block #%d of %d...\n",i+1,num_blocks);
+						if(i == num_blocks -1) //last iteration
+							global_size = num_pages_last_block;
+						else
+							global_size = num_parallel_crcs[h];
+						enqueueCRCDevice(&h_num[i*global_size*num_words],&ocl_remainders[i*num_parallel_crcs[h]],global_size,wg_sizes[k],dev_input[i],dev_output[i],&write_page[i],&kernel_exec[i],&read_page[i]);
+					}
+					clFinish(write_queue);
+					clFinish(kernel_queue);
+					clFinish(read_queue);
+
+					#ifdef ENABLE_TIMER
+						TIMER_STOP
+					#endif
+
+					for(i=0; i<num_blocks; i++)
+					{
+						if(verbosity && (i % update_interval == 0)) printf("\t%d of %d (%5.1f%%) Times Tallied. Continuing...\n",i,num_blocks,((double)(i))/num_blocks*100);
+						if(verbosity >= 2) printf("Parallel Computation: '%X'\n", ocl_remainders[i]);
+
+						START_TIMER(write_page[i], OCD_TIMER_H2D, "CRC Data Copy", ocdTempTimer)
 						END_TIMER(ocdTempTimer)
-						clReleaseEvent(write_page[i*num_parallel_crcs+j]);
+						clReleaseEvent(write_page[i]);
+
+						START_TIMER(kernel_exec[i], OCD_TIMER_KERNEL, "CRC Kernel", ocdTempTimer)
+						END_TIMER(ocdTempTimer)
+						clReleaseEvent(kernel_exec[i]);
+
+						START_TIMER(read_page[i], OCD_TIMER_D2H, "CRC Data Copy", ocdTempTimer)
+						END_TIMER(ocdTempTimer)
+						clReleaseEvent(read_page[i]);
 					}
 
-					START_TIMER(kernel_exec[i], OCD_TIMER_KERNEL, "CRC Kernel", ocdTempTimer)
-					END_TIMER(ocdTempTimer)
-					clReleaseEvent(kernel_exec[i]);
+					#ifdef ENABLE_TIMER
+						TIMER_PRINT
+					#endif
 
-					START_TIMER(read_page[i], OCD_TIMER_D2H, "CRC Data Copy", ocdTempTimer)
-					END_TIMER(ocdTempTimer)
-					clReleaseEvent(read_page[i]);
-				}
-
-				#ifdef ENABLE_TIMER
-					TIMER_PRINT
-				#endif
-
-				if(run_serial) // verify that we have the correct answer with regular C
-				{
-					printf("Validating results with serial CRC...\n");
-//					gettimeofday(&start,NULL);
-//					for(i=0; i<num_pages; i++)
-//					{
-//						cpu_remainder = serialCRC(h_num[i], page_size);
-//						if(verbosity >= 2) printf("Bitwise Computation: '%X'\n", cpu_remainder);
-//						if(cpu_remainder != ocl_remainders[i])
-//							fprintf(stderr,"ERROR: OCL and bitwise remainders for page %u differ [OCL: '%X', Bitwise: '%X']\n",i+1,ocl_remainders[i],cpu_remainder);
-//					}
-//					gettimeofday(&end,NULL);
-//					printf("Bitwise CRC Time: ");
-//					printTimeDiff(start,end);
-
-					gettimeofday(&start,NULL);
-					for(i=0; i<num_pages; i++)
+					if(run_serial) // verify that we have the correct answer with regular C
 					{
-						cpu_remainder = crc32_8bytes(h_num[i], page_size);
-						if(verbosity >= 2) printf("CPU - Slice-by-8 Computation: '%X'\n", cpu_remainder);
-						if(cpu_remainder != ocl_remainders[i])
-							fprintf(stderr,"ERROR: OCL and CPU Slice-by-8 remainders for page %u differ [OCL: '%X', CPU: '%X']\n",i+1,ocl_remainders[i],cpu_remainder);
+						printf("Validating results with serial CRC...\n");
+//						gettimeofday(&start,NULL);
+//						for(i=0; i<num_pages; i++)
+//						{
+//							cpu_remainder = serialCRC(&h_num[i*num_words], page_size);
+//							if(verbosity >= 2) printf("Bitwise Computation: '%X'\n", cpu_remainder);
+//							if(cpu_remainder != ocl_remainders[i])
+//								fprintf(stderr,"ERROR: OCL and bitwise remainders for page %u differ [OCL: '%X', Bitwise: '%X']\n",i+1,ocl_remainders[i],cpu_remainder);
+//						}
+//						gettimeofday(&end,NULL);
+//						printf("Bitwise CRC Time: ");
+//						printTimeDiff(start,end);
+
+						gettimeofday(&start,NULL);
+						for(i=0; i<num_pages; i++)
+						{
+							cpu_remainder = crc32_8bytes(&h_num[i*num_words], page_size);
+							if(verbosity >= 3) printf("CPU - Slice-by-8 Computation: '%X'\n", cpu_remainder);
+							if(cpu_remainder != ocl_remainders[i])
+								fprintf(stderr,"ERROR: OCL and CPU Slice-by-8 remainders for page %u differ [OCL: '%X', CPU: '%X']\n",i+1,ocl_remainders[i],cpu_remainder);
+						}
+						gettimeofday(&end,NULL);
+						printf("CPU Slice-by-8 CRC Time: ");
+						printTimeDiff(start,end);
 					}
-					gettimeofday(&end,NULL);
-					printf("CPU Slice-by-8 CRC Time: ");
-					printTimeDiff(start,end);
 				}
 			}
+			clReleaseKernel(kernel_compute);
+		}
+
+
+		#ifdef ENABLE_TIMER
+			TIMER_DEST
+		#endif
+		for(i=0; i<num_blocks; i++)
+		{
+			clReleaseMemObject(dev_input[i]);
+			clReleaseMemObject(dev_output[i]);
 		}
 	}
-
-	free(h_num);
-	#ifdef ENABLE_TIMER
-		TIMER_DEST
-	#endif
-	for(i=0; i<num_blocks; i++)
-	{
-		clReleaseMemObject(dev_input[i]);
-		clReleaseMemObject(dev_output[i]);
-	}
-	clReleaseKernel(kernel_compute);
 	clReleaseCommandQueue(write_queue);
 	clReleaseCommandQueue(kernel_queue);
 	clReleaseCommandQueue(read_queue);
 	clReleaseContext(context);
+	free(h_num);
 
 	return 0;
 }

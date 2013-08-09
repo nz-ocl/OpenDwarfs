@@ -326,7 +326,7 @@ cl_device_id GetDevice(int platform, int device, cl_int dev_type)
 
     cl_uint nDevices = 1;
     char platformName[100];
-    err = clGetPlatformInfo(platforms[0], CL_PLATFORM_VENDOR, sizeof (platformName), platformName, NULL);
+    err = clGetPlatformInfo(platforms[platform], CL_PLATFORM_VENDOR, sizeof (platformName), platformName, NULL);
     CHECK_ERROR(err);
     printf("Platform Chosen : %s\n", platformName);
 
