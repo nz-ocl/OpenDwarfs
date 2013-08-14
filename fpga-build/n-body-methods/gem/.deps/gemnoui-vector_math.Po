@@ -1,16 +1,15 @@
 n-body-methods/gem/gemnoui-vector_math.o: \
  ../n-body-methods/gem/vector_math.c \
  ../n-body-methods/gem/include/calculations.h \
- ../n-body-methods/gem/include/structures.h \
- /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl.h \
- /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_platform.h \
- /usr/include/stdint.h /usr/include/features.h /usr/include/sys/cdefs.h \
+ ../n-body-methods/gem/include/structures.h /usr/include/CL/cl.h \
+ /usr/include/CL/cl_platform.h /usr/include/stdint.h \
+ /usr/include/features.h /usr/include/sys/cdefs.h \
  /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
  /usr/include/gnu/stubs-64.h /usr/include/bits/wchar.h \
- /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/stddef.h \
- /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/xmmintrin.h \
- /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mmintrin.h \
- /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mm_malloc.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/stddef.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/xmmintrin.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/mmintrin.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/mm_malloc.h \
  /usr/include/stdlib.h /usr/include/bits/waitflags.h \
  /usr/include/bits/waitstatus.h /usr/include/endian.h \
  /usr/include/bits/endian.h /usr/include/bits/byteswap.h \
@@ -20,7 +19,7 @@ n-body-methods/gem/gemnoui-vector_math.o: \
  /usr/include/bits/sigset.h /usr/include/bits/time.h \
  /usr/include/sys/sysmacros.h /usr/include/bits/pthreadtypes.h \
  /usr/include/alloca.h \
- /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/emmintrin.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/emmintrin.h \
  /usr/include/math.h /usr/include/bits/huge_val.h \
  /usr/include/bits/huge_valf.h /usr/include/bits/huge_vall.h \
  /usr/include/bits/inf.h /usr/include/bits/nan.h \
@@ -30,9 +29,9 @@ n-body-methods/gem/gemnoui-vector_math.o: \
 
 ../n-body-methods/gem/include/structures.h:
 
-/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl.h:
+/usr/include/CL/cl.h:
 
-/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_platform.h:
+/usr/include/CL/cl_platform.h:
 
 /usr/include/stdint.h:
 
@@ -48,13 +47,13 @@ n-body-methods/gem/gemnoui-vector_math.o: \
 
 /usr/include/bits/wchar.h:
 
-/usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/stddef.h:
+/usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/stddef.h:
 
-/usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/xmmintrin.h:
+/usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/xmmintrin.h:
 
-/usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mmintrin.h:
+/usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/mmintrin.h:
 
-/usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mm_malloc.h:
+/usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/mm_malloc.h:
 
 /usr/include/stdlib.h:
 
@@ -90,7 +89,7 @@ n-body-methods/gem/gemnoui-vector_math.o: \
 
 /usr/include/alloca.h:
 
-/usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/emmintrin.h:
+/usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/emmintrin.h:
 
 /usr/include/math.h:
 
