@@ -534,7 +534,7 @@ CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS =  
 CPP = gcc -E
-CPPFLAGS = -I/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include
+CPPFLAGS = 
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
