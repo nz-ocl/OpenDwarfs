@@ -514,19 +514,19 @@ DIST_ARCHIVES = $(distdir).tar.gz
 GZIP_ENV = --best
 distuninstallcheck_listfiles = find . -type f -print
 distcleancheck_listfiles = find . -type f -print
-ACLOCAL = ${SHELL} /home/tjkenney/OpenDwarfs/m4/missing --run aclocal-1.11
-AMTAR = ${SHELL} /home/tjkenney/OpenDwarfs/m4/missing --run tar
+ACLOCAL = ${SHELL} /home/tjkenney/workspace/OpenDwarfs/m4/missing --run aclocal-1.11
+AMTAR = ${SHELL} /home/tjkenney/workspace/OpenDwarfs/m4/missing --run tar
 AM_DEFAULT_VERBOSITY = 0
 AR = ar
-AUTOCONF = ${SHELL} /home/tjkenney/OpenDwarfs/m4/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/tjkenney/OpenDwarfs/m4/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/tjkenney/OpenDwarfs/m4/missing --run automake-1.11
+AUTOCONF = ${SHELL} /home/tjkenney/workspace/OpenDwarfs/m4/missing --run autoconf
+AUTOHEADER = ${SHELL} /home/tjkenney/workspace/OpenDwarfs/m4/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/tjkenney/workspace/OpenDwarfs/m4/missing --run automake-1.11
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS =  
 CPP = gcc -E
-CPPFLAGS = 
+CPPFLAGS = -I/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
@@ -543,7 +543,7 @@ EGREP = /bin/grep -E
 EXEEXT = 
 FGREP = /bin/grep -F
 GREP = /bin/grep
-INCLUDEFLAGS =  -I/home/fpga_tools/altera/13.0sp1/aocl/host/include
+INCLUDEFLAGS =  -I/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include
 INSTALL = /usr/bin/install -c
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
@@ -558,7 +558,7 @@ LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIPO = 
 LN_S = ln -s
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /home/tjkenney/OpenDwarfs/m4/missing --run makeinfo
+MAKEINFO = ${SHELL} /home/tjkenney/workspace/OpenDwarfs/m4/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
 NM = /usr/bin/nm -B
 NMEDIT = 
@@ -575,17 +575,17 @@ PACKAGE_TARNAME = opencl-apps
 PACKAGE_VERSION = 0
 PATH_SEPARATOR = :
 RANLIB = ranlib
-RPATHFLAGS =  -Wl,-rpath=/home/fpga_tools/altera/13.0sp1/aocl/linux64/lib -Wl,-rpath=/home/fpga_tools/altera/13.0sp1/aocl/host/linux64/lib
-SEARCHFLAGS =  -L/home/fpga_tools/altera/13.0sp1/aocl/linux64/lib -L/home/fpga_tools/altera/13.0sp1/aocl/host/linux64/lib
+RPATHFLAGS =  -Wl,-rpath=/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/linux64/lib -Wl,-rpath=/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/linux64/lib
+SEARCHFLAGS =  -L/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/linux64/lib -L/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/linux64/lib
 SED = /bin/sed
 SET_MAKE = 
 SHELL = /bin/sh
 STRIP = strip
 VERSION = 0
-abs_builddir = /home/tjkenney/OpenDwarfs/fpga-build
-abs_srcdir = /home/tjkenney/OpenDwarfs/fpga-build/..
-abs_top_builddir = /home/tjkenney/OpenDwarfs/fpga-build
-abs_top_srcdir = /home/tjkenney/OpenDwarfs/fpga-build/..
+abs_builddir = /home/tjkenney/workspace/OpenDwarfs/fpga-build
+abs_srcdir = /home/tjkenney/workspace/OpenDwarfs/fpga-build/..
+abs_top_builddir = /home/tjkenney/workspace/OpenDwarfs/fpga-build
+abs_top_srcdir = /home/tjkenney/workspace/OpenDwarfs/fpga-build/..
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 ac_ct_DUMPBIN = 
@@ -614,7 +614,7 @@ host_vendor = unknown
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/tjkenney/OpenDwarfs/m4/install-sh
+install_sh = ${SHELL} /home/tjkenney/workspace/OpenDwarfs/m4/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -637,8 +637,8 @@ top_builddir = .
 top_srcdir = ..
 AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -Werror  -I/home/fpga_tools/altera/13.0sp1/aocl/host/include
-AM_LDFLAGS =  -L/home/fpga_tools/altera/13.0sp1/aocl/linux64/lib -L/home/fpga_tools/altera/13.0sp1/aocl/host/linux64/lib  -lalterahalmmd -lalterammdpcie -lpkg_editor -lalteracl -lelf -lrt -lstdc++  -Wl,-rpath=/home/fpga_tools/altera/13.0sp1/aocl/linux64/lib -Wl,-rpath=/home/fpga_tools/altera/13.0sp1/aocl/host/linux64/lib
+AM_CPPFLAGS = -Werror  -I/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include
+AM_LDFLAGS =  -L/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/linux64/lib -L/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/linux64/lib  -lalterahalmmd -lalterammdpcie -lpkg_editor -lalteracl -lelf -lrt -lstdc++  -Wl,-rpath=/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/linux64/lib -Wl,-rpath=/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/linux64/lib
 all_local = $(am__append_2) $(am__append_5) $(am__append_8) \
 	$(am__append_11) $(am__append_14) $(am__append_17) \
 	$(am__append_20) $(am__append_23) $(am__append_26) \
@@ -673,7 +673,7 @@ swat_SOURCES = dynamic-programming/swat/alignments.cpp dynamic-programming/swat/
 				 dynamic-programming/swat/param.cpp dynamic-programming/swat/timeRec.cpp
 
 srad_SOURCES = structured-grids/srad/srad.c
-srad_LDFLAGS = -lm  -L/home/fpga_tools/altera/13.0sp1/aocl/linux64/lib -L/home/fpga_tools/altera/13.0sp1/aocl/host/linux64/lib  -lalterahalmmd -lalterammdpcie -lpkg_editor -lalteracl -lelf -lrt -lstdc++  -Wl,-rpath=/home/fpga_tools/altera/13.0sp1/aocl/linux64/lib -Wl,-rpath=/home/fpga_tools/altera/13.0sp1/aocl/host/linux64/lib
+srad_LDFLAGS = -lm  -L/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/linux64/lib -L/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/linux64/lib  -lalterahalmmd -lalterammdpcie -lpkg_editor -lalteracl -lelf -lrt -lstdc++  -Wl,-rpath=/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/linux64/lib -Wl,-rpath=/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/linux64/lib
 lud_SOURCES = dense-linear-algebra/lud/lud.c dense-linear-algebra/lud/common.c
 kmeans_SOURCES = dense-linear-algebra/kmeans/kmeans.c \
 	dense-linear-algebra/kmeans/cluster.c \
@@ -684,12 +684,12 @@ kmeans_SOURCES = dense-linear-algebra/kmeans/kmeans.c \
 
 scl_SOURCES = samplecl/samplecl.c
 clfft_SOURCES = spectral-methods/fft/src/opencl/fft/fft.cpp spectral-methods/fft/src/opencl/fft/fftlib.cpp spectral-methods/fft/src/opencl/common/main.cpp spectral-methods/fft/src/opencl/common/Event.cpp spectral-methods/fft/src/opencl/common/OpenCLDeviceInfo.cpp spectral-methods/fft/src/opencl/common/OpenCLNodePlatformContainer.cpp spectral-methods/fft/src/opencl/common/OpenCLPlatform.cpp spectral-methods/fft/src/common/OptionParser.cpp spectral-methods/fft/src/common/ResultDatabase.cpp spectral-methods/fft/src/common/Timer.cpp spectral-methods/fft/src/common/Option.cpp spectral-methods/fft/src/common/InvalidArgValue.cpp 
-clfft_CPPFLAGS = -I$(top_srcdir)/spectral-methods/fft/src/common -I$(top_srcdir)/spectral-methods/fft/src/opencl/common  -I/home/fpga_tools/altera/13.0sp1/aocl/host/include
+clfft_CPPFLAGS = -I$(top_srcdir)/spectral-methods/fft/src/common -I$(top_srcdir)/spectral-methods/fft/src/opencl/common  -I/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include
 csr_SOURCES = sparse-linear-algebra/SPMV/src/csr.c sparse-linear-algebra/SPMV/src-common/sparse_formats.c sparse-linear-algebra/SPMV/src-common/ziggurat.c sparse-linear-algebra/SPMV/src-common/common.c
 createcsr_SOURCES = sparse-linear-algebra/SPMV/src-test/createcsr.c sparse-linear-algebra/SPMV/src-common/sparse_formats.c sparse-linear-algebra/SPMV/src-common/ziggurat.c sparse-linear-algebra/SPMV/src-common/common.c
 createcsr_LDADD = include/common_util.o
 createcsr_LINK = $(CCLD) -lm -o $@
-crc_LDFLAGS = -lm  -L/home/fpga_tools/altera/13.0sp1/aocl/linux64/lib -L/home/fpga_tools/altera/13.0sp1/aocl/host/linux64/lib  -lalterahalmmd -lalterammdpcie -lpkg_editor -lalteracl -lelf -lrt -lstdc++  -Wl,-rpath=/home/fpga_tools/altera/13.0sp1/aocl/linux64/lib -Wl,-rpath=/home/fpga_tools/altera/13.0sp1/aocl/host/linux64/lib
+crc_LDFLAGS = -lm  -L/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/linux64/lib -L/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/linux64/lib  -lalterahalmmd -lalterammdpcie -lpkg_editor -lalteracl -lelf -lrt -lstdc++  -Wl,-rpath=/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/linux64/lib -Wl,-rpath=/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/linux64/lib
 crc_SOURCES = combinational-logic/crc/crc_algo.c
 cfd_SOURCES = unstructured-grids/cfd/cfd.cpp
 bfs_SOURCES = graph-traversal/bfs/bfs.cpp
@@ -1943,7 +1943,7 @@ distcheck: dist
 	*.zip*) \
 	  unzip $(distdir).zip ;;\
 	esac
-	chmod -R a-w $(distdir); chmod a+w $(distdir)
+	chmod -R a-w $(distdir); chmod u+w $(distdir)
 	mkdir $(distdir)/_build
 	mkdir $(distdir)/_inst
 	chmod a-w $(distdir)

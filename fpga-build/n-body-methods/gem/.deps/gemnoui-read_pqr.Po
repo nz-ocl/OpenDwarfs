@@ -2,10 +2,10 @@ n-body-methods/gem/gemnoui-read_pqr.o: ../n-body-methods/gem/read_pqr.c \
  /usr/include/stdio.h /usr/include/features.h /usr/include/sys/cdefs.h \
  /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
  /usr/include/gnu/stubs-64.h \
- /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/stddef.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/stddef.h \
  /usr/include/bits/types.h /usr/include/bits/typesizes.h \
  /usr/include/libio.h /usr/include/_G_config.h /usr/include/wchar.h \
- /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/stdarg.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/stdarg.h \
  /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
  /usr/include/stdlib.h /usr/include/bits/waitflags.h \
  /usr/include/bits/waitstatus.h /usr/include/endian.h \
@@ -18,13 +18,13 @@ n-body-methods/gem/gemnoui-read_pqr.o: ../n-body-methods/gem/read_pqr.c \
  ../n-body-methods/gem/include/structures.h \
  ../n-body-methods/gem/include/calculations.h \
  ../n-body-methods/gem/include/structures.h \
- /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl.h \
- /home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_platform.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_platform.h \
  /usr/include/stdint.h /usr/include/bits/wchar.h \
- /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/xmmintrin.h \
- /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mmintrin.h \
- /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mm_malloc.h \
- /usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/emmintrin.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/xmmintrin.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/mmintrin.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/mm_malloc.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/emmintrin.h \
  /usr/include/math.h /usr/include/bits/huge_val.h \
  /usr/include/bits/huge_valf.h /usr/include/bits/huge_vall.h \
  /usr/include/bits/inf.h /usr/include/bits/nan.h \
@@ -44,7 +44,7 @@ n-body-methods/gem/gemnoui-read_pqr.o: ../n-body-methods/gem/read_pqr.c \
 
 /usr/include/gnu/stubs-64.h:
 
-/usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/stddef.h:
+/usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/stddef.h:
 
 /usr/include/bits/types.h:
 
@@ -56,7 +56,7 @@ n-body-methods/gem/gemnoui-read_pqr.o: ../n-body-methods/gem/read_pqr.c \
 
 /usr/include/wchar.h:
 
-/usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/stdarg.h:
+/usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/stdarg.h:
 
 /usr/include/bits/stdio_lim.h:
 
@@ -102,21 +102,21 @@ n-body-methods/gem/gemnoui-read_pqr.o: ../n-body-methods/gem/read_pqr.c \
 
 ../n-body-methods/gem/include/structures.h:
 
-/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl.h:
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl.h:
 
-/home/fpga_tools/altera/13.0sp1/aocl/host/include/CL/cl_platform.h:
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_platform.h:
 
 /usr/include/stdint.h:
 
 /usr/include/bits/wchar.h:
 
-/usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/xmmintrin.h:
+/usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/xmmintrin.h:
 
-/usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mmintrin.h:
+/usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/mmintrin.h:
 
-/usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/mm_malloc.h:
+/usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/mm_malloc.h:
 
-/usr/lib/gcc/x86_64-redhat-linux/4.4.6/include/emmintrin.h:
+/usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/emmintrin.h:
 
 /usr/include/math.h:
 

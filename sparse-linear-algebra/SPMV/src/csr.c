@@ -225,7 +225,7 @@ int main(int argc, char** argv)
     else if(verbosity) {printf("Number of input matrices: %d\nMatrix 0 Metadata:\n",num_matrices); print_csr_metadata(&csr[0],stdout);}
 
     cl_mem csr_ap[num_matrices],csr_aj[num_matrices],csr_ax[num_matrices],x_loc[num_matrices],y_loc[num_matrices];
-    cl_event kernel_exec[num_matrices],ap_write[num_matrices],aj_write[num_matrices],ax_write[num_matrices],x_loc_write[num_matrices],y_loc_write[num_matrices];
+    cl_event kernel_exec[num_matrices],ap_write[num_matrices],aj_write[num_matrices],ax_write[num_matrices],x_loc_write[num_matrices],y_loc_write[num_matrices],y_read[num_matrices];
 
     //The other arrays
     float *x_host = NULL, *y_host = NULL, *device_out[num_matrices], *host_out=NULL;
@@ -434,7 +434,7 @@ int main(int argc, char** argv)
 					CHKERR(err, "Failed to execute kernel!");
 
 					/* Read back the results from the device to verify the output */
-					err = clEnqueueReadBuffer(read_queue, y_loc[k], CL_FALSE, 0, sizeof(float)*csr[k].num_rows, device_out[k], 1, &kernel_exec[k], &ocdTempEvent);
+					err = clEnqueueReadBuffer(read_queue, y_loc[k], CL_FALSE, 0, sizeof(float)*csr[k].num_rows, device_out[k], 1, &kernel_exec[k], &y_read[k]);
 					CHKERR(err, "Failed to read output array!");
 				}
 				clFinish(write_queue);
@@ -465,7 +465,7 @@ int main(int argc, char** argv)
 					START_TIMER(kernel_exec[k], OCD_TIMER_KERNEL, "CSR Kernel", ocdTempTimer)
 					END_TIMER(ocdTempTimer)
 
-					START_TIMER(ocdTempEvent, OCD_TIMER_D2H, "CSR Data Copy", ocdTempTimer)
+					START_TIMER(y_read[k], OCD_TIMER_D2H, "CSR Data Copy", ocdTempTimer)
 					END_TIMER(ocdTempTimer)
 
 					if(do_print)
