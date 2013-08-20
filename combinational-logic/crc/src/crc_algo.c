@@ -71,31 +71,29 @@ uint32_t crc32_8bytes(const void* data, size_t length)
 {
 	static int pid=0;
 	pid++;
-  uint32_t* current = (uint32_t*) data;
-  uint32_t crc = ~ 0x00000000;
-  // process eight bytes at once
-  //if(verbosity >= 2) printf("Page #%d: first word =%X\n",pid,*current);
-  while (length >= 8)
-  {
-    uint32_t one = *current++ ^ crc;
-    uint32_t two = *current++;
-    crc = crc32Lookup[7][ one      & 0xFF] ^
-          crc32Lookup[6][(one>> 8) & 0xFF] ^
-          crc32Lookup[5][(one>>16) & 0xFF] ^
-          crc32Lookup[4][ one>>24        ] ^
-          crc32Lookup[3][ two      & 0xFF] ^
-          crc32Lookup[2][(two>> 8) & 0xFF] ^
-          crc32Lookup[1][(two>>16) & 0xFF] ^
-          crc32Lookup[0][ two>>24        ];
-    length -= 8;
-  }
+	uint32_t* current = (uint32_t*) data;
+	uint32_t crc = 0xFFFFFFFF;
 
-  unsigned char* currentChar = (unsigned char*) current;
-  // remaining 1 to 7 bytes
-  while (length--) {
-    crc = (crc >> 8) ^ crc32Lookup[0][(crc & 0xFF) ^ *currentChar++];
-  }
-  return ~crc;
+	while (length >= 8) // process eight bytes at once
+	{
+	    uint32_t one = *current++ ^ crc;
+	    uint32_t two = *current++;
+	    crc = crc32Lookup[7][ one      & 0xFF] ^
+              crc32Lookup[6][(one>> 8) & 0xFF] ^
+              crc32Lookup[5][(one>>16) & 0xFF] ^
+              crc32Lookup[4][ one>>24        ] ^
+              crc32Lookup[3][ two      & 0xFF] ^
+              crc32Lookup[2][(two>> 8) & 0xFF] ^
+              crc32Lookup[1][(two>>16) & 0xFF] ^
+              crc32Lookup[0][ two>>24        ];
+        length -= 8;
+	}
+
+	unsigned char* currentChar = (unsigned char*) current;
+	while (length--) { // remaining 1 to 7 bytes
+	    crc = (crc >> 8) ^ crc32Lookup[0][(crc & 0xFF) ^ *currentChar++];
+	}
+	return ~crc;
 }
 
 void enqueueCRCDevice(unsigned int* h_num, unsigned int* h_answer, size_t global_size, size_t local_size, cl_mem d_input, cl_mem d_output,cl_event* write_page,cl_event* kernel_exec,cl_event* read_page)
@@ -116,6 +114,7 @@ void enqueueCRCDevice(unsigned int* h_num, unsigned int* h_answer, size_t global
 	err = clSetKernelArg(kernel_compute, 3, sizeof(cl_mem), &d_output);
 	CHKERR(err, "Failed to set kernel argument 3!");
 
+	if(verbosity >=2) printf("enqueueCRCDevice(): global_size=%zd - local_size=%zd\n",global_size,local_size);
 	err = clEnqueueNDRangeKernel(kernel_queue, kernel_compute, 1, NULL, &global_size, &local_size, 1, write_page, kernel_exec);
 	CHKERR(err, "Failed to enqueue compute kernel!");
 
@@ -168,7 +167,7 @@ void usage()
 int main(int argc, char** argv)
 {
 	cl_int err,dev_type;
-	size_t maxSize=DATA_SIZE,global_size;
+	size_t maxSize=DATA_SIZE,global_size,local_size;
 	FILE* fp=NULL;
 	void* tmp;
 	unsigned int *h_num,cpu_remainder;
@@ -345,10 +344,22 @@ int main(int argc, char** argv)
 					{
 						if(verbosity >= 2) printf("\tEnqueuing commmands for block #%d of %d...\n",i+1,num_blocks);
 						if(i == num_blocks -1) //last iteration
+						{
 							global_size = num_pages_last_block;
+							if((global_size % local_size) != 0)
+							{
+								local_size = 1;
+								while((global_size % local_size) == 0) local_size = local_size << 1;
+								local_size = local_size >> 1;
+							}
+						}
 						else
+						{
 							global_size = num_parallel_crcs[h];
-						enqueueCRCDevice(&h_num[i*global_size*num_words],&ocl_remainders[i*num_parallel_crcs[h]],global_size,wg_sizes[k],dev_input[i],dev_output[i],&write_page[i],&kernel_exec[i],&read_page[i]);
+							local_size = wg_sizes[k];
+						}
+						if(verbosity >= 2) printf("\tmain(): global_size=%zd - local_size=%zd\n",global_size,local_size);
+						enqueueCRCDevice(&h_num[i*num_parallel_crcs[h]*num_words],&ocl_remainders[i*num_parallel_crcs[h]],global_size,local_size,dev_input[i],dev_output[i],&write_page[i],&kernel_exec[i],&read_page[i]);
 					}
 					clFinish(write_queue);
 					clFinish(kernel_queue);

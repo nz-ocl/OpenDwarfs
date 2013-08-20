@@ -1,6 +1,9 @@
 #include "/home/tjkenney/OpenDwarfs/combinational-logic/crc/inc/eth_crc32_lut.h"
 
-__kernel void crc32_slice8(__global const uint* restrict data, uint length_bytes, const uint length_ints ,__global uint* restrict res)
+__kernel void crc32_slice8(	__global const uint* restrict data, 
+							uint length_bytes, 
+							const uint length_ints,
+							__global uint* restrict res)
 {
   __private uint crc;
   __private uchar* currentChar;
@@ -11,8 +14,6 @@ __kernel void crc32_slice8(__global const uint* restrict data, uint length_bytes
   gid = get_global_id(0);
   i = gid * length_ints;
   
-  
-  //printf("WI #%zd: first word=%X\n",gid+1,data[i]);
   while (length_bytes >= 8) // process eight bytes at once
   {
     one = data[i++] ^ crc;
