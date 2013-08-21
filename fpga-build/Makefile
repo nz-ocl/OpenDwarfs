@@ -2254,10 +2254,12 @@ clfft-exec-local:
 	cp $(top_srcdir)/spectral-methods/fft/src/opencl/fft/fft.cl ${DESTDIR}${bindir}
 
 csr-all-local:
-	cp $(top_srcdir)/sparse-linear-algebra/SPMV/src/spmv_csr_kernel.cl .
+	cp $(top_srcdir)/sparse-linear-algebra/SPMV/src/spmv_kernel.cl .
+	cp $(top_srcdir)/sparse-linear-algebra/SPMV/src/spmv_kernel_fpga_optimized.aocx .
 
 csr-exec-local:
-	cp $(top_srcdir)/sparse-linear-algebra/SPMV/src/spmv_csr_kernel.cl ${DESTDIR}${bindir}
+	cp $(top_srcdir)/sparse-linear-algebra/SPMV/src/spmv_kernel.cl ${DESTDIR}${bindir}
+	cp $(top_srcdir)/sparse-linear-algebra/SPMV/src/spmv_kernel_fpga_optimized.aocx .
 
 dwarf-crc-all-local:
 	cp $(top_srcdir)/combinational-logic/crc/src/crc_kernel.cl .

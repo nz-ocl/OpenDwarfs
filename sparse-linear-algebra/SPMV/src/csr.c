@@ -302,9 +302,9 @@ int main(int argc, char** argv)
 		num_kernels = 1;
 		kernel_files = malloc(sizeof(char*)*num_kernels);
 		#ifdef USE_AFPGA
-				kernel_files[0] = "spmv_csr_kernel.aocx";
+				kernel_files[0] = "spmv_kernel_fpga_optimized.aocx";
 		#else //CPU or GPU
-			kernel_files[0] = "spmv_csr_kernel.cl";
+			kernel_files[0] = "spmv_kernel.cl";
 		#endif
     }
 
