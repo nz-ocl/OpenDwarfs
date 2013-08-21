@@ -1,8 +1,7 @@
 build/*
 fpga-build/*
-xpu-build/*
-test/*
+cpu-build/*
 autom4te.cache/*
 opt/LICENSES/*
-ocldev-install/*
-amd-build/*
+
+

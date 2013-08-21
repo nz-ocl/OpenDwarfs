@@ -2,36 +2,19 @@ OpenDwarfs
 =============
 The OpenDwarfs project provides a benchmark suite consisting of different
 computation/communication idioms, i.e., dwarfs, for state-of-art multicore and
-GPU systems.  The first instantiation of the OpenDwarfs has been realized in
+heterogenous systems.  The first instantiation of the OpenDwarfs has been realized in
 OpenCL, as described in part in "OpenCL and the 13 Dwarfs: A Work in Progress"
 by Feng, Lin, Scogland, and Zhang in the 3rd ACM/SPEC International Conference
 on Performance Engineering, April 2012.
 
+This rendition of OpenDwarfs has seen the input sized scaled and the code altered for
+compatibility with Altera FPGAs. This process has been completed for sparse-linear-algebra
+as well as combinational-logic. However, all dwarfs are included here as development on them
+is continuing.
+
 
 The computation/communication idioms are based on the 13 Berkeley Dwarfs:
 (http://view.eecs.berkeley.edu/wiki/Dwarf_Mine).
-
-Benchmark status
-----------------
-
-Stable:
-gem
-
-Beta:
-bfs
-cfd
-crc
-fft
-kmeans
-lud
-nw
-spmv
-srad
-swat
-
-Alpha:
-astar
-tdm
 
 Requirements
 ------------
@@ -58,17 +41,17 @@ Building
 To build all of the included applications for CPU or GPU:
 
     $ ./autogen.sh
-    $ mkdir build
-    $ cd build
-    $ ../configure
+    $ mkdir cpu-build
+    $ cd cpu-build
+    $ ../configure --with-opencl-sdk=/path/to/desired/sdk CPPFLAGS=-I/path/to/desired/sdk/include
     $ make
     
 To build all of the included applications for an Altera FPGA:
 
 	$ ./autogen.sh
-    $ mkdir build
-    $ cd build
-    $ ../configure --with-AOCL=/path/to/AOCL
+    $ mkdir fpga-build
+    $ cd fpga-build
+    $ ../configure --with-AOCL=/path/to/AOCL CPPFLAGS=-I/path/to/AOCL/host/include
     $ make
     
 To build only the applications you select, call configure with the --with-apps
