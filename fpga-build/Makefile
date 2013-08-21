@@ -2260,7 +2260,8 @@ csr-exec-local:
 	cp $(top_srcdir)/sparse-linear-algebra/SPMV/src/spmv_csr_kernel.cl ${DESTDIR}${bindir}
 
 dwarf-crc-all-local:
-	cp $(top_srcdir)/combinational-logic/crc/src/crc_algo_kernel.cl .
+	cp $(top_srcdir)/combinational-logic/crc/src/crc_kernel.cl .
+	cp $(top_srcdir)/combinational-logic/crc/src/crc_kernel_fpga_optimized.aocx .
 
 dwarf-crc-exec-local:
 	cp $(top_srcdir)/combinational-logic/crc/src/crc_algo_kernel_2.cl ${DESTDIR}${bindir}

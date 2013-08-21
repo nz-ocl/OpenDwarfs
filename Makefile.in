@@ -2260,7 +2260,8 @@ uninstall-am: uninstall-binPROGRAMS
 @build_csr_TRUE@	cp $(top_srcdir)/sparse-linear-algebra/SPMV/src/spmv_csr_kernel.cl ${DESTDIR}${bindir}
 
 @build_crc_TRUE@dwarf-crc-all-local:
-@build_crc_TRUE@	cp $(top_srcdir)/combinational-logic/crc/src/crc_algo_kernel.cl .
+@build_crc_TRUE@	cp $(top_srcdir)/combinational-logic/crc/src/crc_kernel.cl .
+@build_crc_TRUE@	cp $(top_srcdir)/combinational-logic/crc/src/crc_kernel_fpga_optimized.aocx .
 
 @build_crc_TRUE@dwarf-crc-exec-local:
 @build_crc_TRUE@	cp $(top_srcdir)/combinational-logic/crc/src/crc_algo_kernel_2.cl ${DESTDIR}${bindir}

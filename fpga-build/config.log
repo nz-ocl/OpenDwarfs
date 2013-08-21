@@ -747,6 +747,7 @@ on fpgabuildrhl
 
 config.status:1088: creating Makefile
 config.status:1088: creating config.h
+config.status:1303: config.h is unchanged
 config.status:1355: executing depfiles commands
 config.status:1355: executing libtool commands
 

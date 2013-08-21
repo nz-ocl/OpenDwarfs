@@ -1,61 +1,46 @@
-__kernel void precompute(__global unsigned char* g_table,
-                    const unsigned char crc)
+#include "../combinational-logic/crc/inc/eth_crc32_lut.h"
+
+__kernel void crc32_slice8(	__global const uint* restrict data, 
+							uint length_bytes, 
+							const uint length_ints,
+							__global uint* restrict res)
 {
-    unsigned int tid = get_global_id(0);
-    unsigned char num = tid;
-    unsigned char crcCalc = 0x0;
+  __private uint crc;
+  __private uchar* currentChar;
+  __private uint one,two;
+  __private size_t i,j,gid;
+  
+  crc = 0xFFFFFFFF;
+  gid = get_global_id(0);
+  i = gid * length_ints;
+  
+  while (length_bytes >= 8) // process eight bytes at once
+  {
+    one = data[i++] ^ crc;
+    two = data[i++];
+    crc = crc32Lookup[7][ one      & 0xFF] ^
+          crc32Lookup[6][(one>> 8) & 0xFF] ^
+          crc32Lookup[5][(one>>16) & 0xFF] ^
+          crc32Lookup[4][ one>>24        ] ^
+          crc32Lookup[3][ two      & 0xFF] ^
+          crc32Lookup[2][(two>> 8) & 0xFF] ^
+          crc32Lookup[1][(two>>16) & 0xFF] ^
+          crc32Lookup[0][ two>>24        ];
+    length_bytes -= 8;
+  }
+  
+  while(length_bytes) // remaining 1 to 7 bytes
+  {
+	  one = data[i++];
+	 currentChar = (unsigned char*) &one;
+	  j=0;
+	  while (length_bytes && j < 4) 
+	  {
+	  	length_bytes = length_bytes - 1;
+	    crc = (crc >> 8) ^ crc32Lookup[0][(crc & 0xFF) ^ currentChar[j]];
+	    j = j + 1;
+	  }
+  }
 
-    for(unsigned int k = 0; k < 8; k++)
-    {
-        //If the k-th bit is 1
-        if((num >> (7-k)) % 2 == 1)
-        {
-            num ^= crc >> (k + 1);
-            crcCalc ^= crc << (7-k);
-        }
-    }
-
-    g_table[tid] = crcCalc;
-}
-
-__kernel void compute(__global unsigned char* g_num,
-                    __global unsigned char* g_table,
-                    __global unsigned char* g_answer,
-                    const unsigned int num_size)
-{
-    unsigned int tid = get_global_id(0);
-    if(tid < num_size)
-    {
-        unsigned char loc = g_num[tid];
-        for(int i = 0; i < num_size - tid; i++)
-        {
-            loc = g_table[loc];
-        }
-        g_answer[tid] = loc;
-    }
-}
-
-__kernel void reduce(__global unsigned char* g_answer,
-                    __global unsigned char* g_reducedSet,
-                  const unsigned int num_size)
-{
-    unsigned int gid = get_group_id(0);
-    unsigned int lid = get_local_id(0);
-    unsigned int tid = get_global_id(0);
-    if(tid < num_size)
-    {
-        int mod = 2;
-        int remainder = 1;
-        for(mod = 2, remainder = 1; remainder <= get_local_size(0); mod *= 2, remainder *= 2)
-        {
-            if(lid % mod == remainder)
-            {
-                g_answer[tid - remainder] ^= g_answer[tid];
-            }
-            barrier(CLK_LOCAL_MEM_FENCE);
-        }
-
-        if(lid == 0)
-            g_reducedSet[gid] = g_answer[tid];
-    }
+  res[gid] = ~crc;
 }

@@ -128,17 +128,11 @@ void setup_device(const char* kernel_file)
 	cl_int err;
 	
 	program = ocdBuildProgramFromFile(context,device_id,kernel_file);
-
-	// Create the compute kernel in the program we wish to run
-	kernel_compute = clCreateKernel(program, "crc32_slice8", &err);
+	kernel_compute = clCreateKernel(program, "crc32_slice8", &err); // Create the compute kernel in the program we wish to run
 	CHKERR(err, "Failed to create a compute kernel!");
 
 	if(!wg_sizes)
 	{
-		// Get the maximum work group size for executing the kernel on the device
-//		err = clGetKernelWorkGroupInfo(kernel_compute, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &max_local_size, NULL);
-//		CHKERR(err, "Failed to retrieve kernel_compute work group info!");
-
 		num_wg_sizes = 1;
 		wg_sizes = malloc(sizeof(size_t)*num_wg_sizes);
 		wg_sizes[0] = 1;
@@ -155,7 +149,7 @@ void usage()
 	printf("\t-v | 'Increase verbosity level by 1 - Default is 0 - Max is 2'\n");
 	printf("\t-i | 'Input file name' [string]\n");
 	printf("\t-a | 'Verify results on CPU'\n");
-	printf("\t-p | 'Set the number of pages to CRC in parallel (i.e., the global size of each kernel) - Default is 1024\n");
+	printf("\t-p | 'Set the number of pages to CRC in parallel (i.e., the global size of each kernel) - Default is 16\n");
 	printf("\t-r | 'Execute program with same data exactly <num_execs> times to increase sample size - Default is 1\n");
 	printf("\t-w | 'Loop through each kernel execution 'm' times, once with each wg_size-'1..m' - Default is 1 iteration with wg_size set to the maximum possible (limited either by the device or the size of the input)\n");
 	printf("\t-k | 'Test CRC 'n' times, once with each kernel_file-'1..n' - Default is 1 kernel named './crc_kernel.xxx' where xxx is 'aocx' if USE_AFPGA is defined, 'cl' otherwise.\n");
@@ -171,7 +165,7 @@ int main(int argc, char** argv)
 	FILE* fp=NULL;
 	void* tmp;
 	unsigned int *h_num,cpu_remainder;
-	unsigned int run_serial=0,seed=time(NULL),h,ii,i,j,k,l,m,num_pages=1,num_execs=1,num_kernels=0,update_interval;
+	unsigned int run_serial=0,seed=time(NULL),h,ii,i,j,k,l,m,num_pages=1,num_execs=1,num_kernels=0;
 	char* file=NULL,*optptr;
 	char** kernel_files=NULL;
 	int c;
@@ -252,6 +246,13 @@ int main(int argc, char** argv)
 	check(file != NULL,"-i option must be supplied!");
 	h_num = read_crc(&num_pages,&page_size,file);
 
+	if(!num_block_sizes)
+	{
+	    num_block_sizes=1;
+	    num_parallel_crcs = malloc(sizeof(int)*num_block_sizes);
+	    num_parallel_crcs[0] = 16;
+	}
+
 	num_words = page_size / 4;
 	if(verbosity) printf("num_words = %u\n",num_words);
 
@@ -286,9 +287,9 @@ int main(int argc, char** argv)
 		num_kernels = 1;
 		kernel_files = malloc(sizeof(char*)*num_kernels);
 		#ifdef USE_AFPGA
-			kernel_files[0] = "crc_kernel.aocx";
+			kernel_files[0] = "crc_kernel_fpga_optimized.aocx";
 		#else //CPU or GPU
-			kernel_files[0] = "crc_algo_kernel.cl";
+			kernel_files[0] = "crc_kernel.cl";
 		#endif
 	}
 
@@ -312,9 +313,6 @@ int main(int argc, char** argv)
 		cl_event write_page[num_blocks],kernel_exec[num_blocks],read_page[num_blocks];
 		unsigned int* ocl_remainders;
 		ocl_remainders = int_new_array(num_pages,"crc_algo.main() - Heap Overflow! Cannot allocate space for ocl_remainders");
-
-		update_interval = round(num_blocks / 10.0);
-		if(!update_interval) update_interval = num_blocks;
 
 		for(i=0; i<num_blocks; i++)
 		{
@@ -346,6 +344,7 @@ int main(int argc, char** argv)
 						if(i == num_blocks -1) //last iteration
 						{
 							global_size = num_pages_last_block;
+							local_size = wg_sizes[k];
 							if((global_size % local_size) != 0)
 							{
 								local_size = 1;
@@ -371,7 +370,6 @@ int main(int argc, char** argv)
 
 					for(i=0; i<num_blocks; i++)
 					{
-						if(verbosity && (i % update_interval == 0)) printf("\t%d of %d (%5.1f%%) Times Tallied. Continuing...\n",i,num_blocks,((double)(i))/num_blocks*100);
 						if(verbosity >= 2) printf("Parallel Computation: '%X'\n", ocl_remainders[i]);
 
 						START_TIMER(write_page[i], OCD_TIMER_H2D, "CRC Data Copy", ocdTempTimer)
