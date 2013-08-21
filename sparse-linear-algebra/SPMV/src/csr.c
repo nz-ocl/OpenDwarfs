@@ -1,3 +1,10 @@
+/* Main File for SPMV (aka CSR) application which represents Sparse-Linear-Algebra dwarf
+ *
+ * This application multiplies a sparse matrix, stored in CSR format, by a vector, adds it with another vector, and returns the resulting vector.
+ *
+ */
+
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,6 +83,11 @@ void spmv_csr_cpu(const csr_matrix* csr,const float* x,const float* y,float* out
 	}
 }
 
+/*
+ * Returns an array of work group sizes with only 1 element. The value is the largest possible
+ * work-group size (i.e., fewest number of work-groups possible will be used), whether thats
+ * limited by the device or the global size of the application
+ */
 size_t* default_wg_sizes(unsigned int* num_wg_sizes,const size_t max_wg_size,const size_t global_size)
 {
 	unsigned int num_wg;
@@ -93,6 +105,9 @@ size_t* default_wg_sizes(unsigned int* num_wg_sizes,const size_t max_wg_size,con
 	return wg_sizes;
 }
 
+/*
+ * stores a valid cl_mem buffer in address *ptr using the given flags and num_bytes.
+ */
 void csrCreateBuffer(const cl_context* p_context, cl_mem* ptr, const size_t num_bytes, const cl_mem_flags flags, const char* buff_name, int verbosity)
 {
 	cl_int err;
@@ -103,6 +118,16 @@ void csrCreateBuffer(const cl_context* p_context, cl_mem* ptr, const size_t num_
 	CHKERR(err, err_msg);
 }
 
+/*
+ * Main Method
+ *
+ * Reads input file, builds kernel and then executes it a number of times.
+ * The number of executions is equal to num_execs*num_wg_sizes*num_kernels. These
+ * values can be controlled from the command line with the -r,-w, and -k options,
+ * respectively, and are implemented via nested for-loops. As the input is scaled
+ * to larger size, reading in the input file becomes very time consuming and this
+ * allows one to test multiple variables without repeating that process.
+ */
 int main(int argc, char** argv)
 {
 	cl_int err;
@@ -295,8 +320,6 @@ int main(int argc, char** argv)
 		#endif
 	}
 
-
-
     if(!kernel_files) //use default if no kernel files were given on commandline
     {
 		num_kernels = 1;
@@ -308,12 +331,12 @@ int main(int argc, char** argv)
 		#endif
     }
 
-	for(iii=0; iii<num_kernels; iii++)
+	for(iii=0; iii<num_kernels; iii++) //loop through all kernels that need to be tested
 	{
 	    printf("Kernel #%d: '%s'\n\n",iii+1,kernel_files[iii]);
 		program = ocdBuildProgramFromFile(context,device_id,kernel_files[iii]);
 
-		if(!wg_sizes)
+		if(!wg_sizes) //use default work-group size if none was specified on command line
 		{
 			/* Get the maximum work group size for executing the kernel on the device */
 			kernel = clCreateKernel(program, "csr", &err);
