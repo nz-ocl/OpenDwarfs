@@ -1,3 +1,10 @@
+/*Main file for CRC application which represents the combinational-logic dwarf.
+ *
+ * This application computes a 32-bit ethernet CRC on a number of input pages using
+ * a "Slice-By-8" algorithm published by Intel.
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -67,10 +74,13 @@ unsigned int serialCRC(unsigned int* h_num, size_t size)
 	return ~crc;
 }
 
+// /////Slice-by-8 version of CRC///////////////////////
+////////altered from the version posted online by Stephan Brumme////////
+// Copyright (c) 2013 Stephan Brumme. All rights reserved.
+// see http://create.stephan-brumme.com/disclaimer.html
+//
 uint32_t crc32_8bytes(const void* data, size_t length)
 {
-	static int pid=0;
-	pid++;
 	uint32_t* current = (uint32_t*) data;
 	uint32_t crc = 0xFFFFFFFF;
 
@@ -141,7 +151,7 @@ void setup_device(const char* kernel_file)
 
 void usage()
 {
-	printf("crc [pd] -- [hsivpw] [-r <num_execs>] [-w <wg_size-1>][-w <wg_size-2>]...[-w <wg_size-m>]\n");
+	printf("crc -i <input_file> [hvp] [-r <num_execs>] [-w <wg_size-1>][-w <wg_size-2>]...[-w <wg_size-m>] [-k <kernel_file-1>][-k <kernel_file-2>]...[-k <kernel_file-n>]\n");
 	printf("Common arguments:\n");
 	ocd_usage();
 	printf("Program-specific arguments:\n");

@@ -1,3 +1,15 @@
+/*
+** CRC Kernel code optimized for Altera FPGAs
+**
+** This code computes a 32-bit ethernet CRC using the "Slice-by-8" Algorithm published by Intel
+*/
+
+
+// /////FPGA-optimized Kernel Code///////////////////////
+////////altered from the version posted online by Stephan Brumme////////
+// Copyright (c) 2013 Stephan Brumme. All rights reserved.
+// see http://create.stephan-brumme.com/disclaimer.html
+
 #include "../combinational-logic/crc/inc/eth_crc32_lut.h"
 
 #define BITS_PER_GLOBAL_LD 512
