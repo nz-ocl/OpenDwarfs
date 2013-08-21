@@ -281,7 +281,7 @@ int setup(int argc, char **argv) {
 	
 	len = (float) ((max_nclusters - min_nclusters + 1)*nloops);
 
-	printf("Number of Iteration: %d\n", nloops);
+//	printf("Number of Iteration: %d\n", nloops);
 	//printf("Time for I/O: %.5fsec\n", io_timing);
 	//printf("Time for Entire Clustering: %.5fsec\n", cluster_timing);
 	
