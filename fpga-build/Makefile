@@ -698,14 +698,10 @@ createcsr_SOURCES = sparse-linear-algebra/SPMV/src-test/createcsr.c sparse-linea
 createcsr_LDADD = include/common_util.o
 createcsr_LINK = $(CCLD) -lm -o $@
 crc_LDFLAGS = -lm  -L/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/linux64/lib -L/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/linux64/lib  -lalterahalmmd -lalterammdpcie -lpkg_editor -lalteracl -lelf -lrt -lstdc++  -Wl,-rpath=/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/linux64/lib -Wl,-rpath=/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/linux64/lib
-<<<<<<< HEAD
 crc_SOURCES = combinational-logic/crc/src/crc_algo.c combinational-logic/crc/src-common/crc_formats.c
 createcrc_SOURCES = combinational-logic/crc/src-test/createcrc.c combinational-logic/crc/src-common/crc_formats.c
 createcrc_LDADD = include/common_util.o
 createcrc_LINK = $(CCLD) -lm -o $@
-=======
-crc_SOURCES = combinational-logic/crc/crc_algo.c
->>>>>>> SPMV
 cfd_SOURCES = unstructured-grids/cfd/cfd.cpp
 bfs_SOURCES = graph-traversal/bfs/bfs.cpp
 tdm_SOURCES = finite-state-machine/tdm/GpuTemporalDataMining.cpp

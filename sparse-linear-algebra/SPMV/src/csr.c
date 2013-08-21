@@ -308,57 +308,10 @@ int main(int argc, char** argv)
 		#endif
     }
 
-	#ifdef USE_AFPGA
-		kernel_file_mode = "rb";
-	#else //CPU or GPU
-		kernel_file_mode = "r";
-	#endif
-
 	for(iii=0; iii<num_kernels; iii++)
 	{
-		/* Load kernel source */
-		printf("Kernel #%d: '%s'\n\n",iii+1,kernel_files[iii]);
-		kernel_fp = fopen(kernel_files[iii], kernel_file_mode);
-		check(kernel_fp != NULL,"Cannot open kernel file");
-		fseek(kernel_fp, 0, SEEK_END);
-		kernelLength = (size_t) ftell(kernel_fp);
-		kernelSource = (char *) malloc(sizeof(char)*kernelLength);
-		check(kernelSource != NULL,"csr.main() - Heap Overflow! Cannot allocate space for kernelSource.");
-		rewind(kernel_fp);
-		items_read = fread((void *) kernelSource, kernelLength, 1, kernel_fp);
-		check(items_read == 1,"csr.main() - Error reading from kernelFile");
-		fclose(kernel_fp);
-		if(verbosity) printf("kernel source loaded.\n");
-
-		/* Create the compute program from the source buffer */
-		#ifdef USE_AFPGA //use Altera FPGA
-			program = clCreateProgramWithBinary(context,1,&device_id,&kernelLength,(const unsigned char**)&kernelSource,NULL,&err);
-		#else //CPU or GPU
-			program = clCreateProgramWithSource(context, 1, (const char **) &kernelSource, &kernelLength, &err);
-		#endif
-		CHKERR(err, "Failed to create a compute program!");
-
-		free(kernelSource); /* Free kernel source */
-
-		/* Build the program executable */
-		#ifdef USE_AFPGA //use Altera FPGA
-			err = clBuildProgram(program,1,&device_id,NULL,NULL,NULL);
-		#else
-			err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
-		#endif
-		if (err == CL_BUILD_PROGRAM_FAILURE)
-		{
-			char *buildLog;
-			size_t logLen;
-			err = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &logLen);
-			buildLog = (char *) malloc(sizeof(char)*logLen);
-			check(buildLog != NULL,"csr.main() - Heap Overflow! Cannot allocate space for buildLog.");
-			err = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, logLen, (void *) buildLog, NULL);
-			fprintf(stderr, "CL Error %d: Failed to build program! Log:\n%s", err, buildLog);
-			free(buildLog);
-			exit(1);
-		}
-		CHKERR(err, "Failed to build program!");
+	    printf("Kernel #%d: '%s'\n\n",iii+1,kernel_files[iii]);
+		program = ocdBuildProgramFromFile(context,device_id,kernel_files[iii]);
 
 		if(!wg_sizes)
 		{
