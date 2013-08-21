@@ -29,6 +29,10 @@ dynamic-programming/nw/needle.o: ../dynamic-programming/nw/needle.c \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/mm_malloc.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/emmintrin.h \
  ../dynamic-programming/nw/../../include/common_ocl.h ../opts/opts.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/opencl.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl_ext.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_ext.h \
  ../dynamic-programming/nw/../../include/rdtsc.h \
  ../dynamic-programming/nw/../../include/common_util.h
 
@@ -139,6 +143,14 @@ config.h:
 ../dynamic-programming/nw/../../include/common_ocl.h:
 
 ../opts/opts.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/opencl.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl_ext.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_ext.h:
 
 ../dynamic-programming/nw/../../include/rdtsc.h:
 

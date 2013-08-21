@@ -32,6 +32,10 @@ dense-linear-algebra/lud/lud.o: ../dense-linear-algebra/lud/lud.c \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/emmintrin.h \
  /usr/include/string.h /usr/include/xlocale.h \
  ../dense-linear-algebra/lud/../../include/common_ocl.h ../opts/opts.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/opencl.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl_ext.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_ext.h \
  ../dense-linear-algebra/lud/../../include/rdtsc.h \
  ../dense-linear-algebra/lud/../../include/common_util.h \
  ../dense-linear-algebra/lud/common.h
@@ -153,6 +157,14 @@ config.h:
 ../dense-linear-algebra/lud/../../include/common_ocl.h:
 
 ../opts/opts.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/opencl.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl_ext.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_ext.h:
 
 ../dense-linear-algebra/lud/../../include/rdtsc.h:
 

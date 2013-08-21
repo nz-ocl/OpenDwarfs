@@ -39,7 +39,7 @@ int platform_id=PLATFORM_ID, n_device=DEVICE_ID;
 /**
  * Compares N float values and prints error msg if any corresponding entries differ by greater than .001
  */
-void float_array_comp(const float* control, const float* experimental, const unsigned int N)
+void float_array_comp(const float* control, const float* experimental, const unsigned int N, const unsigned int exec_num)
 {
 	unsigned int j;
 	float diff,perc;
@@ -49,7 +49,7 @@ void float_array_comp(const float* control, const float* experimental, const uns
 		if(fabsf(diff) > .001)
 		{
 			perc = fabsf(diff/control[j]) * 100;
-			fprintf(stderr,"Possible error, difference of %.3f (%.1f%% error) [control=%.3f, experimental=%.3f] at row %d \n", diff,perc,control[j],experimental[j],j);
+			fprintf(stderr,"Possible error on exec #%u, difference of %.3f (%.1f%% error) [control=%.3f, experimental=%.3f] at row %d \n",exec_num,diff,perc,control[j],experimental[j],j);
 		}
 	}
 }
@@ -225,7 +225,7 @@ int main(int argc, char** argv)
     else if(verbosity) {printf("Number of input matrices: %d\nMatrix 0 Metadata:\n",num_matrices); print_csr_metadata(&csr[0],stdout);}
 
     cl_mem csr_ap[num_matrices],csr_aj[num_matrices],csr_ax[num_matrices],x_loc[num_matrices],y_loc[num_matrices];
-    cl_event kernel_exec[num_matrices],ap_write[num_matrices],aj_write[num_matrices],ax_write[num_matrices],x_loc_write[num_matrices],y_loc_write[num_matrices];
+    cl_event kernel_exec[num_matrices],ap_write[num_matrices],aj_write[num_matrices],ax_write[num_matrices],x_loc_write[num_matrices],y_loc_write[num_matrices],y_read[num_matrices];
 
     //The other arrays
     float *x_host = NULL, *y_host = NULL, *device_out[num_matrices], *host_out=NULL;
@@ -277,23 +277,25 @@ int main(int argc, char** argv)
 	context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
 	CHKERR(err, "Failed to create a compute context!");
 
-	/* Create command queues, one for each stage in the write-execute-read pipeline */
-	write_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
-	CHKERR(err, "Failed to create a command queue!");
-	kernel_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
-	CHKERR(err, "Failed to create a command queue!");
-	read_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
-	CHKERR(err, "Failed to create a command queue!");
-
 	for(k=0; k<num_matrices; k++)
 	{
 		if(verbosity >= 2) printf("Creating Data Buffers for Matrix #%d of %d...\n",k+1,num_matrices);
-		csrCreateBuffer(&context,&csr_ap[k],sizeof(int)*(csr[k].num_rows+1),CL_MEM_READ_ONLY,"csr_ap",verbosity);
-		csrCreateBuffer(&context,&x_loc[k],sizeof(float)*csr[k].num_cols,CL_MEM_READ_ONLY,"x_loc",verbosity);
-		csrCreateBuffer(&context,&y_loc[k],sizeof(float)*csr[k].num_rows,CL_MEM_READ_WRITE,"y_loc",verbosity);
-		csrCreateBuffer(&context,&csr_aj[k],sizeof(int)*csr[k].num_nonzeros,CL_MEM_READ_ONLY,"csr_aj",verbosity);
-		csrCreateBuffer(&context,&csr_ax[k],sizeof(float)*csr[k].num_nonzeros,CL_MEM_READ_ONLY,"csr_ax",verbosity);
+		#ifdef USE_AFPGA
+				csrCreateBuffer(&context,&csr_ap[k],sizeof(int)*(csr[k].num_rows+1),CL_MEM_BANK_1_ALTERA | CL_MEM_READ_ONLY,"csr_ap",verbosity);
+				csrCreateBuffer(&context,&x_loc[k],sizeof(float)*csr[k].num_cols,CL_MEM_BANK_1_ALTERA | CL_MEM_READ_ONLY,"x_loc",verbosity);
+				csrCreateBuffer(&context,&y_loc[k],sizeof(float)*csr[k].num_rows,CL_MEM_BANK_2_ALTERA | CL_MEM_READ_WRITE,"y_loc",verbosity);
+				csrCreateBuffer(&context,&csr_aj[k],sizeof(int)*csr[k].num_nonzeros,CL_MEM_BANK_1_ALTERA | CL_MEM_READ_ONLY,"csr_aj",verbosity);
+				csrCreateBuffer(&context,&csr_ax[k],sizeof(float)*csr[k].num_nonzeros,CL_MEM_BANK_2_ALTERA | CL_MEM_READ_ONLY,"csr_ax",verbosity);
+		#else
+				csrCreateBuffer(&context,&csr_ap[k],sizeof(int)*(csr[k].num_rows+1), CL_MEM_READ_ONLY,"csr_ap",verbosity);
+				csrCreateBuffer(&context,&x_loc[k],sizeof(float)*csr[k].num_cols, CL_MEM_READ_ONLY,"x_loc",verbosity);
+				csrCreateBuffer(&context,&y_loc[k],sizeof(float)*csr[k].num_rows, CL_MEM_READ_WRITE,"y_loc",verbosity);
+				csrCreateBuffer(&context,&csr_aj[k],sizeof(int)*csr[k].num_nonzeros, CL_MEM_READ_ONLY,"csr_aj",verbosity);
+				csrCreateBuffer(&context,&csr_ax[k],sizeof(float)*csr[k].num_nonzeros, CL_MEM_READ_ONLY,"csr_ax",verbosity);
+		#endif
 	}
+
+
 
     if(!kernel_files) //use default if no kernel files were given on commandline
     {
@@ -358,18 +360,18 @@ int main(int argc, char** argv)
 		}
 		CHKERR(err, "Failed to build program!");
 
-		/* Get the maximum work group size for executing the kernel on the device */
-		kernel = clCreateKernel(program, "csr", &err);
-		CHKERR(err, "Failed to create a compute kernel!");
-		err = clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &max_wg_size, NULL);
-		if(verbosity) printf("Kernel Max Work Group Size: %d\n",max_wg_size);
-		CHKERR(err, "Failed to retrieve kernel work group info!");
-
 		if(!wg_sizes)
 		{
+			/* Get the maximum work group size for executing the kernel on the device */
+			kernel = clCreateKernel(program, "csr", &err);
+			CHKERR(err, "Failed to create a compute kernel!");
+			err = clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), (void *) &max_wg_size, NULL);
+			if(verbosity) printf("Kernel Max Work Group Size: %d\n",max_wg_size);
+			CHKERR(err, "Failed to retrieve kernel work group info!");
 			global_size = csr[0].num_rows; //Preconditions: all matrices in input file are same size
 										   //				all kernels have same max workgroup size
 			wg_sizes = default_wg_sizes(&num_wg_sizes,max_wg_size,global_size);
+			clReleaseKernel(kernel);
 		}
 
 		for(ii=0; ii<num_wg_sizes; ii++) //loop through all wg_sizes that need to be tested
@@ -380,6 +382,19 @@ int main(int argc, char** argv)
 			for(i=0; i<num_execs; i++) //repeat Host-Device transfer, kernel execution, and device-host transfer num_execs times
 			{						//to gather multiple samples of data
 				if(verbosity) printf("Beginning execution #%d of %d\n",i+1,num_execs);
+
+				/* Create command queues, one for each stage in the write-execute-read pipeline */
+				write_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
+				CHKERR(err, "Failed to create a command queue!");
+				kernel_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
+				CHKERR(err, "Failed to create a command queue!");
+				read_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
+				CHKERR(err, "Failed to create a command queue!");
+
+				/* Get the maximum work group size for executing the kernel on the device */
+				kernel = clCreateKernel(program, "csr", &err);
+				CHKERR(err, "Failed to create a compute kernel!");
+
 				#ifdef ENABLE_TIMER
 					TIMER_INIT
 				#endif
@@ -419,7 +434,7 @@ int main(int argc, char** argv)
 					CHKERR(err, "Failed to execute kernel!");
 
 					/* Read back the results from the device to verify the output */
-					err = clEnqueueReadBuffer(read_queue, y_loc[k], CL_FALSE, 0, sizeof(float)*csr[k].num_rows, device_out[k], 1, &kernel_exec[k], &ocdTempEvent);
+					err = clEnqueueReadBuffer(read_queue, y_loc[k], CL_FALSE, 0, sizeof(float)*csr[k].num_rows, device_out[k], 1, &kernel_exec[k], &y_read[k]);
 					CHKERR(err, "Failed to read output array!");
 				}
 				clFinish(write_queue);
@@ -450,7 +465,7 @@ int main(int argc, char** argv)
 					START_TIMER(kernel_exec[k], OCD_TIMER_KERNEL, "CSR Kernel", ocdTempTimer)
 					END_TIMER(ocdTempTimer)
 
-					START_TIMER(ocdTempEvent, OCD_TIMER_D2H, "CSR Data Copy", ocdTempTimer)
+					START_TIMER(y_read[k], OCD_TIMER_D2H, "CSR Data Copy", ocdTempTimer)
 					END_TIMER(ocdTempTimer)
 
 					if(do_print)
@@ -460,6 +475,15 @@ int main(int argc, char** argv)
 						   printf("\trow: %d	output: %6.2f \n", j, device_out[k][j]);
 					}
 				}
+
+				clReleaseCommandQueue(write_queue);
+				CHKERR(err,"Failed to release write_queue!");
+				clReleaseCommandQueue(kernel_queue);
+				CHKERR(err,"Failed to release kernel_queue!");
+				clReleaseCommandQueue(read_queue);
+				CHKERR(err,"Failed to release read_queue!");
+				clReleaseKernel(kernel);
+				CHKERR(err,"Failed to release kernel!");
 
 				#ifdef ENABLE_TIMER
 					TIMER_PRINT
@@ -471,7 +495,7 @@ int main(int argc, char** argv)
 				   for(k=0; k<num_matrices; k++)
 				   {
 					   spmv_csr_cpu(&csr[k],x_host,y_host,host_out);
-					   float_array_comp(host_out,device_out[k],csr[k].num_rows);
+					   float_array_comp(host_out,device_out[k],csr[k].num_rows,i+1);
 				   }
 				}
 			}
@@ -494,20 +518,24 @@ int main(int argc, char** argv)
 		CHKERR(err,"Failed to release x_loc!");
 		err = clReleaseMemObject(y_loc[k]);
 		CHKERR(err,"Failed to release y_loc!");
-		err = clReleaseEvent(y_loc_write[k]);
-		CHKERR(err,"Failed to release data_write!");
-		err = clReleaseEvent(kernel_exec[k]);
-		CHKERR(err,"Failed to release kernel_exec!");
+//		err = clReleaseEvent(aj_write[k]);	//releasing of any of these events is throwing an error with the altera sdk.
+//		if(verbosity) printf("k: %d\terr: %d\n",k,err); //Perhaps because the command-queue was already released?
+//		CHKERR(err,"Failed to release aj_write!");
+//		err = clReleaseEvent(ap_write[k]);
+//		if(verbosity) printf("k: %d\terr: %d\n",k,err);
+//		CHKERR(err,"Failed to release ap_write!");
+//		err = clReleaseEvent(ax_write[k]);
+//		CHKERR(err,"Failed to release ax_write!");
+//		err = clReleaseEvent(x_loc_write[k]);
+//		CHKERR(err,"Failed to release x_loc_write!");
+//		err = clReleaseEvent(y_loc_write[k]);
+//		if(verbosity) printf("k: %d\terr: %d\n",k,err);
+//		CHKERR(err,"Failed to release y_loc_write!");
+//		err = clReleaseEvent(kernel_exec[k]);
+//		CHKERR(err,"Failed to release kernel_exec!");
 		free(device_out[k]);
 	}
-	err = clReleaseKernel(kernel);
-	CHKERR(err,"Failed to release kernel!");
-	clReleaseCommandQueue(write_queue);
-	CHKERR(err,"Failed to release write_queue!");
-	clReleaseCommandQueue(kernel_queue);
-	CHKERR(err,"Failed to release kernel_queue!");
-	clReleaseCommandQueue(write_queue);
-	CHKERR(err,"Failed to release read_queue!");
+
 	clReleaseContext(context);
 	CHKERR(err,"Failed to release context!");
 	if(verbosity) printf("Released context\n");

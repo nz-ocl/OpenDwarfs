@@ -1,5 +1,9 @@
 include/common_ocl.o: ../include/common_ocl.c ../include/common_ocl.h \
  ../opts/opts.h config.h \
+<<<<<<< HEAD
+=======
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/opencl.h \
+>>>>>>> SPMV
  /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl.h \
  /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_platform.h \
  /usr/include/stdint.h /usr/include/features.h /usr/include/sys/cdefs.h \
@@ -19,6 +23,12 @@ include/common_ocl.o: ../include/common_ocl.c ../include/common_ocl.h \
  /usr/include/sys/sysmacros.h /usr/include/bits/pthreadtypes.h \
  /usr/include/alloca.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/emmintrin.h \
+<<<<<<< HEAD
+=======
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl_ext.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_ext.h \
+>>>>>>> SPMV
  /usr/include/string.h /usr/include/xlocale.h /usr/include/stdio.h \
  /usr/include/libio.h /usr/include/_G_config.h /usr/include/wchar.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/stdarg.h \
@@ -31,8 +41,15 @@ include/common_ocl.o: ../include/common_ocl.c ../include/common_ocl.h \
 
 config.h:
 
+<<<<<<< HEAD
 /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl.h:
 
+=======
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/opencl.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl.h:
+
+>>>>>>> SPMV
 /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_platform.h:
 
 /usr/include/stdint.h:
@@ -92,6 +109,15 @@ config.h:
 /usr/include/alloca.h:
 
 /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/emmintrin.h:
+<<<<<<< HEAD
+=======
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl_ext.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_ext.h:
+>>>>>>> SPMV
 
 /usr/include/string.h:
 

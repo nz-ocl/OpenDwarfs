@@ -30,6 +30,10 @@ dense-linear-algebra/kmeans/kmeans.o: \
  ../dense-linear-algebra/kmeans/kmeans.h \
  ../dense-linear-algebra/kmeans/../../include/common_ocl.h ../opts/opts.h \
  config.h \
+<<<<<<< HEAD
+=======
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/opencl.h \
+>>>>>>> SPMV
  /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl.h \
  /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_platform.h \
  /usr/include/stdint.h /usr/include/bits/wchar.h \
@@ -37,6 +41,12 @@ dense-linear-algebra/kmeans/kmeans.o: \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/mmintrin.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/mm_malloc.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/emmintrin.h \
+<<<<<<< HEAD
+=======
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl_ext.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_ext.h \
+>>>>>>> SPMV
  ../dense-linear-algebra/kmeans/../../include/rdtsc.h \
  /usr/include/sys/time.h \
  ../dense-linear-algebra/kmeans/../../include/common_util.h
@@ -151,8 +161,15 @@ dense-linear-algebra/kmeans/kmeans.o: \
 
 config.h:
 
+<<<<<<< HEAD
 /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl.h:
 
+=======
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/opencl.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl.h:
+
+>>>>>>> SPMV
 /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_platform.h:
 
 /usr/include/stdint.h:
@@ -160,12 +177,27 @@ config.h:
 /usr/include/bits/wchar.h:
 
 /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/xmmintrin.h:
+<<<<<<< HEAD
 
 /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/mmintrin.h:
 
 /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/mm_malloc.h:
 
 /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/emmintrin.h:
+=======
+
+/usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/mmintrin.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/mm_malloc.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/emmintrin.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl_ext.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_ext.h:
+>>>>>>> SPMV
 
 ../dense-linear-algebra/kmeans/../../include/rdtsc.h:
 

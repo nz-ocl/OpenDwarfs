@@ -29,6 +29,10 @@ graph-traversal/bfs/bfs.o: ../graph-traversal/bfs/bfs.cpp \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/mm_malloc.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/emmintrin.h \
  ../graph-traversal/bfs/../../include/common_ocl.h ../opts/opts.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/opencl.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl_ext.h \
+ /home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_ext.h \
  ../graph-traversal/bfs/../../include/rdtsc.h \
  ../graph-traversal/bfs/../../include/common_util.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.7/../../../../include/c++/4.4.7/utility \
@@ -147,6 +151,14 @@ config.h:
 ../graph-traversal/bfs/../../include/common_ocl.h:
 
 ../opts/opts.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/opencl.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_gl_ext.h:
+
+/home/fpga_tools/altera/13.0.1.232_dp1/AOCL/host/include/CL/cl_ext.h:
 
 ../graph-traversal/bfs/../../include/rdtsc.h:
 
